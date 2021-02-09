@@ -11,7 +11,7 @@ on:
 
 jobs:
   analyze:
-    name: [ 'C/C++', 'Python' ]
+    name: ${{ matrix.analysisname }}
     runs-on: ubuntu-20.04
 
     strategy:
@@ -19,6 +19,7 @@ jobs:
       matrix:
         # C is included in cpp, no separate C language available on CodeQL
         language: [ 'cpp', 'python' ]
+        analysisname: [ 'C/C++', 'Python' ]
 
     steps:
     - name: Checkout repository
