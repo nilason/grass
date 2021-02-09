@@ -19,7 +19,7 @@ jobs:
       matrix:
         # C is included in cpp, no separate C language available on CodeQL
         language: [ 'cpp', 'python' ]
-        analysisname: [ 'C/C++', 'Python' ]
+        analysisname: [ 'CCpp', 'Python' ]
 
     steps:
     - name: Checkout repository
