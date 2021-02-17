@@ -31,7 +31,6 @@ export INSTALL_PREFIX=$1
     --with-blas \
     --with-lapack \
     --with-readline \
-    --with-openmp \
     --with-pthread \
     --with-tiff \
     --with-freetype \
