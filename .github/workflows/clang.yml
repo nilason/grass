@@ -41,4 +41,5 @@ jobs:
         CFLAGS: "-std=${{ matrix.c }} -fexceptions -fno-common"
         # TODO: -pedantic-errors here won't compile
         CXXFLAGS: "-std=${{ matrix.cpp }}"
+        LDFLAGS: "-fuse-ld=lld -lstdc++"
       run: .github/workflows/build.sh $HOME/install
