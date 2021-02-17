@@ -21,7 +21,6 @@ python3-termcolor
 sqlite3
 zlib1g-dev
 clang-format
-clang-tidyclang-tools
 clang
 clangd
 libc++-dev
@@ -31,7 +30,6 @@ libc++abi1
 libclang-dev
 libclang1
 liblldb-dev
-libllvm-ocaml-dev
 libomp-dev
 libomp5
 lld
