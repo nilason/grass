@@ -12,7 +12,7 @@ jobs:
     strategy:
       matrix:
         include:
-        - c: c11
+        - c: c17
           cpp: c++11
       fail-fast: false
 
