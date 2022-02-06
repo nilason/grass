@@ -517,7 +517,7 @@ AC_MSG_RESULT(no)
 ])
 
 AC_MSG_CHECKING(for int64_t)
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <sys/types.h>]], [[int64_t x;]])],[
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <stdint.h>]], [[int64_t x;]])],[
 AC_MSG_RESULT(yes)
 AC_DEFINE(HAVE_INT64_T, 1, [define if "int64_t" is available])
 ],[
