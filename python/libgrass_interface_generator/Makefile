@@ -61,7 +61,7 @@ INTLLIB = -lintl-8
 endif
 
 CTYPESGEN = ./run.py
-CTYPESFLAGS = --no-embed-preamble --strip-build-path "$(ARCH_DISTDIR)" \
+CTYPESFLAGS = --no-embed-preamble --strip-build-path "$(ARCH_DISTDIR)" --allow-gnu-c \
 	--cpp "$(CC) -E $(CPPFLAGS) $(LFS_CFLAGS) $(EXTRA_CFLAGS) $(NLS_CFLAGS) $(DEFS) $(EXTRA_INC) $(INC) -D__GLIBC_HAVE_LONG_LONG"
 EXTRA_CLEAN_FILES := $(wildcard ctypesgen/*.pyc) $(wildcard ctypesgen/*/*.pyc)
 EXTRA_CLEAN_DIRS := $(wildcard ctypesgen/__pycache__) $(wildcard ctypesgen/*/__pycache__)
