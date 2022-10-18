@@ -41,7 +41,7 @@ from ctypesgen.parser import cdeclarations, yacc
 
 
 reserved_keyword_tokens = (
-    "SIZEOF", "TYPEDEF", "EXTERN", "STATIC", "AUTO", "REGISTER",  # "INLINE",
+    "SIZEOF", "TYPEDEF", "EXTERN", "STATIC", "AUTO", "REGISTER", "INLINE",
     "CONST", "RESTRICT", "VOLATILE",
     "CHAR", "SHORT", "INT", "LONG", "SIGNED", "UNSIGNED", "FLOAT", "DOUBLE",
     "VOID", "STRUCT", "UNION", "ENUM",
@@ -51,16 +51,22 @@ reserved_keyword_tokens = (
 )
 
 reserved_keyword_tokens_new = (
-    "_BOOL",
+    "_BOOL", "_NORETURN",
     # "_ALIGNAS", "_ALIGNOF", "_ATOMIC", "_COMPLEX",
     # "_DECIMAL128", "_DECIMAL32", "_DECIMAL64",
-    # "_GENERIC", "_IMAGINARY", "_NORETURN", "_STATIC_ASSERT", "_THREAD_LOCAL",
+    # "_GENERIC", "_IMAGINARY", "_STATIC_ASSERT", "_THREAD_LOCAL",
 )
 
 extra_keywords_with_alias = {
     "__asm__": "__ASM__",
+    "__asm": "__ASM__",
     "__attribute__": "__ATTRIBUTE__",
+    "__const": "CONST",
     "__restrict": "RESTRICT",
+    "__inline__": "INLINE",
+    "__inline": "INLINE",
+    "__extension__": "__EXTENSION__",
+    "__volatile__": "VOLATILE",
 }
 
 keyword_map = {}
@@ -101,7 +107,8 @@ tokens = reserved_keyword_tokens + reserved_keyword_tokens_new + (
     # Preprocessor
     "PP_DEFINE", "PP_DEFINE_MACRO_NAME", "PP_DEFINE_NAME", "PP_END_DEFINE",
     "PP_IDENTIFIER_PASTE", "PP_MACRO_PARAM", "PP_STRINGIFY", "PP_UNDEFINE",
-    # "PP_NUMBER",
+    "ATT_START", "ATT_END", "ATT_EXPR",
+    "ASM_START", "ASM_CODE",
 
     # Pragma
     "PRAGMA", "PRAGMA_END", "PRAGMA_PACK",
@@ -111,7 +118,7 @@ tokens = reserved_keyword_tokens + reserved_keyword_tokens_new + (
     "RBRACKET", "LBRACE", "RBRACE", "COMMA", "SEMI",
     "COLON",
 
-    "__ASM__", "__ATTRIBUTE__",
+    "__ASM__", "__ATTRIBUTE__", "__EXTENSION__"
 )
 
 
@@ -216,6 +223,11 @@ def p_macro_param(p):
         p[0] = expressions.ParameterExpressionNode(p[2])
 
 
+# def p_vector(p):
+#     """ vector : LBRACE argument_expression_list RBRACE
+#     """
+
+
 def p_primary_expression(p):
     """ primary_expression : identifier
                            | constant
@@ -288,11 +300,14 @@ def p_argument_expression_list(p):
 
 
 def p_asm_expression(p):
-    """ asm_expression : __ASM__ volatile_opt LPAREN string_literal RPAREN
-                       | __ASM__ volatile_opt LPAREN string_literal COLON str_opt_expr_pair_list RPAREN
-                       | __ASM__ volatile_opt LPAREN string_literal COLON str_opt_expr_pair_list COLON str_opt_expr_pair_list RPAREN
-                       | __ASM__ volatile_opt LPAREN string_literal COLON str_opt_expr_pair_list COLON str_opt_expr_pair_list COLON str_opt_expr_pair_list RPAREN
+    """ asm_expression : __ASM__ ASM_START ASM_CODE
     """
+
+    # """ asm_expression : __ASM__ volatile_opt LPAREN string_literal RPAREN
+    #                    | __ASM__ volatile_opt LPAREN string_literal COLON str_opt_expr_pair_list RPAREN
+    #                    | __ASM__ volatile_opt LPAREN string_literal COLON str_opt_expr_pair_list COLON str_opt_expr_pair_list RPAREN
+    #                    | __ASM__ volatile_opt LPAREN string_literal COLON str_opt_expr_pair_list COLON str_opt_expr_pair_list COLON str_opt_expr_pair_list RPAREN
+    # """
 
     # Definitely not ISO C, adapted from example ANTLR GCC parser at
     #  http://www.antlr.org/grammar/cgram//grammars/GnuCParser.g
@@ -303,23 +318,23 @@ def p_asm_expression(p):
     p[0] = expressions.UnsupportedExpressionNode("This node is ASM assembler.")
 
 
-def p_str_opt_expr_pair_list(p):
-    """ str_opt_expr_pair_list :
-                               | str_opt_expr_pair
-                               | str_opt_expr_pair_list COMMA str_opt_expr_pair
-    """
-
-
-def p_str_opt_expr_pair(p):
-    """ str_opt_expr_pair : string_literal
-                          | string_literal LPAREN expression RPAREN
-    """
-
-
-def p_volatile_opt(p):
-    """ volatile_opt :
-                     | VOLATILE
-    """
+# def p_str_opt_expr_pair_list(p):
+#     """ str_opt_expr_pair_list :
+#                                | str_opt_expr_pair
+#                                | str_opt_expr_pair_list COMMA str_opt_expr_pair
+#     """
+#
+#
+# def p_str_opt_expr_pair(p):
+#     """ str_opt_expr_pair : string_literal
+#                           | string_literal LPAREN expression RPAREN
+#     """
+#
+#
+# def p_volatile_opt(p):
+#     """ volatile_opt :
+#                      | VOLATILE
+#     """
 
 
 prefix_ops_dict = {
@@ -332,6 +347,11 @@ prefix_ops_dict = {
     "~": ("inversion", (lambda x: ~x), "(~%s)", False),
     "!": ("logical not", (lambda x: not x), "(not %s)", True),
 }
+
+
+def p_extension(p):
+    """ extension : __EXTENSION__
+    """
 
 
 def p_unary_expression(p):
@@ -355,6 +375,13 @@ def p_unary_expression(p):
     else:
         name, op, format, can_be_ctype = prefix_ops_dict[p[1]]
         p[0] = expressions.UnaryExpressionNode(name, op, format, can_be_ctype, p[2])
+
+
+# def p_unary_expression2(p):
+#     """ unary_expression : vector
+#     """
+                         # | LPAREN type_name RPAREN LPAREN type_name RPAREN vector
+                         # | LPAREN type_name RPAREN vector
 
 
 def p_unary_operator(p):
@@ -573,6 +600,11 @@ def p_assignment_expression(p):
             name, op, format = assign_ops_dict[p[2]]
             p[0] = expressions.BinaryExpressionNode(name, op, format, (True, True), p[1], p[3])
 
+# def p_assignment_expression_vector(p):
+#     """ assignment_expression : unary_expression assignment_operator LPAREN IDENTIFIER RPAREN vector
+#                               | unary_expression assignment_operator vector
+#     """
+
 
 def p_assignment_operator(p):
     """ assignment_operator : EQUALS
@@ -650,6 +682,7 @@ def p_declaration_specifier(p):
     """ declaration_specifier : storage_class_specifier
                               | type_specifier
                               | type_qualifier
+                              | function_specifier
     """
     p[0] = p[1]
 
@@ -666,13 +699,15 @@ def p_init_declarator_list(p):
 
 def p_init_declarator(p):
     """ init_declarator : declarator gcc_attributes
+                        | declarator asm_expression gcc_attributes
                         | declarator gcc_attributes EQUALS initializer
     """
     p[0] = p[1]
-    p[0].attrib.update(p[2])
+    if type(p[2]) == cdeclarations.Attrib:
+        p[0].attrib.update(p[2])
     p.slice[0].filename = p.slice[1].filename
     p.slice[0].lineno = p.slice[1].lineno
-    if len(p) > 3:
+    if len(p) > 3 and p[3] == "=":
         p[0].initializer = p[4]
 
 
@@ -705,6 +740,11 @@ def p_type_specifier(p):
         p[0] = p[1]
     else:
         p[0] = cdeclarations.TypeSpecifier(p[1])
+
+
+def p_type_specifier_extension(p):
+    """ type_specifier : extension
+    """
 
 
 def p_struct_or_union_specifier(p):
@@ -740,6 +780,13 @@ def p_struct_or_union(p):
     """ struct_or_union : STRUCT
                         | UNION
     """
+    # | extension STRUCT
+    # | extension UNION
+    
+    # if len(p) == 2:
+    #     p[0] = p[1] == "union"
+    # else:
+    #     p[0] = p[2] == "union"
     p[0] = p[1] == "union"
 
 
@@ -756,7 +803,7 @@ def p_gcc_attributes(p):
 
 
 def p_gcc_attribute(p):
-    """ gcc_attribute : __ATTRIBUTE__ LPAREN LPAREN gcc_attrib_list RPAREN RPAREN
+    """ gcc_attribute : __ATTRIBUTE__ ATT_START LPAREN gcc_attrib_list RPAREN ATT_END
     """
     p[0] = cdeclarations.Attrib()
     p[0].update(p[4])
@@ -774,17 +821,28 @@ def p_gcc_attrib_list(p):
 
 def p_gcc_attrib(p):
     """ gcc_attrib :
-                   | IDENTIFIER
-                   | IDENTIFIER LPAREN argument_expression_list RPAREN
     """
-    if len(p) == 1:
-        p[0] = (None, None)
-    elif len(p) == 2:
-        p[0] = (p[1], True)
-    elif len(p) == 5:
-        p[0] = (p[1], p[3])
+    p[0] = (None, None)
+
+
+def p_gcc_attrib2(p):
+    """ gcc_attrib : ATT_EXPR
+                   | STRING_LITERAL
+                   | ATT_EXPR STRING_LITERAL
+    """
+    if len(p) == 3:
+        v = f'{p[1]}"{p[2]}"'
+    elif type(p[1]).__name__ == "StringLiteral":
+        v = f'"{p[1]}"'
     else:
-        raise RuntimeError("Should never reach this part of the grammar")
+        v = p[1]
+    p[0] = (v, True)
+
+
+def p_gcc_attrib3(p):
+    """ gcc_attrib : ATT_EXPR LPAREN gcc_attrib_list RPAREN
+    """
+    p[0] = (p[1], p[3])
 
 
 def p_member_declaration_list(p):
@@ -899,13 +957,14 @@ def p_enumerator_list_iso(p):
 
 
 def p_enumerator(p):
-    """ enumerator : IDENTIFIER
-                   | IDENTIFIER EQUALS constant_expression
+    """ enumerator : IDENTIFIER gcc_attributes
+                   | IDENTIFIER gcc_attributes EQUALS constant_expression gcc_attributes
     """
-    if len(p) == 2:
-        p[0] = cdeclarations.Enumerator(p[1], None)
+    # ignore gcc_attributes
+    if len(p) > 3:
+        p[0] = cdeclarations.Enumerator(p[1], p[4])
     else:
-        p[0] = cdeclarations.Enumerator(p[1], p[3])
+        p[0] = cdeclarations.Enumerator(p[1], None)
 
 
 def p_type_qualifier(p):
@@ -914,6 +973,12 @@ def p_type_qualifier(p):
                        | RESTRICT
     """
     p[0] = cdeclarations.TypeQualifier(p[1])
+
+
+def p_function_specifier(p):
+    """ function_specifier : INLINE
+                           | _NORETURN
+    """
 
 
 def p_declarator(p):
@@ -1265,40 +1330,41 @@ def p_directive(p):
 
 
 def p_define(p):
-    """ define : PP_DEFINE PP_DEFINE_NAME PP_END_DEFINE
+    """ define : PP_DEFINE PP_DEFINE_NAME gcc_attributes PP_END_DEFINE
                | PP_DEFINE PP_DEFINE_NAME type_name PP_END_DEFINE
-               | PP_DEFINE PP_DEFINE_NAME constant_expression PP_END_DEFINE
-               | PP_DEFINE PP_DEFINE_MACRO_NAME LPAREN RPAREN PP_END_DEFINE
-               | PP_DEFINE PP_DEFINE_MACRO_NAME LPAREN RPAREN constant_expression PP_END_DEFINE
-               | PP_DEFINE PP_DEFINE_MACRO_NAME LPAREN macro_parameter_list RPAREN PP_END_DEFINE
-               | PP_DEFINE PP_DEFINE_MACRO_NAME LPAREN macro_parameter_list RPAREN constant_expression PP_END_DEFINE
+               | PP_DEFINE PP_DEFINE_NAME constant_expression gcc_attributes PP_END_DEFINE
     """
     filename = p.slice[1].filename
     lineno = p.slice[1].lineno
-
-    if p[3] != "(":
-        if len(p) == 4:
-            p.parser.cparser.handle_define_constant(p[2], None, filename, lineno)
-        else:
-            p.parser.cparser.handle_define_constant(p[2], p[3], filename, lineno)
+    if isinstance(p[3], cdeclarations.Attrib):
+        # "empty" defines with or without __attributes_
+        p.parser.cparser.handle_define_constant(p[2], None, filename, lineno)
     else:
-        if p[4] == ")":
-            params = []
-            if len(p) == 6:
-                expr = None
-            elif len(p) == 7:
-                expr = p[5]
-        else:
-            params = p[4]
-            if len(p) == 7:
-                expr = None
-            elif len(p) == 8:
-                expr = p[6]
+        p.parser.cparser.handle_define_constant(p[2], p[3], filename, lineno)
 
-        filename = p.slice[1].filename
-        lineno = p.slice[1].lineno
+def p_define2(p):
+    """ define : PP_DEFINE PP_DEFINE_MACRO_NAME LPAREN RPAREN PP_END_DEFINE
+               | PP_DEFINE PP_DEFINE_MACRO_NAME LPAREN RPAREN constant_expression PP_END_DEFINE
+               | PP_DEFINE PP_DEFINE_MACRO_NAME LPAREN macro_parameter_list RPAREN gcc_attributes PP_END_DEFINE
+               | PP_DEFINE PP_DEFINE_MACRO_NAME LPAREN macro_parameter_list RPAREN constant_expression gcc_attributes PP_END_DEFINE
+    """
+    if p[4] == ")":
+        params = []
+        if len(p) == 6:
+            expr = None
+        elif len(p) == 7:
+            expr = p[5]
+    else:
+        params = p[4]
+        if len(p) == 8:
+            expr = None
+        elif len(p) == 9:
+            expr = p[6]
 
-        p.parser.cparser.handle_define_macro(p[2], params, expr, filename, lineno)
+    filename = p.slice[1].filename
+    lineno = p.slice[1].lineno
+
+    p.parser.cparser.handle_define_macro(p[2], params, expr, filename, lineno)
 
 
 def p_define_error(p):
@@ -1367,6 +1433,7 @@ def p_error(t):
 
 def p_pragma(p):
     """ pragma : pragma_pack
+               | PRAGMA pragma_directive_list PRAGMA_END
     """
 
 
@@ -1418,6 +1485,23 @@ def p_pragma_pack_stack_args(p):
                 n = p[5].value
 
     p[0] = (op, id, n)
+
+
+def p_pragma_directive_list(p):
+    """ pragma_directive_list : pragma_directive
+                              | pragma_directive_list pragma_directive
+    """
+    if len(p) == 3:
+        p[0] = p[1] + (p[2],)
+    else:
+        p[0] = (p[1],)
+
+
+def p_pragma_directive(p):
+    """ pragma_directive : IDENTIFIER
+                         | string_literal
+    """
+    p[0] = p[1]
 
 
 def main():

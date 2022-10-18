@@ -17,7 +17,7 @@ tokens = cgrammar.tokens
 keywords = cgrammar.keywords
 
 
-states = [("DEFINE", "exclusive"), ("PRAGMA", "exclusive")]
+states = [("DEFINE", "exclusive"), ("PRAGMA", "exclusive"), ("ATTRIBUTE", "exclusive"), ("ASM", "exclusive")]
 
 
 _B_ = r"[0-1]"
@@ -135,6 +135,91 @@ t_ANY_RBRACE = r"\}"
 t_ANY_COMMA = r","
 t_ANY_SEMI = r";"
 t_ANY_COLON = r":"
+
+
+# @TOKEN(r"__asm")
+@TOKEN(r"[_]*asm[_]*[\s]*")
+def t_ANY_ASM(t):
+    t.type = "__ASM__"
+    t.lexer.level = 0
+    t.lexer.code_start = t.lexer.lexpos + 1
+    t.lexer.previous_state = t.lexer.lexstate
+    t.lexer.begin("ASM")
+    return t
+
+
+@TOKEN(r"\(")
+def t_ASM_LPAREN(t):
+    if t.lexer.level == 0:
+        t.type = "ASM_START"
+    t.lexer.level += 1
+    return t
+
+
+@TOKEN(r"\)")
+def t_ASM_RPAREN(t):
+    t.lexer.level -= 1
+    if t.lexer.level == 0:
+        t.value = t.lexer.lexdata[t.lexer.code_start:t.lexer.lexpos - 1]
+        t.type = "ASM_CODE"
+        t.lexer.begin(t.lexer.previous_state)
+    return t
+
+
+# @TOKEN(r"[^\s]+")
+# def t_ASM_nonspace(t):
+#     t.type = "ASM_EXPR"
+#     return t
+
+
+@TOKEN(STRING_LITERAL)
+def t_ASM_string_literal(t):
+    return None
+    # t.type = "STRING_LITERAL"
+    # t.value = StringLiteral(t.value)
+    # return t
+
+# ---------------
+
+
+@TOKEN(r"__attribute__")
+def t_ANY_ATTRIBUTE(t):
+    t.type = "__ATTRIBUTE__"
+    t.lexer.level = 0
+    t.lexer.code_start = t.lexer.lexpos
+    t.lexer.previous_state = t.lexer.lexstate
+    t.lexer.begin("ATTRIBUTE")
+    return t
+
+
+@TOKEN(r"\(")
+def t_ATTRIBUTE_LPAREN(t):
+    if t.lexer.level == 0:
+        t.type = "ATT_START"
+    t.lexer.level += 1
+    return t
+
+
+@TOKEN(r"\)")
+def t_ATTRIBUTE_RPAREN(t):
+    t.lexer.level -= 1
+    if t.lexer.level == 0:
+        t.type = "ATT_END"
+        t.lexer.begin(t.lexer.previous_state)
+    return t
+
+
+@TOKEN(r"[^\(\)\,\"]+")
+def t_ATTRIBUTE_nonspace(t):
+    t.type = "ATT_EXPR"
+    return t
+
+
+@TOKEN(STRING_LITERAL)
+def t_ATTRIBUTE_string_literal(t):
+    t.type = "STRING_LITERAL"
+    t.value = StringLiteral(t.value)
+    return t
 
 
 @TOKEN(DIRECTIVE)
@@ -375,6 +460,20 @@ def t_INITIAL_error(t):
 
 
 def t_DEFINE_error(t):
+    t.type = "OTHER"
+    t.value = t.value[0]
+    t.lexer.lexpos += 1  # Skip it if it's an error in a #define
+    return t
+
+
+def t_ATTRIBUTE_error(t):
+    t.type = "OTHER"
+    t.value = t.value[0]
+    t.lexer.lexpos += 1  # Skip it if it's an error in a #define
+    return t
+
+
+def t_ASM_error(t):
     t.type = "OTHER"
     t.value = t.value[0]
     t.lexer.lexpos += 1  # Skip it if it's an error in a #define
