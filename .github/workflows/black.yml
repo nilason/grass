@@ -3,12 +3,11 @@ name: Python Black Formatting
 on:
   push:
     branches:
-      - main
-      - releasebranch_*
+    - main
+    - releasebranch_*
+    tags:
+      - "*.*.*"
   pull_request:
-    branches:
-      - main
-      - releasebranch_*
 
 jobs:
   run-black:

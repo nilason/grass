@@ -3,12 +3,11 @@ name: Python Pylint Code Quality
 on:
   push:
     branches:
-      - main
-      - releasebranch_*
+    - main
+    - releasebranch_*
+    tags:
+      - "*.*.*"
   pull_request:
-    branches:
-      - main
-      - releasebranch_*
 
 jobs:
   pylint:

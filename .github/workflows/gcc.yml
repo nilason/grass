@@ -1,14 +1,8 @@
 name: GCC C/C++ standards check
 
 on:
-  push:
-    branches:
-      - main
-      - releasebranch_*
-  pull_request:
-    branches:
-      - main
-      - releasebranch_*
+  - push
+  - pull_request
 
 jobs:
   build:
