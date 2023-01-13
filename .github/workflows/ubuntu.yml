@@ -29,6 +29,7 @@ jobs:
 
       - name: Get dependencies
         run: |
+          sudo sed -i 's/azure\.//' /etc/apt/sources.list
           sudo apt-get update -y
           sudo apt-get install -y wget git gawk findutils
           xargs -a <(awk '! /^ *(#|$)/' ".github/workflows/apt.txt") -r -- \
