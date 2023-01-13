@@ -2,14 +2,8 @@ name: Ubuntu
 # Build and run tests on Ubuntu
 
 on:
-  push:
-    branches:
-      - main
-      - releasebranch_*
-  pull_request:
-    branches:
-      - main
-      - releasebranch_*
+  - push
+  - pull_request
 
 jobs:
   build-and-test:
