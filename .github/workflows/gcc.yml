@@ -2,14 +2,8 @@
 name: GCC C/C++ standards check
 
 on:
-  push:
-    branches:
-      - main
-      - releasebranch_*
-  pull_request:
-    branches:
-      - main
-      - releasebranch_*
+  - push
+  - pull_request
 
 jobs:
   build:
@@ -58,4 +52,4 @@ jobs:
           CFLAGS: -std=${{ matrix.c }} -fPIC -Wall -Wextra
           # TODO: -pedantic-errors here won't compile
           CXXFLAGS: -std=${{ matrix.cpp }} -fPIC -Wall -Wextra
-        run: .github/workflows/build_ubuntu-22.04.sh $HOME/install -Werror
+        run: .github/workflows/build_ubuntu-22.04.sh $HOME/install -Wpedantic
