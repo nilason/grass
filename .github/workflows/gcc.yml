@@ -4,7 +4,7 @@ name: GCC C/C++ standards check
 on:
   - push
   - pull_request
-
+# test
 jobs:
   build:
     name: ${{ matrix.c }} & ${{ matrix.cpp }}
