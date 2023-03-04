@@ -8,13 +8,14 @@
 
 #include "raster3d_intern.h"
 
+static const char null_bytes[8] = {(char)0xFF, (char)0xFF, (char)0xFF,
+                                   (char)0xFF, (char)0xFF, (char)0xFF,
+                                   (char)0xFF, (char)0xFF};
+
 /*---------------------------------------------------------------------------*/
 
 int Rast3d_is_xdr_null_num(const void *num, int isFloat)
 {
-    static const char null_bytes[8] = {0xFF, 0xFF, 0xFF, 0xFF,
-                                       0xFF, 0xFF, 0xFF, 0xFF};
-
     return memcmp(num, null_bytes, isFloat ? 4 : 8) == 0;
 }
 
@@ -36,9 +37,6 @@ int Rast3d_is_xdr_null_double(const double *d)
 
 void Rast3d_set_xdr_null_num(void *num, int isFloat)
 {
-    static const char null_bytes[8] = {0xFF, 0xFF, 0xFF, 0xFF,
-                                       0xFF, 0xFF, 0xFF, 0xFF};
-
     memcpy(num, null_bytes, isFloat ? 4 : 8);
 }
 
