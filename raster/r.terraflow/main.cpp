@@ -447,7 +447,6 @@ int main(int argc, char *argv[])
 {
     struct GModule *module;
     Rtimer rtTotal;
-    char buf[BUFSIZ];
 
     /* initialize GIS library */
     G_gisinit(argv[0]);
@@ -489,10 +488,7 @@ int main(int argc, char *argv[])
     G_verbose_message(_("Region size is %d x %d"), nrows, ncols);
 
     /* check STREAM path (the place where intermediate STREAMs are placed) */
-    snprintf(buf, BUFSIZ, "%s=%s", STREAM_TMPDIR, opt->streamdir);
-    /* don't pass an automatic variable; putenv() isn't guaranteed to make a
-     * copy */
-    putenv(G_store(buf));
+    G_putenv(STREAM_TMPDIR, opt->streamdir);
     if (getenv(STREAM_TMPDIR) == NULL) {
         G_fatal_error(_("%s not set"), STREAM_TMPDIR);
     }

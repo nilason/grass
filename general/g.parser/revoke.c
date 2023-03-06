@@ -17,33 +17,30 @@ int reinvoke_script(const struct context *ctx, const char *filename)
      * to uppercase it was necessary to use uppercase variables.
      * Set both until all scripts are updated */
     for (flag = ctx->first_flag; flag; flag = flag->next_flag) {
-        char buff[16];
+        char buf1[16], buf2[16];
 
-        sprintf(buff, "GIS_FLAG_%c=%d", flag->key, flag->answer ? 1 : 0);
-        putenv(G_store(buff));
+        snprintf(buf1, sizeof(buf1), "GIS_FLAG_%c", flag->key);
+        snprintf(buf2, sizeof(buf2), "%d", flag->answer ? 1 : 0);
+        G_putenv(buf1, buf2);
 
-        sprintf(buff, "GIS_FLAG_%c=%d", toupper(flag->key),
-                flag->answer ? 1 : 0);
-
-        G_debug(2, "set %s", buff);
-        putenv(G_store(buff));
+        snprintf(buf1, sizeof(buf1), "GIS_FLAG_%c", toupper(flag->key));
+        G_debug(2, "set %s=%s", buf1, buf2);
+        G_putenv(buf1, buf2);
     }
 
     for (option = ctx->first_option; option; option = option->next_opt) {
         char upper[4096];
         char *str;
 
-        G_asprintf(&str, "GIS_OPT_%s=%s", option->key,
-                   option->answer ? option->answer : "");
-        putenv(str);
+        G_asprintf(&str, "GIS_OPT_%s", option->key);
+        G_putenv(str, option->answer ? option->answer : "");
 
         strcpy(upper, option->key);
         G_str_to_upper(upper);
-        G_asprintf(&str, "GIS_OPT_%s=%s", upper,
-                   option->answer ? option->answer : "");
+        G_asprintf(&str, "GIS_OPT_%s", upper);
 
-        G_debug(2, "set %s", str);
-        putenv(str);
+        G_debug(2, "set %s=%s", str, option->answer ? option->answer : "");
+        G_putenv(str, option->answer ? option->answer : "");
     }
 
 #ifdef __MINGW32__

@@ -176,7 +176,7 @@ int main(int argc, char *argv[])
     ds_close(Ogr_ds);
 
     /* create new vector map */
-    putenv("GRASS_VECTOR_EXTERNAL_IGNORE=1");
+    G_putenv("GRASS_VECTOR_EXTERNAL_IGNORE", "1");
     if (Vect_open_new(&Map, output, WITHOUT_Z) <
         0) /* dimension is set later from data source */
         G_fatal_error(_("Unable to create vector map <%s>"), output);

@@ -270,7 +270,7 @@ int main(int argc, char *argv[])
             snprintf(buf, sizeof(buf), "%s=%s", STREAM_TMPDIR,
                      viewOptions.streamdir);
             G_debug(1, "setting %s ", buf);
-            putenv(buf);
+            G_putenv(STREAM_TMPDIR, viewOptions.streamdir);
             if (getenv(STREAM_TMPDIR) == NULL) {
                 G_fatal_error(_("%s not set"), "STREAM_TMPDIR");
                 exit(1);

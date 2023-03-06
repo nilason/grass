@@ -14,7 +14,6 @@ char *create_pgfile(const char *dsn, const char *schema, const char *olink,
     int i;
     const char *epsg;
     char *filename, *conninfo;
-    char buf[GPATH_MAX];
     FILE *fp;
 
     struct Key_Value *key_val;
@@ -26,8 +25,7 @@ char *create_pgfile(const char *dsn, const char *schema, const char *olink,
     fp = G_fopen_new("", filename);
     if (!fp)
         G_fatal_error(_("Unable to create <%s> file"), filename);
-    sprintf(buf, "GRASS_VECTOR_PGFILE=%s", filename);
-    putenv(G_store(buf));
+    G_putenv("GRASS_VECTOR_PGFILE", filename);
     G_add_error_handler(file_handler, filename);
 
     key_val = G_create_key_value();
@@ -119,5 +117,5 @@ void file_handler(void *p)
 
     G_debug(1, "file_handler: %s", filename);
     G_remove("", filename);
-    putenv("GRASS_VECTOR_PGFILE=");
+    G_putenv("GRASS_VECTOR_PGFILE", "");
 }

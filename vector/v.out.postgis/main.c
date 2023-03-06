@@ -129,7 +129,7 @@ int main(int argc, char *argv[])
 
     /* don't use temporary maps, writes vector features immediately to
        the output PostGIS layer */
-    putenv("GRASS_VECTOR_EXTERNAL_IMMEDIATE=1");
+    G_putenv("GRASS_VECTOR_EXTERNAL_IMMEDIATE", "1");
     if (-1 ==
         Vect_open_new(&Out, olayer,
                       !flags.force2d->answer ? Vect_is_3d(&In) : WITHOUT_Z))
