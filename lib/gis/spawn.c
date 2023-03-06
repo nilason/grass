@@ -13,6 +13,7 @@
  * \date 2004-2006
  */
 
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

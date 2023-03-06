@@ -12,6 +12,8 @@
  * \author Hamish Bowman, Glynn Clements
  */
 
+#include "pi.h"
+
 #include <math.h>
 
 #define RpD    ((2 * M_PI) / 360.) /* radians/degree */

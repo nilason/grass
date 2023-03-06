@@ -1,6 +1,9 @@
-#include <math.h>
 #include "driver.h"
 #include "driverlib.h"
+
+#include <grass/gis.h>
+
+#include <math.h>
 
 void COM_Text_size(double x, double y)
 {
