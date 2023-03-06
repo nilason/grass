@@ -641,10 +641,7 @@ static void do_bindings(const struct binding *bindings, int num_bindings)
 
     for (i = 0; i < num_bindings; i++) {
         const struct binding *b = &bindings[i];
-        char *str = G_malloc(strlen(b->var) + strlen(b->val) + 2);
-
-        sprintf(str, "%s=%s", b->var, b->val);
-        putenv(str);
+        G_putenv(b->var, b->val);
     }
 }
 

@@ -534,12 +534,12 @@ int G_parser(int argc, char **argv)
 
             /* Verbose option */
             else if (strcmp(ptr, "--v") == 0 || strcmp(ptr, "--verbose") == 0) {
-                char buff[32];
+                char buff[16];
 
                 /* print everything: max verbosity level */
                 st->module_info.verbose = G_verbose_max();
-                sprintf(buff, "GRASS_VERBOSE=%d", G_verbose_max());
-                putenv(G_store(buff));
+                snprintf(buff, sizeof(buff), "%d", G_verbose_max());
+                G_putenv("GRASS_VERBOSE", buff);
                 if (st->quiet == 1) {
                     G_warning(_("Use either --quiet or --verbose flag, not "
                                 "both. Assuming --verbose."));
@@ -549,12 +549,12 @@ int G_parser(int argc, char **argv)
 
             /* Quiet option */
             else if (strcmp(ptr, "--q") == 0 || strcmp(ptr, "--quiet") == 0) {
-                char buff[32];
+                char buff[16];
 
                 /* print nothing, but errors and warnings */
                 st->module_info.verbose = G_verbose_min();
-                sprintf(buff, "GRASS_VERBOSE=%d", G_verbose_min());
-                putenv(G_store(buff));
+                snprintf(buff, sizeof(buff), "%d", G_verbose_min());
+                G_putenv("GRASS_VERBOSE", buff);
                 if (st->quiet == -1) {
                     G_warning(_("Use either --quiet or --verbose flag, not "
                                 "both. Assuming --quiet."));
@@ -564,12 +564,12 @@ int G_parser(int argc, char **argv)
 
             /* Super quiet option */
             else if (strcmp(ptr, "--qq") == 0) {
-                char buff[32];
+                char buff[16];
 
                 /* print nothing, but errors  */
                 st->module_info.verbose = G_verbose_min();
-                sprintf(buff, "GRASS_VERBOSE=%d", G_verbose_min());
-                putenv(G_store(buff));
+                snprintf(buff, sizeof(buff), "%d", G_verbose_min());
+                G_putenv("GRASS_VERBOSE", buff);
                 G_suppress_warnings(TRUE);
                 if (st->quiet == -1) {
                     G_warning(_("Use either --qq or --verbose flag, not both. "
@@ -1611,7 +1611,7 @@ int check_overwrite(void)
     if (st->overwrite || over) {
         st->module_info.overwrite = 1;
         /* Set the environment so that programs run in a script also obey --o */
-        putenv("GRASS_OVERWRITE=1");
+        G_putenv("GRASS_OVERWRITE", "1");
         /* No need to check options for existing files if overwrite is true */
         return error;
     }

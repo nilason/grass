@@ -503,21 +503,11 @@ int main(int argc, char *argv[])
 
     /* set up encoding for attribute data */
     if (param.encoding->answer) {
-        char *encbuf, *encp;
-        int len;
-
-        len = strlen("SHAPE_ENCODING") + strlen(param.encoding->answer) + 2;
-        encbuf = G_malloc(len * sizeof(char));
         /* -> Esri Shapefile */
-        sprintf(encbuf, "SHAPE_ENCODING=%s", param.encoding->answer);
-        encp = G_store(encbuf);
-        putenv(encp);
+        G_putenv("SHAPE_ENCODING", param.encoding->answer);
         /* -> DXF */
-        sprintf(encbuf, "DXF_ENCODING=%s", param.encoding->answer);
-        encp = G_store(encbuf);
-        putenv(encp);
+        G_putenv("DXF_ENCODING", param.encoding->answer);
         /* todo: others ? */
-        G_free(encbuf);
     }
 
     /* GDAL configuration options */

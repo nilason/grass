@@ -28,14 +28,13 @@ char *start(const char *name, const char *output, int width, int height,
     output_path[0] = '\0';
 
     if (!output) {
-        char buff[512];
+        char buff[16];
 
-        sprintf(buff, "GRASS_RENDER_IMMEDIATE=%s", name);
-        putenv(G_store(buff));
-        sprintf(buff, "GRASS_RENDER_WIDTH=%d", width);
-        putenv(G_store(buff));
-        sprintf(buff, "GRASS_RENDER_HEIGHT=%d", height);
-        putenv(G_store(buff));
+        G_putenv("GRASS_RENDER_IMMEDIATE", name);
+        snprintf(buff, sizeof(buff), "%d", width);
+        G_putenv("GRASS_RENDER_WIDTH", buff);
+        snprintf(buff, sizeof(buff), "%d", height);
+        G_putenv("GRASS_RENDER_HEIGHT", buff);
 
         D_open_driver();
 
@@ -56,7 +55,7 @@ char *start(const char *name, const char *output, int width, int height,
         }
         D_close_driver(); /* must be called after check because this
                            * function produces default map file */
-        putenv("GRASS_RENDER_IMMEDIATE=");
+        G_putenv("GRASS_RENDER_IMMEDIATE", "");
     }
     else {
         char *dir_name;

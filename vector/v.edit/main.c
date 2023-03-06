@@ -20,6 +20,8 @@
 
 #include "global.h"
 
+#include <grass/gis.h>
+
 int main(int argc, char *argv[])
 {
     struct GModule *module;
@@ -101,7 +103,7 @@ int main(int argc, char *argv[])
         }
 
         /* 3D vector maps? */
-        putenv("GRASS_VECTOR_EXTERNAL_IMMEDIATE=1");
+        G_putenv("GRASS_VECTOR_EXTERNAL_IMMEDIATE", "1");
         ret = Vect_open_new(&Map, params.map->answer, WITHOUT_Z);
         if (ret == -1) {
             G_fatal_error(_("Unable to create vector map <%s>"),
