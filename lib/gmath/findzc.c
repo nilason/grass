@@ -23,6 +23,8 @@
  * \date 2006
  */
 
+#include <grass/gis.h>
+
 #include <stdio.h>
 #include <math.h>
 
