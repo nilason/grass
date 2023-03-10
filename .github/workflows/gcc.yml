@@ -17,7 +17,7 @@ jobs:
     strategy:
       matrix:
         include:
-          - c: c2x
+          - c: gnu2x
             cpp: c++20
       fail-fast: false
 
