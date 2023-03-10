@@ -105,7 +105,7 @@ public:
     ReplacementHeapBlock<T, Compare>(queue<MEM_STREAM<T> *> *runList);
 
     // delete array mergeHeap
-    ~ReplacementHeapBlock<T, Compare>();
+    ~ReplacementHeapBlock();
 
     // is heap empty?
     int empty() const { return (size == 0); }
@@ -161,7 +161,7 @@ ReplacementHeapBlock<T, Compare>::ReplacementHeapBlock(
 
 /*****************************************************************/
 template <class T, class Compare>
-ReplacementHeapBlock<T, Compare>::~ReplacementHeapBlock<T, Compare>()
+ReplacementHeapBlock<T, Compare>::~ReplacementHeapBlock()
 {
 
     if (!empty()) {
