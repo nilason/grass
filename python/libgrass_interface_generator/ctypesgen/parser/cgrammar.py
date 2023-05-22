@@ -60,9 +60,12 @@ reserved_keyword_tokens_new = (
 extra_keywords_with_alias = {
     "__asm__": "__ASM__",
     "__attribute__": "__ATTRIBUTE__",
+    "__const": "CONST",
     "__restrict": "RESTRICT",
     "__inline__": "INLINE",
     "__inline": "INLINE",
+    "__extension__": "__EXTENSION__",
+    "__volatile__": "VOLATILE",
 }
 
 keyword_map = {}
@@ -103,7 +106,7 @@ tokens = reserved_keyword_tokens + reserved_keyword_tokens_new + (
     # Preprocessor
     "PP_DEFINE", "PP_DEFINE_MACRO_NAME", "PP_DEFINE_NAME", "PP_END_DEFINE",
     "PP_IDENTIFIER_PASTE", "PP_MACRO_PARAM", "PP_STRINGIFY", "PP_UNDEFINE",
-    # "PP_NUMBER",
+    "ATT_START", "ATT_END", "ATT_EXPR",
 
     # Pragma
     "PRAGMA", "PRAGMA_END", "PRAGMA_PACK",
@@ -113,7 +116,7 @@ tokens = reserved_keyword_tokens + reserved_keyword_tokens_new + (
     "RBRACKET", "LBRACE", "RBRACE", "COMMA", "SEMI",
     "COLON",
 
-    "__ASM__", "__ATTRIBUTE__",
+    "__ASM__", "__ATTRIBUTE__", "__EXTENSION__"
 )
 
 
@@ -216,6 +219,11 @@ def p_macro_param(p):
         p[0] = expressions.ParameterExpressionNode(p[1])
     else:
         p[0] = expressions.ParameterExpressionNode(p[2])
+
+
+def p_vector(p):
+    """ vector : LBRACE argument_expression_list RBRACE
+    """
 
 
 def p_primary_expression(p):
@@ -336,6 +344,11 @@ prefix_ops_dict = {
 }
 
 
+def p_extension(p):
+    """ extension : __EXTENSION__
+    """
+
+
 def p_unary_expression(p):
     """ unary_expression : postfix_expression
                          | INC_OP unary_expression
@@ -357,6 +370,13 @@ def p_unary_expression(p):
     else:
         name, op, format, can_be_ctype = prefix_ops_dict[p[1]]
         p[0] = expressions.UnaryExpressionNode(name, op, format, can_be_ctype, p[2])
+
+
+def p_unary_expression2(p):
+    """ unary_expression : extension vector
+                         | extension LPAREN type_name RPAREN LPAREN type_name RPAREN vector
+                         | extension LPAREN type_name RPAREN vector
+    """
 
 
 def p_unary_operator(p):
@@ -594,6 +614,7 @@ def p_assignment_operator(p):
 
 def p_expression(p):
     """ expression : assignment_expression
+                   | extension assignment_expression
                    | expression COMMA assignment_expression
     """
     p[0] = p[1]
@@ -608,6 +629,7 @@ def p_constant_expression(p):
 
 def p_declaration(p):
     """ declaration : declaration_impl SEMI
+                    | extension declaration_impl SEMI
     """
     # The ';' must be here, not in 'declaration', as declaration needs to
     # be executed before the ';' is shifted (otherwise the next lookahead will
@@ -759,7 +781,7 @@ def p_gcc_attributes(p):
 
 
 def p_gcc_attribute(p):
-    """ gcc_attribute : __ATTRIBUTE__ LPAREN LPAREN gcc_attrib_list RPAREN RPAREN
+    """ gcc_attribute : __ATTRIBUTE__ ATT_START LPAREN gcc_attrib_list RPAREN ATT_END
     """
     p[0] = cdeclarations.Attrib()
     p[0].update(p[4])
@@ -777,17 +799,28 @@ def p_gcc_attrib_list(p):
 
 def p_gcc_attrib(p):
     """ gcc_attrib :
-                   | IDENTIFIER
-                   | IDENTIFIER LPAREN argument_expression_list RPAREN
     """
-    if len(p) == 1:
-        p[0] = (None, None)
-    elif len(p) == 2:
-        p[0] = (p[1], True)
-    elif len(p) == 5:
-        p[0] = (p[1], p[3])
+    p[0] = (None, None)
+
+
+def p_gcc_attrib2(p):
+    """ gcc_attrib : ATT_EXPR
+                   | STRING_LITERAL
+                   | ATT_EXPR STRING_LITERAL
+    """
+    if len(p) == 3:
+        v = f'{p[1]}"{p[2]}"'
+    elif type(p[1]).__name__ == "StringLiteral":
+        v = f'"{p[1]}"'
     else:
-        raise RuntimeError("Should never reach this part of the grammar")
+        v = p[1]
+    p[0] = (v, True)
+
+
+def p_gcc_attrib3(p):
+    """ gcc_attrib : ATT_EXPR LPAREN gcc_attrib_list RPAREN
+    """
+    p[0] = (p[1], p[3])
 
 
 def p_member_declaration_list(p):
@@ -902,13 +935,14 @@ def p_enumerator_list_iso(p):
 
 
 def p_enumerator(p):
-    """ enumerator : IDENTIFIER
-                   | IDENTIFIER EQUALS constant_expression
+    """ enumerator : IDENTIFIER gcc_attributes
+                   | IDENTIFIER gcc_attributes EQUALS constant_expression gcc_attributes
     """
-    if len(p) == 2:
-        p[0] = cdeclarations.Enumerator(p[1], None)
+    # ignore gcc_attributes
+    if len(p) > 3:
+        p[0] = cdeclarations.Enumerator(p[1], p[4])
     else:
-        p[0] = cdeclarations.Enumerator(p[1], p[3])
+        p[0] = cdeclarations.Enumerator(p[1], None)
 
 
 def p_type_qualifier(p):
@@ -1274,40 +1308,41 @@ def p_directive(p):
 
 
 def p_define(p):
-    """ define : PP_DEFINE PP_DEFINE_NAME PP_END_DEFINE
+    """ define : PP_DEFINE PP_DEFINE_NAME gcc_attributes PP_END_DEFINE
                | PP_DEFINE PP_DEFINE_NAME type_name PP_END_DEFINE
-               | PP_DEFINE PP_DEFINE_NAME constant_expression PP_END_DEFINE
-               | PP_DEFINE PP_DEFINE_MACRO_NAME LPAREN RPAREN PP_END_DEFINE
-               | PP_DEFINE PP_DEFINE_MACRO_NAME LPAREN RPAREN constant_expression PP_END_DEFINE
-               | PP_DEFINE PP_DEFINE_MACRO_NAME LPAREN macro_parameter_list RPAREN PP_END_DEFINE
-               | PP_DEFINE PP_DEFINE_MACRO_NAME LPAREN macro_parameter_list RPAREN constant_expression PP_END_DEFINE
+               | PP_DEFINE PP_DEFINE_NAME constant_expression gcc_attributes PP_END_DEFINE
     """
     filename = p.slice[1].filename
     lineno = p.slice[1].lineno
-
-    if p[3] != "(":
-        if len(p) == 4:
-            p.parser.cparser.handle_define_constant(p[2], None, filename, lineno)
-        else:
-            p.parser.cparser.handle_define_constant(p[2], p[3], filename, lineno)
+    if isinstance(p[3], cdeclarations.Attrib):
+        # "empty" defines with or without __attributes_
+        p.parser.cparser.handle_define_constant(p[2], None, filename, lineno)
     else:
-        if p[4] == ")":
-            params = []
-            if len(p) == 6:
-                expr = None
-            elif len(p) == 7:
-                expr = p[5]
-        else:
-            params = p[4]
-            if len(p) == 7:
-                expr = None
-            elif len(p) == 8:
-                expr = p[6]
+        p.parser.cparser.handle_define_constant(p[2], p[3], filename, lineno)
 
-        filename = p.slice[1].filename
-        lineno = p.slice[1].lineno
+def p_define2(p):
+    """ define : PP_DEFINE PP_DEFINE_MACRO_NAME LPAREN RPAREN PP_END_DEFINE
+               | PP_DEFINE PP_DEFINE_MACRO_NAME LPAREN RPAREN constant_expression PP_END_DEFINE
+               | PP_DEFINE PP_DEFINE_MACRO_NAME LPAREN macro_parameter_list RPAREN gcc_attributes PP_END_DEFINE
+               | PP_DEFINE PP_DEFINE_MACRO_NAME LPAREN macro_parameter_list RPAREN constant_expression gcc_attributes PP_END_DEFINE
+    """
+    if p[4] == ")":
+        params = []
+        if len(p) == 6:
+            expr = None
+        elif len(p) == 7:
+            expr = p[5]
+    else:
+        params = p[4]
+        if len(p) == 8:
+            expr = None
+        elif len(p) == 9:
+            expr = p[6]
 
-        p.parser.cparser.handle_define_macro(p[2], params, expr, filename, lineno)
+    filename = p.slice[1].filename
+    lineno = p.slice[1].lineno
+
+    p.parser.cparser.handle_define_macro(p[2], params, expr, filename, lineno)
 
 
 def p_define_error(p):

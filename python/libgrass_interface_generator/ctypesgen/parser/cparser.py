@@ -137,7 +137,7 @@ class CParser(object):
     def handle_pp_error(self, message):
         """The C preprocessor emitted an error.
 
-        The default implementatin prints the error to stderr. If processing
+        The default implementation prints the error to stderr. If processing
         can continue, it will.
         """
         sys.stderr.write("Preprocessor: {}\n".format(message))
