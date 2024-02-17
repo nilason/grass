@@ -4,14 +4,7 @@ name: macOS
 # Build and run tests on macOS
 
 on:
-  push:
-    branches:
-      - main
-      - releasebranch_*
-  pull_request:
-    branches:
-      - main
-      - releasebranch_*
+  - push
 env:
   CACHE_NUMBER: 0
 concurrency:
