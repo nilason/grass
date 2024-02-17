@@ -1,0 +1,47 @@
+---
+name: Publish GRASS
+
+on:
+  release:
+    types: [published]
+env:
+  OUT_DIR: ${{ github.workspace }}/.g_outdir
+  GRASS: grass-${{ github.ref_name }}
+permissions:
+  contents: write
+jobs:
+  build-n-publish:
+    name: Build and publish GRASS
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+      - name: Generate Git derived data files
+        run: |
+          ./utils/generate_version_git_file.sh
+          ./utils/generate_last_commit_file.py
+      - name: Create tarballs
+        run: |
+          mkdir ${{ env.OUT_DIR }}
+          cd ..
+          tar -cvf ${{ env.OUT_DIR }}/${{ env.GRASS }}.tar \
+            --exclude=".gi*" --exclude=".tr*" grass
+          cd ${{ env.OUT_DIR }}
+          gzip -9k ${{ env.GRASS }}.tar
+          md5sum ${{ env.GRASS }}.tar.gz > ${{ env.GRASS }}.tar.gz.md5
+          sha256sum ${{ env.GRASS }}.tar.gz > ${{ env.GRASS }}.tar.gz.sha256
+          xz -9e ${{ env.GRASS }}.tar
+          md5sum ${{ env.GRASS }}.tar.xz > ${{ env.GRASS }}.tar.xz.md5
+          sha256sum ${{ env.GRASS }}.tar.xz > ${{ env.GRASS }}.tar.xz.sha256
+      - name: Publish distribution to GitHub
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+              ${{ env.OUT_DIR }}/${{ env.GRASS }}.tar.gz
+              ${{ env.OUT_DIR }}/${{ env.GRASS }}.tar.gz.md5
+              ${{ env.OUT_DIR }}/${{ env.GRASS }}.tar.gz.sha256
+              ${{ env.OUT_DIR }}/${{ env.GRASS }}.tar.xz
+              ${{ env.OUT_DIR }}/${{ env.GRASS }}.tar.xz.md5
+              ${{ env.OUT_DIR }}/${{ env.GRASS }}.tar.xz.sha256
