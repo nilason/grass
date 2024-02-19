@@ -43,6 +43,14 @@ jobs:
         run: |
           printenv | sort
           $CC --version
+      - name: Generate Git derived data files
+        run: |
+          echo "Generate VERSION_GIT_FILE:"
+          ./utils/generate_version_git_file.sh
+          cat include/include/VERSION_GIT
+          echo "Generate GENERATE_LAST_COMMIT_FILE:"
+          python utils/generate_last_commit_file.py .
+          cat core_modules_with_last_commit.json
       - name: Create installation directory
         run: mkdir $HOME/install
       - name: Build and install
