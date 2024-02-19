@@ -32,6 +32,20 @@ jobs:
             -type f -print -delete
           hash -r
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - name: Generate Git derived data files
+        run: |
+          echo "Generate VERSION_GIT_FILE:"
+          ./utils/generate_version_git_file.sh
+          cat include/VERSION_GIT
+          echo "Generate GENERATE_LAST_COMMIT_FILE:"
+          python utils/generate_last_commit_file.py .
+          cat core_modules_with_last_commit.json
+
       - name: Setup Mamba
         uses: mamba-org/setup-micromamba@v1
         with:
@@ -43,14 +57,6 @@ jobs:
         run: |
           printenv | sort
           $CC --version
-      - name: Generate Git derived data files
-        run: |
-          echo "Generate VERSION_GIT_FILE:"
-          ./utils/generate_version_git_file.sh
-          cat include/VERSION_GIT
-          echo "Generate GENERATE_LAST_COMMIT_FILE:"
-          python utils/generate_last_commit_file.py .
-          cat core_modules_with_last_commit.json
       - name: Create installation directory
         run: mkdir $HOME/install
       - name: Build and install
