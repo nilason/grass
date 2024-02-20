@@ -18,16 +18,25 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ github.ref }}
+          fetch-depth: 0
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
       - name: Generate Git derived data files
         run: |
+          echo "Generate VERSION_GIT file:"
           ./utils/generate_version_git_file.sh
-          ./utils/generate_last_commit_file.py
+          cat include/VERSION_GIT
+          echo "Generate GENERATE_LAST_COMMIT_FILE:"
+          python utils/generate_last_commit_file.py .
+          cat core_modules_with_last_commit.json
       - name: Create tarballs
         run: |
           mkdir ${{ env.OUT_DIR }}
           cd ..
           tar -cvf ${{ env.OUT_DIR }}/${{ env.GRASS }}.tar \
-            --exclude=".gi*" --exclude=".tr*" grass
+            --exclude=".gi*" --exclude=".tr*" --exclude=".g_outdir" grass
           cd ${{ env.OUT_DIR }}
           gzip -9k ${{ env.GRASS }}.tar
           md5sum ${{ env.GRASS }}.tar.gz > ${{ env.GRASS }}.tar.gz.md5
