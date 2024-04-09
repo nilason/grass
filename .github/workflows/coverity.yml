@@ -41,6 +41,8 @@ jobs:
           ldd --version
       - name: Configure
         run: |
+          echo "CFLAGS=${{ env.CFLAGS }}" >> $GITHUB_ENV
+          echo "CXXFLAGS=${{ env.CXXFLAGS }}" >> $GITHUB_ENV
           ./configure \
               --prefix="$HOME/install/" \
               --enable-largefile \
