@@ -68,6 +68,8 @@ jobs:
         run: |
           pwd
           export PATH=`pwd`/cov-analysis-linux64/bin:$PATH
+          echo "CFLAGS $CFLAGS"
+          echo "CXXFLAGS $CXXFLAGS"
           cov-build --dir cov-int make
       - name: Submit to Coverity Scan
         run: |
