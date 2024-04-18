@@ -15,7 +15,7 @@ permissions:
 jobs:
   coverity:
     runs-on: ubuntu-22.04
-    if: github.repository == 'OSGeo/grass'
+    if: github.repository == 'nilason/grass'
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
 
