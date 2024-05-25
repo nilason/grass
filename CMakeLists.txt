@@ -240,9 +240,9 @@ if(MSVC)
 endif()
 
 # TODO: fix this hack
-include_directories(${PostgreSQL_INCLUDE_DIR})
-include_directories(${PROJ_INCLUDE_DIR})
-include_directories(/opt/local/include)
+# include_directories(${PostgreSQL_INCLUDE_DIR})
+# include_directories(${PROJ_INCLUDE_DIR})
+# include_directories(/opt/local/include)
 
 add_subdirectory(python)
 add_subdirectory(lib)
