@@ -27,6 +27,13 @@ A=$(cygpath -w /mingw64/lib/pkgconfig)
 echo $A
 echo
 cygpath -u $A
+echo
+pkg-config --libs pdal
+pkg-config --libs /d/msys64/mingw64/lib/pkgconfig/pdal.pc
+pkg-config --libs /mingw64/lib/pkgconfig/pdal.pc
+echo
+which pkg-config
+echo
 
 ./configure \
     --host=${ARCH} \
