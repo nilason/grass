@@ -1,13 +1,7 @@
 ---
 name: OSGeo4W
 
-on:
-  push:
-    branches:
-      - main
-      - releasebranch_*
-  pull_request:
-
+on: [push]
 jobs:
   build:
     name: ${{ matrix.os }} build and tests
@@ -43,7 +37,7 @@ jobs:
             mingw-w64-x86_64-gcc mingw-w64-x86_64-ccache mingw-w64-x86_64-zlib mingw-w64-x86_64-libiconv
             mingw-w64-x86_64-bzip2 mingw-w64-x86_64-gettext mingw-w64-x86_64-libsystre
             mingw-w64-x86_64-libtre-git mingw-w64-x86_64-libwinpthread-git mingw-w64-x86_64-libpng
-            mingw-w64-x86_64-pcre
+            mingw-w64-x86_64-pcre mingw-w64-x86_64-pdal
 
       - name: Setup OSGeo4W environment
         uses: echoix/setup-OSGeo4W@17deecd39e077a80bf1081443998ea8edd6f15bf  # v0.1.0
@@ -63,7 +57,6 @@ jobs:
             libtiff-devel
             libxdr
             netcdf-devel
-            pdal-devel
             pdcurses
             proj-devel
             python3-core
