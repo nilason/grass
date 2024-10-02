@@ -23,7 +23,7 @@ export ARCH=x86_64-w64-mingw32
 export PKG_CONFIG_PATH=${PKG_CONFIG_PATH}:/c/msys64/mingw64/lib/pkgconfig
 echo "PKG_CONFIG_PATH: {$PKG_CONFIG_PATH}"
 echo
-cygpath -u /mingw64/lib/pkgconfig
+cygpath -u $(cygpath -w /mingw64/lib/pkgconfig)
 echo
 
 ./configure \
