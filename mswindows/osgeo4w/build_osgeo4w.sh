@@ -12,7 +12,7 @@
 #
 
 # stop on errors
-set -e
+# set -e
 
 
 # compile
@@ -82,6 +82,8 @@ echo
     --with-netcdf=${OSGEO4W_ROOT_MSYS}/bin/nc-config \
     --with-pdal
 
+cat config.log
+exit
 make
 
 # install
