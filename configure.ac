@@ -1072,7 +1072,7 @@ else
   AC_MSG_RESULT(yes)
 
   if ! ${PKG_CONFIG} --exists ${pdal} ; then
-    AC_MSG_ERROR([*** Unable to locate PDAL package.])
+    AC_MSG_WARN([*** Unable to locate PDAL package.])
   fi
 
   PDAL_LIBS=`${PKG_CONFIG} --libs "${pdal}"`
