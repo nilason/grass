@@ -76,6 +76,7 @@ jobs:
           echo "MAKEFLAGS=-j$(nproc)" >> $GITHUB_ENV
           ls -l /mingw64/lib/pkgconfig
           ls -l /mingw64/lib
+          cygpath -w /mingw64/bin
           cd /mingw64/lib/pkgconfig; cat pdal.pc
         shell: msys2 {0}
 
