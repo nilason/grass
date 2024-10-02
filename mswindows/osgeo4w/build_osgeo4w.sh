@@ -26,7 +26,7 @@ echo
 A=$(cygpath -w /mingw64/lib/pkgconfig)
 echo $A
 echo
-echo cygpath -u $A
+cygpath -u $A
 
 ./configure \
     --host=${ARCH} \
