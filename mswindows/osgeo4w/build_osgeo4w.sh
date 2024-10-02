@@ -17,14 +17,16 @@ set -e
 
 # compile
 export PATH=${OSGEO4W_ROOT_MSYS}/bin:/usr/bin:/mingw64/bin
-export C_INCLUDE_PATH=".:${OSGEO4W_ROOT_MSYS}/include:${SRC}/dist.${ARCH}/include:/c/msys64/mingw64/include"
+export C_INCLUDE_PATH=".:${OSGEO4W_ROOT_MSYS}/include:${SRC}/dist.${ARCH}/include:/d/msys64/mingw64/include"
 export PYTHONHOME=${OSGEO4W_ROOT_MSYS}/apps/Python312
 export ARCH=x86_64-w64-mingw32
-export PKG_CONFIG_PATH=${PKG_CONFIG_PATH}:/c/msys64/mingw64/lib/pkgconfig
-echo "PKG_CONFIG_PATH: {$PKG_CONFIG_PATH}"
+export PKG_CONFIG_PATH=${PKG_CONFIG_PATH}:/d/msys64/mingw64/lib/pkgconfig
+echo "PKG_CONFIG_PATH: ${PKG_CONFIG_PATH}"
 echo
-cygpath -w /mingw64/lib/pkgconfig
+A=$(cygpath -w /mingw64/lib/pkgconfig)
+echo $A
 echo
+echo cygpath -u $A
 
 ./configure \
     --host=${ARCH} \
