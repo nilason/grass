@@ -76,7 +76,7 @@ jobs:
           echo "MAKEFLAGS=-j$(nproc)" >> $GITHUB_ENV
           ls -l /mingw64/lib/pkgconfig
           ls -l /mingw64/lib
-          cat /mingw64/lib/pkgconfig/pdal.pc
+          cd /mingw64/lib/pkgconfig; cat pdal.pc
         shell: msys2 {0}
 
       - name: Compile GRASS GIS
