@@ -68,6 +68,7 @@ AC_SUBST(WINDRES)
 
 # Check for custom PKG_CONFIG
 PKG_CONFIG=${PKG_CONFIG-pkg-config}
+AC_MSG_NOTICE([PKG_CONFIG: $PKG_CONFIG])
 
 # Check for full floating-point support, including Infinity and NaN
 IEEEFLAG=
@@ -1070,7 +1071,7 @@ if test "$with_pdal" = "no" ; then
 else
   AC_MSG_RESULT(yes)
 
-  if test -s "${PKG_CONFIG} --exists ${pdal}" ; then
+  if ! ${PKG_CONFIG} --exists ${pdal} ; then
     AC_MSG_ERROR([*** Unable to locate PDAL package.])
   fi
 

@@ -4705,6 +4705,8 @@ fi
 
 # Check for custom PKG_CONFIG
 PKG_CONFIG=${PKG_CONFIG-pkg-config}
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: PKG_CONFIG: $PKG_CONFIG" >&5
+printf "%s\n" "$as_me: PKG_CONFIG: $PKG_CONFIG" >&6;}
 
 # Check for full floating-point support, including Infinity and NaN
 IEEEFLAG=
@@ -10369,7 +10371,7 @@ else
   { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 printf "%s\n" "yes" >&6; }
 
-  if test -s "${PKG_CONFIG} --exists ${pdal}" ; then
+  if ! ${PKG_CONFIG} --exists ${pdal} ; then
     as_fn_error $? "*** Unable to locate PDAL package." "$LINENO" 5
   fi
 
