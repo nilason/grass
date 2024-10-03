@@ -10383,7 +10383,7 @@ printf "%s\n" "$as_me: WARNING: *** Unable to locate PDAL package." >&2;}
   ac_save_libs="$LIBS"
   ac_save_cflags="$CFLAGS"
   ac_save_ldflags="$LDFLAGS"
-    LDFLAGS="$LDFLAGS $PDAL_LIBS"
+    LDFLAGS="$LDFLAGS -L/mingw64/lib $PDAL_LIBS"
   CFLAGS="$CFLAGS $PDAL_INC"
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext

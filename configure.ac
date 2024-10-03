@@ -1084,7 +1084,7 @@ else
   ac_save_cflags="$CFLAGS"
   ac_save_ldflags="$LDFLAGS"
   dnl LIBS="$LIBS $PDAL_LIBS"
-  LDFLAGS="$LDFLAGS $PDAL_LIBS"
+  LDFLAGS="$LDFLAGS -L/mingw64/lib $PDAL_LIBS"
   CFLAGS="$CFLAGS $PDAL_INC"
   AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <pdal/PointTable.hpp>
   #include <pdal/Streamable.hpp>
