@@ -720,7 +720,6 @@ NETCDF_LIBS
 NETCDF_CONFIG
 USE_PDAL
 PDAL_INC
-PDAL_CPPFLAGS
 PDAL_LIBS
 USE_LIBLAS
 LIBLAS_INC
@@ -10360,7 +10359,7 @@ ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
 
 
 PDAL_LIBS=
-PDAL_CPPFLAGS=
+PDAL_INC=
 USE_PDAL=
 pdal="pdal"
 
@@ -10383,8 +10382,9 @@ printf "%s\n" "$as_me: WARNING: *** Unable to locate PDAL package." >&2;}
   PDAL=
   ac_save_libs="$LIBS"
   ac_save_cflags="$CFLAGS"
-  LIBS="$LIBS $PDAL_LIBS"
-  CFLAGS="$CFLAGS $PDAL_CFLAGS"
+  ac_save_ldflags="$LDFLAGS"
+    LDFLAGS="$LDFLAGS $PDAL_LIBS"
+  CFLAGS="$CFLAGS $PDAL_INC"
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -10448,8 +10448,8 @@ rm -f core conftest.err conftest.$ac_objext conftest.beam \
 
   LIBS=${ac_save_libs}
   CFLAGS=${ac_save_cflags}
+  LDFLAGS=${ac_save_ldflags}
 fi
-
 
 
 

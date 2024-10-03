@@ -1062,7 +1062,7 @@ AC_MSG_CHECKING(whether to use PDAL)
 AC_LANG_PUSH(C++)
 
 PDAL_LIBS=
-PDAL_CPPFLAGS=
+PDAL_INC=
 USE_PDAL=
 pdal="pdal"
 
@@ -1082,8 +1082,10 @@ else
   PDAL=
   ac_save_libs="$LIBS"
   ac_save_cflags="$CFLAGS"
-  LIBS="$LIBS $PDAL_LIBS"
-  CFLAGS="$CFLAGS $PDAL_CFLAGS"
+  ac_save_ldflags="$LDFLAGS"
+  dnl LIBS="$LIBS $PDAL_LIBS"
+  LDFLAGS="$LDFLAGS $PDAL_LIBS"
+  CFLAGS="$CFLAGS $PDAL_INC"
   AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <pdal/PointTable.hpp>
   #include <pdal/Streamable.hpp>
   class St:public pdal::Streamable {};]], [[pdal::PointTable table;]])],
@@ -1105,10 +1107,10 @@ else
 
   LIBS=${ac_save_libs}
   CFLAGS=${ac_save_cflags}
+  LDFLAGS=${ac_save_ldflags}
 fi
 
 AC_SUBST(PDAL_LIBS)
-AC_SUBST(PDAL_CPPFLAGS)
 AC_SUBST(PDAL_INC)
 AC_SUBST(USE_PDAL)
 
