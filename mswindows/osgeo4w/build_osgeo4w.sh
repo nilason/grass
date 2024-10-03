@@ -37,6 +37,10 @@ echo
 which pkg-config
 echo
 
+echo "OSGEO4W_ROOT_MSYS=${OSGEO4W_ROOT_MSYS}"
+sysdir=$(cygpath --sysdir)
+echo "SYSDIDR=${sysdir}"
+echo "OSGEO4W_ROOT=${OSGEO4W_ROOT}"
 ./configure \
     --host=${ARCH} \
     --with-libs="${OSGEO4W_ROOT_MSYS}/lib ${OSGEO4W_ROOT_MSYS}/bin" \
