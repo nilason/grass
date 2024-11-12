@@ -1290,6 +1290,7 @@ static int json_serialize_to_buffer_r(const JSON_Value *value, char *buf,
 
     switch (json_value_get_type(value)) {
     case JSONArray:
+        printf("serialize JSONArray\n");
         array = json_value_get_array(value);
         count = json_array_get_count(array);
         APPEND_STRING("[");
@@ -1303,6 +1304,7 @@ static int json_serialize_to_buffer_r(const JSON_Value *value, char *buf,
             temp_value = json_array_get_value(array, i);
             written = json_serialize_to_buffer_r(temp_value, buf, level + 1,
                                                  is_pretty, num_buf);
+
             if (written < 0) {
                 return -1;
             }
@@ -1337,6 +1339,7 @@ static int json_serialize_to_buffer_r(const JSON_Value *value, char *buf,
             if (is_pretty) {
                 APPEND_INDENT(level + 1);
             }
+            printf("serialize JSONObject:%s\n", key);
             /* We do not support key names with embedded \0 chars */
             written = json_serialize_string(key, strlen(key), buf);
             if (written < 0) {
@@ -1377,6 +1380,7 @@ static int json_serialize_to_buffer_r(const JSON_Value *value, char *buf,
         if (string == NULL) {
             return -1;
         }
+        printf("serialize JSONString:%s\n", string);
         len = json_value_get_string_len(value);
         written = json_serialize_string(string, len, buf);
         if (written < 0) {
@@ -1394,12 +1398,14 @@ static int json_serialize_to_buffer_r(const JSON_Value *value, char *buf,
         else {
             APPEND_STRING("false");
         }
+        printf("serialize JSONBoolean:%s\n", buf);
         return written_total;
     case JSONNumber:
         num = json_value_get_number(value);
         if (buf != NULL) {
             num_buf = buf;
         }
+        printf("serialize JSONNumber:%f\n", num);
         if (parson_number_serialization_function) {
             written = parson_number_serialization_function(num, num_buf);
         }
@@ -1419,8 +1425,10 @@ static int json_serialize_to_buffer_r(const JSON_Value *value, char *buf,
         return written_total;
     case JSONNull:
         APPEND_STRING("null");
+        printf("serialize JSONNull:%s\n", buf);
         return written_total;
     case JSONError:
+        printf("serialize JSONError\n");
         return -1;
     default:
         return -1;

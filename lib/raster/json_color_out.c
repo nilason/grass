@@ -169,6 +169,42 @@ static void write_json_rule(DCELL *val, DCELL *min, DCELL *max, int r, int g,
     json_array_append_value(root_array, color_value);
 }
 
+static bool doit(JSON_Array *root_array, struct Colors *colors,
+                 ColorFormat clr_frmt)
+{
+    int r, g, b;
+
+    // Get RGB color for null values and create JSON entry
+    Rast_get_null_value_color(&r, &g, &b, colors);
+    JSON_Value *nv_value = json_value_init_object();
+    if (nv_value == NULL)
+        return false;
+    JSON_Object *nv_object = json_object(nv_value);
+    const char *nv_str = "nv";
+    if (json_object_set_string(nv_object, "value", nv_str) != JSONSuccess)
+        return false;
+
+    set_color(r, g, b, clr_frmt, nv_object);
+    json_array_append_value(root_array, nv_value);
+
+    // Get RGB color for default values and create JSON entry
+    Rast_get_default_color(&r, &g, &b, colors);
+    JSON_Value *default_value = json_value_init_object();
+    if (default_value == NULL)
+        return false;
+
+    JSON_Object *default_object = json_object(default_value);
+    const char *default_str = "default";
+    if (json_object_set_string(default_object, "value", default_str) !=
+        JSONSuccess)
+        return false;
+
+    set_color(r, g, b, clr_frmt, default_object);
+    json_array_append_value(root_array, default_value);
+
+    return true;
+}
+
 /*!
    \brief Print color table in JSON format
 
@@ -225,46 +261,50 @@ void Rast_print_json_colors(struct Colors *colors, DCELL min, DCELL max,
                             clr_frmt, fp, root_value);
         }
     }
-
-    //  Add special color entries for "null" and "default" values
-    {
-        int r, g, b;
-
-        // Get RGB color for null values and create JSON entry
-        Rast_get_null_value_color(&r, &g, &b, colors);
-        JSON_Value *nv_value = json_value_init_object();
-        if (nv_value == NULL) {
-            json_value_free(root_value);
-            close_file(fp);
-            G_fatal_error(
-                _("Failed to initialize JSON object. Out of memory?"));
-        }
-        JSON_Object *nv_object = json_object(nv_value);
-        const char *nv_str = "nv";
-        if (json_object_set_string(nv_object, "value", nv_str) != JSONSuccess) {
-            G_fatal_error("failed to set nv_str");
-        }
-        set_color(r, g, b, clr_frmt, nv_object);
-        json_array_append_value(root_array, nv_value);
-
-        // Get RGB color for default values and create JSON entry
-        Rast_get_default_color(&r, &g, &b, colors);
-        JSON_Value *default_value = json_value_init_object();
-        if (default_value == NULL) {
-            json_value_free(root_value);
-            close_file(fp);
-            G_fatal_error(
-                _("Failed to initialize JSON object. Out of memory?"));
-        }
-        JSON_Object *default_object = json_object(default_value);
-        const char *default_str = "default";
-        if (json_object_set_string(default_object, "value", default_str) !=
-            JSONSuccess) {
-            G_fatal_error("failed to set default_str");
-        }
-        set_color(r, g, b, clr_frmt, default_object);
-        json_array_append_value(root_array, default_value);
+    if (!doit(root_array, colors, clr_frmt)) {
+        close_file(fp);
+        G_fatal_error("failed to set nv, default");
     }
+    //  Add special color entries for "null" and "default" values
+    // {
+    //     int r, g, b;
+    //
+    //     // Get RGB color for null values and create JSON entry
+    //     Rast_get_null_value_color(&r, &g, &b, colors);
+    //     JSON_Value *nv_value = json_value_init_object();
+    //     if (nv_value == NULL) {
+    //         json_value_free(root_value);
+    //         close_file(fp);
+    //         G_fatal_error(
+    //             _("Failed to initialize JSON object. Out of memory?"));
+    //     }
+    //     JSON_Object *nv_object = json_object(nv_value);
+    //     const char *nv_str = "nv";
+    //     if (json_object_set_string(nv_object, "value", nv_str) !=
+    //     JSONSuccess) {
+    //         G_fatal_error("failed to set nv_str");
+    //     }
+    //     set_color(r, g, b, clr_frmt, nv_object);
+    //     json_array_append_value(root_array, nv_value);
+    //
+    //     // Get RGB color for default values and create JSON entry
+    //     Rast_get_default_color(&r, &g, &b, colors);
+    //     JSON_Value *default_value = json_value_init_object();
+    //     if (default_value == NULL) {
+    //         json_value_free(root_value);
+    //         close_file(fp);
+    //         G_fatal_error(
+    //             _("Failed to initialize JSON object. Out of memory?"));
+    //     }
+    //     JSON_Object *default_object = json_object(default_value);
+    //     const char *default_str = "default";
+    //     if (json_object_set_string(default_object, "value", default_str) !=
+    //         JSONSuccess) {
+    //         G_fatal_error("failed to set default_str");
+    //     }
+    //     set_color(r, g, b, clr_frmt, default_object);
+    //     json_array_append_value(root_array, default_value);
+    // }
 
     // Serialize JSON array to a string and print to the file
     char *json_string = json_serialize_to_string_pretty(root_value);
