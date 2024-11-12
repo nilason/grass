@@ -2455,7 +2455,12 @@ JSON_Status json_object_set_value(JSON_Object *object, const char *name,
 JSON_Status json_object_set_string(JSON_Object *object, const char *name,
                                    const char *string)
 {
+    printf("%s: string:%s\n", __func__, string);
     JSON_Value *value = json_value_init_string(string);
+    if (!value)
+        printf("%s: string:%s no value\n", __func__, string);
+    else
+        printf("%s: string:%s value\n", __func__, string);
     JSON_Status status = json_object_set_value(object, name, value);
     printf("%s: status:%d string:%s\n", __func__, status, string);
     if (status != JSONSuccess) {
