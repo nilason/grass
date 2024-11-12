@@ -240,7 +240,10 @@ void Rast_print_json_colors(struct Colors *colors, DCELL min, DCELL max,
                 _("Failed to initialize JSON object. Out of memory?"));
         }
         JSON_Object *nv_object = json_object(nv_value);
-        json_object_set_string(nv_object, "value", "nv");
+        const char *nv_str = "nv";
+        if (json_object_set_string(nv_object, "value", nv_str) != JSONSuccess) {
+            G_fatal_error("failed to set nv_str");
+        }
         set_color(r, g, b, clr_frmt, nv_object);
         json_array_append_value(root_array, nv_value);
 
@@ -254,7 +257,11 @@ void Rast_print_json_colors(struct Colors *colors, DCELL min, DCELL max,
                 _("Failed to initialize JSON object. Out of memory?"));
         }
         JSON_Object *default_object = json_object(default_value);
-        json_object_set_string(default_object, "value", "default");
+        const char *default_str = "default";
+        if (json_object_set_string(default_object, "value", default_str) !=
+            JSONSuccess) {
+            G_fatal_error("failed to set default_str");
+        }
         set_color(r, g, b, clr_frmt, default_object);
         json_array_append_value(root_array, default_value);
     }
