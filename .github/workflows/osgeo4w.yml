@@ -96,12 +96,12 @@ jobs:
         shell: msys2 {0}
         run: gendef - dist.x86_64-w64-mingw32/lib/libgrass_parson.8.5.dll
 
-      - name: List symbols (libintl)
-        if: always()
-        shell: msys2 {0}
-        run: |
-          ls -l C:\msys64\mingw64\lib
-          gendef - C:\msys64\mingw64\lib\libintl-8.dll
+      # - name: List symbols (libintl)
+      #   if: always()
+      #   shell: msys2 {0}
+      #   run: |
+      #     ls -l C:\msys64\mingw64\lib
+      #     gendef - C:\msys64\mingw64\lib\libintl-8.dll
 
       - name: List symbols (libgrass_gis)
         if: always()
