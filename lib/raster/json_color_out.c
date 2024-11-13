@@ -98,11 +98,13 @@ static void set_color(int r, int g, int b, ColorFormat clr_frmt,
     case RGB:
         snprintf(color_string, sizeof(color_string), "rgb(%d, %d, %d)", r, g,
                  b);
+        printf("just about to set string: %s", color_string);
         json_object_set_string(color_object, "rgb", color_string);
         break;
 
     case HEX:
         snprintf(color_string, sizeof(color_string), "#%02X%02X%02X", r, g, b);
+        printf("just about to set string: %s", color_string);
         json_object_set_string(color_object, "hex", color_string);
         break;
 
@@ -110,11 +112,13 @@ static void set_color(int r, int g, int b, ColorFormat clr_frmt,
         rgb_to_hsv(r, g, b, &h, &s, &v);
         snprintf(color_string, sizeof(color_string), "hsv(%d, %d, %d)", (int)h,
                  (int)s, (int)v);
+        printf("just about to set string: %s", color_string);
         json_object_set_string(color_object, "hsv", color_string);
         break;
 
     case TRIPLET:
         snprintf(color_string, sizeof(color_string), "%d:%d:%d", r, g, b);
+        printf("just about to set string: %s", color_string);
         json_object_set_string(color_object, "triplet", color_string);
         break;
     }
@@ -181,6 +185,7 @@ static bool doit(JSON_Array *root_array, struct Colors *colors,
         return false;
     JSON_Object *nv_object = json_object(nv_value);
     const char *nv_str = "nv";
+    printf("just about to set string: %s", nv_str);
     if (json_object_set_string(nv_object, "value", nv_str) != JSONSuccess)
         return false;
 
@@ -195,6 +200,7 @@ static bool doit(JSON_Array *root_array, struct Colors *colors,
 
     JSON_Object *default_object = json_object(default_value);
     const char *default_str = "default";
+    printf("just about to set string: %s", nv_str);
     if (json_object_set_string(default_object, "value", default_str) !=
         JSONSuccess)
         return false;
