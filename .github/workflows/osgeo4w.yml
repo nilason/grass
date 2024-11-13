@@ -39,7 +39,7 @@ jobs:
             mingw-w64-x86_64-gcc mingw-w64-x86_64-ccache mingw-w64-x86_64-zlib mingw-w64-x86_64-libiconv
             mingw-w64-x86_64-bzip2 mingw-w64-x86_64-gettext mingw-w64-x86_64-libsystre
             mingw-w64-x86_64-libtre-git mingw-w64-x86_64-libwinpthread-git mingw-w64-x86_64-libpng
-            mingw-w64-x86_64-pcre
+            mingw-w64-x86_64-pcre mingw-w64-x86_64-ntldd
 
       - name: Setup OSGeo4W environment
         uses: echoix/setup-OSGeo4W@17deecd39e077a80bf1081443998ea8edd6f15bf  # v0.1.0
@@ -99,17 +99,28 @@ jobs:
       - name: List symbols (libintl)
         if: always()
         shell: msys2 {0}
-        run: gendef - C:\msys64\mingw64\bin\libintl-8.dll
+        run: |
+          ls -l C:\msys64\mingw64\lib
+          gendef - C:\msys64\mingw64\lib\libintl-8.dll
 
       - name: List symbols (libgrass_gis)
         if: always()
         shell: msys2 {0}
         run: gendef - dist.x86_64-w64-mingw32/lib/libgrass_gis.8.5.dll
 
-      - name: List symbols (r.colors.out.exe)
+      - name: List dependencies (r.colors.out.exe)
         if: always()
         shell: msys2 {0}
-        run: gendef - dist.x86_64-w64-mingw32/bin/r.colors.out.exe
+        run: |
+          ntldd dist.x86_64-w64-mingw32/bin/r.colors.out.exe
+          ntldd --list-exports dist.x86_64-w64-mingw32/bin/r.colors.out.exe
+
+      - name: List dependencies (libgrass_parson)
+        if: always()
+        shell: msys2 {0}
+        run: |
+          ntldd dist.x86_64-w64-mingw32/lib/libgrass_parson.8.5.dll
+          ntldd --list-exports dist.x86_64-w64-mingw32/lib/libgrass_parson.8.5.dll
 
       - name: Test executing of the grass command
         run: .github/workflows/test_simple.bat 'C:\OSGeo4W\opt\grass\grass85.bat'
