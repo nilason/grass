@@ -91,15 +91,15 @@ jobs:
         shell: msys2 {0}
         run: .github/workflows/print_versions.sh
 
-      - name: List symbols (nm)
+      - name: List symbols (gendef)
         if: always()
         shell: msys2 {0}
-        run: nm -gD dist.x86_64-w64-mingw32/lib/libgrass_parson.8.5.dll
+        run: gendef - dist.x86_64-w64-mingw32/lib/libgrass_parson.8.5.dll
 
       - name: List symbols (objdump)
         if: always()
         shell: msys2 {0}
-        run: objdump -TC dist.x86_64-w64-mingw32/lib/libgrass_parson.8.5.dll
+        run: objdump -p dist.x86_64-w64-mingw32/lib/libgrass_parson.8.5.dll
 
       - name: Test executing of the grass command
         run: .github/workflows/test_simple.bat 'C:\OSGeo4W\opt\grass\grass85.bat'
