@@ -96,10 +96,20 @@ jobs:
         shell: msys2 {0}
         run: gendef - dist.x86_64-w64-mingw32/lib/libgrass_parson.8.5.dll
 
-      - name: List symbols (objdump)
+      - name: List symbols (libintl)
         if: always()
         shell: msys2 {0}
-        run: objdump -p dist.x86_64-w64-mingw32/lib/libgrass_parson.8.5.dll
+        run: gendef - C:\msys64\mingw64\bin\libintl-8.dll
+
+      - name: List symbols (libgrass_gis)
+        if: always()
+        shell: msys2 {0}
+        run: gendef - dist.x86_64-w64-mingw32/lib/libgrass_gis.8.5.dll
+
+      - name: List symbols (r.colors.out.exe)
+        if: always()
+        shell: msys2 {0}
+        run: gendef - dist.x86_64-w64-mingw32/bin/r.colors.out.exe
 
       - name: Test executing of the grass command
         run: .github/workflows/test_simple.bat 'C:\OSGeo4W\opt\grass\grass85.bat'
