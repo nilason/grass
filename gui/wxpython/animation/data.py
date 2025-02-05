@@ -15,6 +15,7 @@ This program is free software under the GNU General Public License
 
 @author Anna Petrasova <kratochanna gmail.com>
 """
+
 import os
 import copy
 
@@ -84,11 +85,11 @@ class AnimationData:
         timeseriesList = []
         for layer in layerList:
             if layer.active and hasattr(layer, "maps"):
-                if layer.mapType in ("strds", "stvds", "str3ds"):
+                if layer.mapType in {"strds", "stvds", "str3ds"}:
                     timeseriesList.append((layer.name, layer.mapType))
                     self._firstStdsNameType = layer.name, layer.mapType
                 else:
-                    mapSeriesList.append((layer.maps))
+                    mapSeriesList.append(layer.maps)
         if not timeseriesList:
             self._firstStdsNameType = None, None
         # this throws GException
@@ -239,9 +240,7 @@ class AnimationData:
             del region["projection"]
         if "zone" in region:
             del region["zone"]
-        regions = []
-        for i in range(self._mapCount):
-            regions.append(copy.copy(region))
+        regions = [copy.copy(region) for i in range(self._mapCount)]
         self._regions = regions
         if not (endRegion or zoomValue):
             return
@@ -294,10 +293,9 @@ class AnimLayer(Layer):
     def SetName(self, name):
         if not self.hidden:
             if self._mapType is None:
-                raise ValueError(
-                    "To set layer name, the type of layer must be specified."
-                )
-            if self._mapType in ("strds", "stvds", "str3ds"):
+                msg = "To set layer name, the type of layer must be specified."
+                raise ValueError(msg)
+            if self._mapType in {"strds", "stvds", "str3ds"}:
                 try:
                     name = validateTimeseriesName(name, self._mapType)
                     self._maps = getRegisteredMaps(name, self._mapType)

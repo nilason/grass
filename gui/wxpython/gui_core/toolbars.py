@@ -18,9 +18,10 @@ This program is free software under the GNU General Public License
 
 import platform
 import os
+from itertools import starmap
 
 import wx
-import wx.lib.agw.aui as aui
+from wx.lib.agw import aui
 
 from core import globalvar
 from core.debug import Debug
@@ -83,7 +84,7 @@ BaseIcons = {
     "mapDispSettings": MetaIcon(
         img="monitor-settings", label=_("Map Display Settings")
     ),
-    "mapDispDocking": MetaIcon(img="monitor-dock", label=_("(Un)dock Map Display")),
+    "docking": MetaIcon(img="monitor-dock", label=_("(Un)dock")),
 }
 
 
@@ -173,13 +174,11 @@ class ToolbarController:
             if isinstance(tool[0], tuple):
                 if tool[0][0] == "":  # separator
                     continue
-                else:
-                    internal_label = tool[0][0]
+                internal_label = tool[0][0]
             else:
                 if tool[0] == "":  # separator
                     continue
-                else:
-                    internal_label = tool[0]
+                internal_label = tool[0]
 
             label = vars(self.widget)[internal_label]
             if enable:
@@ -245,10 +244,7 @@ class ToolbarController:
 
     def _getToolbarData(self, data):
         """Define tool"""
-        retData = list()
-        for args in data:
-            retData.append(self._defineTool(*args))
-        return retData
+        return list(starmap(self._defineTool, data))
 
     def _defineTool(
         self, name=None, icon=None, handler=None, item=wx.ITEM_NORMAL, pos=-1
@@ -329,7 +325,6 @@ class BaseToolbar(ToolBar):
     """Abstract basic toolbar class.
 
     Following code shows how to create new basic toolbar:
-
 
         class MyToolbar(BaseToolbar):
             def __init__(self, parent):

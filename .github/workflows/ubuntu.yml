@@ -9,10 +9,8 @@ on:
       - main
       - releasebranch_*
   pull_request:
-    branches:
-      - main
-      - releasebranch_*
-      - '*'
+
+permissions: {}
 
 jobs:
   ubuntu:
@@ -22,6 +20,8 @@ jobs:
       cancel-in-progress: true
 
     runs-on: ${{ matrix.os }}
+    env:
+      PYTHONWARNINGS: always
     strategy:
       matrix:
         name:
@@ -61,7 +61,7 @@ jobs:
       fail-fast: false
 
     steps:
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Invert inclusion list to an exclusion list
         id: get-exclude
@@ -96,7 +96,7 @@ jobs:
 
       - name: Add extra exclusions to a gunittest config file
         run: |
-          sed 's:exclude =:exclude = ${{ 
+          sed 's:exclude =:exclude = ${{
             steps.get-exclude.outputs.extra-exclude
           }}:g' .gunittest.cfg > .gunittest.extra.cfg
           cat .gunittest.extra.cfg
@@ -151,7 +151,7 @@ jobs:
 
       - name: Make HTML test report available
         if: ${{ always() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
         with:
           name: testreport-${{ matrix.os }}-${{ matrix.config }}-${{ matrix.extra-include }}
           path: testreport

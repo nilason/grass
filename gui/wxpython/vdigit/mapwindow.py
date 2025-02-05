@@ -102,7 +102,7 @@ class VDigitWindow(BufferedMapWindow):
         )
         if (
             self.toolbar.GetAction() != "addLine"
-            or self.toolbar.GetAction("type") not in ("line", "boundary")
+            or self.toolbar.GetAction("type") not in {"line", "boundary"}
             or len(self.polycoords) == 0
         ):
             # we cannot provide info, so find out if it is something new
@@ -290,11 +290,11 @@ class VDigitWindow(BufferedMapWindow):
         """Left mouse button pressed - add new feature"""
         try:
             mapLayer = self.toolbar.GetLayer().GetName()
-        except:
+        except AttributeError:
             return
 
-        if self.toolbar.GetAction("type") in ["point", "centroid"]:
-            # add new point / centroiud
+        if self.toolbar.GetAction("type") in {"point", "centroid"}:
+            # add new point / centroid
             east, north = self.Pixel2Cell(self.mouse["begin"])
             nfeat, fids = self.digit.AddFeature(
                 self.toolbar.GetAction("type"), [(east, north)]
@@ -342,7 +342,7 @@ class VDigitWindow(BufferedMapWindow):
                     addRecordDlg.ShowModal()
                 addRecordDlg.Destroy()
 
-        elif self.toolbar.GetAction("type") in ["line", "boundary", "area"]:
+        elif self.toolbar.GetAction("type") in {"line", "boundary", "area"}:
             # add new point to the line
             self.polycoords.append(self.Pixel2Cell(event.GetPosition()))
             self.DrawLines(pdc=self.pdcTmp)
@@ -460,14 +460,14 @@ class VDigitWindow(BufferedMapWindow):
         """Left mouse button pressed - vector digitizer move
         feature/vertex, edit linear feature
         """
-        self.moveInfo = dict()
+        self.moveInfo = {}
         # geographic coordinates of initial position (left-down)
         self.moveInfo["begin"] = None
         # list of ids to modify
-        self.moveInfo["id"] = list()
+        self.moveInfo["id"] = []
 
         # set pen
-        if self.toolbar.GetAction() in ["moveVertex", "editLine"]:
+        if self.toolbar.GetAction() in {"moveVertex", "editLine"}:
             pcolor = UserSettings.Get(
                 group="vdigit", key="symbol", subkey=["highlight", "color"]
             )
@@ -482,7 +482,7 @@ class VDigitWindow(BufferedMapWindow):
         """
         try:
             mapLayer = self.toolbar.GetLayer().GetName()
-        except:
+        except AttributeError:
             return
 
         coords = self.Pixel2Cell(self.mouse["begin"])
@@ -534,7 +534,7 @@ class VDigitWindow(BufferedMapWindow):
                     # highlight feature & re-draw map
                     if not self.parent.dialogs["attributes"].IsShown():
                         self.parent.dialogs["attributes"].Show()
-                else:
+                else:  # noqa: PLR5501
                     if (
                         self.parent.dialogs["attributes"]
                         and self.parent.dialogs["attributes"].IsShown()
@@ -561,7 +561,7 @@ class VDigitWindow(BufferedMapWindow):
                     # highlight feature & re-draw map
                     if not self.parent.dialogs["category"].IsShown():
                         self.parent.dialogs["category"].Show()
-                else:
+                else:  # noqa: PLR5501
                     if self.parent.dialogs["category"].IsShown():
                         self.parent.dialogs["category"].Hide()
 
@@ -612,7 +612,7 @@ class VDigitWindow(BufferedMapWindow):
         action = self.toolbar.GetAction()
         if (
             action == "addLine"
-            and self.toolbar.GetAction("type") in ["line", "boundary", "area"]
+            and self.toolbar.GetAction("type") in {"line", "boundary", "area"}
         ) or action == "editLine":
             # add line or boundary -> remove last point from the line
             try:
@@ -624,8 +624,7 @@ class VDigitWindow(BufferedMapWindow):
                         removed,
                     ],
                 )
-                # self.mouse['begin'] = self.Cell2Pixel(self.polycoords[-1])
-            except:
+            except IndexError:
                 pass
 
         if action == "editLine":
@@ -635,7 +634,7 @@ class VDigitWindow(BufferedMapWindow):
 
             self.UpdateMap(render=False, renderVector=False)
 
-        elif action in [
+        elif action in {
             "deleteLine",
             "deleteArea",
             "moveLine",
@@ -652,11 +651,11 @@ class VDigitWindow(BufferedMapWindow):
             "queryLine",
             "breakLine",
             "typeConv",
-        ]:
+        }:
             # various tools -> unselected selected features
             self.digit.GetDisplay().SetSelected([])
 
-            if action in ["moveLine", "moveVertex", "editLine"] and hasattr(
+            if action in {"moveLine", "moveVertex", "editLine"} and hasattr(
                 self, "moveInfo"
             ):
                 del self.moveInfo
@@ -690,8 +689,8 @@ class VDigitWindow(BufferedMapWindow):
     def _onLeftDown(self, event):
         """Left mouse button donw - vector digitizer various actions"""
         try:
-            mapLayer = self.toolbar.GetLayer().GetName()
-        except:
+            self.toolbar.GetLayer().GetName()
+        except AttributeError:
             GMessage(parent=self, message=_("No vector map selected for editing."))
             event.Skip()
             return
@@ -702,13 +701,13 @@ class VDigitWindow(BufferedMapWindow):
             GMessage(
                 parent=self,
                 message=_(
-                    "Nothing to do. " "Choose appropriate tool from digitizer toolbar."
+                    "Nothing to do. Choose appropriate tool from digitizer toolbar."
                 ),
             )
             event.Skip()
             return
 
-        if action not in ("moveVertex", "addVertex", "removeVertex", "editLine"):
+        if action not in {"moveVertex", "addVertex", "removeVertex", "editLine"}:
             # set pen
             self.pen = wx.Pen(
                 colour=UserSettings.Get(
@@ -725,7 +724,7 @@ class VDigitWindow(BufferedMapWindow):
                 style=wx.SOLID,
             )
 
-        if action in ("addVertex", "removeVertex", "splitLines"):
+        if action in {"addVertex", "removeVertex", "splitLines"}:
             # unselect
             self.digit.GetDisplay().SetSelected([])
 
@@ -735,15 +734,15 @@ class VDigitWindow(BufferedMapWindow):
         elif action == "editLine" and hasattr(self, "moveInfo"):
             self.OnLeftDownEditLine(event)
 
-        elif action in ("moveLine", "moveVertex", "editLine") and not hasattr(
+        elif action in {"moveLine", "moveVertex", "editLine"} and not hasattr(
             self, "moveInfo"
         ):
             self.OnLeftDownMoveLine(event)
 
-        elif action in ("displayAttrs" "displayCats"):
+        elif action in ("displayAttrsdisplayCats"):
             self.OnLeftDownDisplayCA(event)
 
-        elif action in ("copyCats", "copyAttrs"):
+        elif action in {"copyCats", "copyAttrs"}:
             self.OnLeftDownCopyCA(event)
 
         elif action == "copyLine":
@@ -762,7 +761,7 @@ class VDigitWindow(BufferedMapWindow):
         nselected = 0
         action = self.toolbar.GetAction()
         # -> delete line || move line || move vertex
-        if action in ("moveVertex", "editLine"):
+        if action in {"moveVertex", "editLine"}:
             if len(self.digit.GetDisplay().GetSelected()) == 0:
                 nselected = int(
                     self.digit.GetDisplay().SelectLineByPoint(pos1)["line"] != -1
@@ -799,7 +798,7 @@ class VDigitWindow(BufferedMapWindow):
 
                     self.UpdateMap(render=False)
 
-        elif action in ("copyCats", "copyAttrs"):
+        elif action in {"copyCats", "copyAttrs"}:
             if not hasattr(self, "copyCatsIds"):
                 # 'from' -> select by point
                 nselected = int(
@@ -826,32 +825,26 @@ class VDigitWindow(BufferedMapWindow):
             if nselected > 0:
                 self.digit.GetDisplay().SetSelected(selected)
 
+        # -> moveLine || deleteLine, etc. (select by point/box)
+        elif action == "moveLine" and len(self.digit.GetDisplay().GetSelected()) > 0:
+            nselected = 0
+        elif action == "deleteArea":
+            nselected = int(
+                self.digit.GetDisplay().SelectAreaByPoint(pos1)["area"] != -1
+            )
         else:
-            # -> moveLine || deleteLine, etc. (select by point/box)
-            if action == "moveLine" and len(self.digit.GetDisplay().GetSelected()) > 0:
-                nselected = 0
-            else:
-                if action == "deleteArea":
-                    nselected = int(
-                        self.digit.GetDisplay().SelectAreaByPoint(pos1)["area"] != -1
-                    )
-                else:
-                    if action == "moveLine":
-                        drawSeg = True
-                    else:
-                        drawSeg = False
+            drawSeg = action == "moveLine"
 
-                    nselected = self.digit.GetDisplay().SelectLinesByBox(
-                        bbox=(pos1, pos2), drawSeg=drawSeg
-                    )
-                    if nselected == 0:
-                        nselected = int(
-                            self.digit.GetDisplay().SelectLineByPoint(pos1)["line"]
-                            != -1
-                        )
+            nselected = self.digit.GetDisplay().SelectLinesByBox(
+                bbox=(pos1, pos2), drawSeg=drawSeg
+            )
+            if nselected == 0:
+                nselected = int(
+                    self.digit.GetDisplay().SelectLineByPoint(pos1)["line"] != -1
+                )
 
         if nselected > 0:
-            if action in ("moveLine", "moveVertex") and hasattr(self, "moveInfo"):
+            if action in {"moveLine", "moveVertex"} and hasattr(self, "moveInfo"):
                 # get pseudoDC id of objects which should be redrawn
                 if action == "moveLine":
                     # -> move line
@@ -891,14 +884,14 @@ class VDigitWindow(BufferedMapWindow):
                 # -> move line || move vertex
                 self.UpdateMap(render=False)
 
-        else:  # no vector object found
-            if not (
-                action in ("moveLine", "moveVertex")
-                and hasattr(self, "moveInfo")
-                and len(self.moveInfo["id"]) > 0
-            ):
-                # avoid left-click when features are already selected
-                self.UpdateMap(render=False, renderVector=False)
+        # no vector object found
+        elif not (
+            action in {"moveLine", "moveVertex"}
+            and hasattr(self, "moveInfo")
+            and len(self.moveInfo["id"]) > 0
+        ):
+            # avoid left-click when features are already selected
+            self.UpdateMap(render=False, renderVector=False)
 
     def OnLeftUpModifyLine(self, event):
         """Left mouse button released - vector digitizer split line,
@@ -910,7 +903,7 @@ class VDigitWindow(BufferedMapWindow):
         if not pointOnLine:
             return
 
-        if self.toolbar.GetAction() in ["splitLine", "addVertex"]:
+        if self.toolbar.GetAction() in {"splitLine", "addVertex"}:
             self.UpdateMap(render=False)  # highlight object
             self.DrawCross(
                 pdc=self.pdcTmp,
@@ -986,10 +979,9 @@ class VDigitWindow(BufferedMapWindow):
                     )
                 else:
                     self.layerTmp.SetCmd(dVectTmp)
-            else:
-                if self.layerTmp:
-                    self.Map.DeleteLayer(self.layerTmp)
-                    self.layerTmp = None
+            elif self.layerTmp:
+                self.Map.DeleteLayer(self.layerTmp)
+                self.layerTmp = None
 
             self.UpdateMap(render=True, renderVector=True)
 
@@ -1031,7 +1023,7 @@ class VDigitWindow(BufferedMapWindow):
             self.mouse["begin"] = self.mouse["end"]
 
         action = self.toolbar.GetAction()
-        if action in (
+        if action in {
             "deleteLine",
             "deleteArea",
             "moveLine",
@@ -1046,10 +1038,10 @@ class VDigitWindow(BufferedMapWindow):
             "breakLine",
             "typeConv",
             "connectLine",
-        ):
+        }:
             self.OnLeftUpVarious(event)
 
-        elif action in ("splitLine", "addVertex", "removeVertex"):
+        elif action in {"splitLine", "addVertex", "removeVertex"}:
             self.OnLeftUpModifyLine(event)
 
         elif action == "copyLine":
@@ -1067,7 +1059,7 @@ class VDigitWindow(BufferedMapWindow):
     def _onRightDown(self, event):
         # digitization tool (confirm action)
         action = self.toolbar.GetAction()
-        if action in ("moveLine", "moveVertex") and hasattr(self, "moveInfo"):
+        if action in {"moveLine", "moveVertex"} and hasattr(self, "moveInfo"):
             pFrom = self.moveInfo["begin"]
             pTo = self.Pixel2Cell(event.GetPosition())
 
@@ -1094,23 +1086,20 @@ class VDigitWindow(BufferedMapWindow):
     def _onRightUp(self, event):
         """Right mouse button released (confirm action)"""
         action = self.toolbar.GetAction()
-        if action == "addLine" and self.toolbar.GetAction("type") in [
+        if action == "addLine" and self.toolbar.GetAction("type") in {
             "line",
             "boundary",
             "area",
-        ]:
+        }:
             # -> add new line / boundary
             try:
                 mapName = self.toolbar.GetLayer().GetName()
-            except:
+            except AttributeError:
                 mapName = None
                 GError(parent=self, message=_("No vector map selected for editing."))
 
             if mapName:
-                if self.toolbar.GetAction("type") == "line":
-                    line = True
-                else:
-                    line = False
+                line = self.toolbar.GetAction("type") == "line"
 
                 if len(self.polycoords) < 2:  # ignore 'one-point' lines
                     return
@@ -1197,7 +1186,7 @@ class VDigitWindow(BufferedMapWindow):
                     fid,
                 ]
             )
-        elif action in ("copyCats", "copyAttrs") and hasattr(self, "copyCatsIds"):
+        elif action in {"copyCats", "copyAttrs"} and hasattr(self, "copyCatsIds"):
             if action == "copyCats":
                 if (
                     self.digit.CopyCats(
@@ -1206,14 +1195,11 @@ class VDigitWindow(BufferedMapWindow):
                     < 0
                 ):
                     return
-            else:
-                if (
-                    self.digit.CopyCats(
-                        self.copyCatsList, self.copyCatsIds, copyAttrb=True
-                    )
-                    < 0
-                ):
-                    return
+            elif (
+                self.digit.CopyCats(self.copyCatsList, self.copyCatsIds, copyAttrb=True)
+                < 0
+            ):
+                return
 
             del self.copyCatsList
             del self.copyCatsIds
@@ -1292,17 +1278,17 @@ class VDigitWindow(BufferedMapWindow):
         )
 
         action = self.toolbar.GetAction()
-        if action == "addLine" and self.toolbar.GetAction("type") in [
+        if action == "addLine" and self.toolbar.GetAction("type") in {
             "line",
             "boundary",
             "area",
-        ]:
+        }:
             if len(self.polycoords) > 0:
                 self.MouseDraw(
                     pdc=self.pdcTmp, begin=self.Cell2Pixel(self.polycoords[-1])
                 )
 
-        elif action in ["moveLine", "moveVertex", "editLine"] and hasattr(
+        elif action in {"moveLine", "moveVertex", "editLine"} and hasattr(
             self, "moveInfo"
         ):
             dx = self.mouse["end"][0] - self.mouse["begin"][0]
@@ -1313,7 +1299,7 @@ class VDigitWindow(BufferedMapWindow):
                 # move line
                 for id in self.moveInfo["id"]:
                     self.pdcTmp.TranslateId(id, dx, dy)
-            elif action in ["moveVertex", "editLine"]:
+            elif action in {"moveVertex", "editLine"}:
                 # move vertex ->
                 # (vertex, left vertex, left line,
                 # right vertex, right line)

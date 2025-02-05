@@ -40,9 +40,8 @@ class ViewFrame(wx.Frame):
         self.confilesBox = StaticBox(
             parent=self.panel,
             id=wx.ID_ANY,
-            label=_(
-                "View and modify the "
-                "configuration file '{name}'".format(name=self.confile)
+            label=_("View and modify the configuration file '{name}'").format(
+                name=self.confile
             ),
         )
         self.textCtrl = TextCtrl(
@@ -214,12 +213,13 @@ class RLiSetupFrame(wx.Frame):
     def ListFiles(self):
         """Check the configuration files inside the path"""
         # list of configuration file
-        listfiles = []
         # return all the configuration files in self.rlipath, check if there are
         # link or directory and doesn't add them
-        for l in os.listdir(self.rlipath):
-            if os.path.isfile(os.path.join(self.rlipath, l)):
-                listfiles.append(l)
+        listfiles = [
+            rli_conf
+            for rli_conf in os.listdir(self.rlipath)
+            if os.path.isfile(os.path.join(self.rlipath, rli_conf))
+        ]
         return sorted(listfiles)
 
     def OnClose(self, event):
@@ -241,7 +241,7 @@ class RLiSetupFrame(wx.Frame):
             return
         dlg = wx.MessageDialog(
             parent=self.parent,
-            message=_("Do you want remove r.li " "configuration file <%s>?") % confile,
+            message=_("Do you want remove r.li configuration file <%s>?") % confile,
             caption=_("Remove new r.li configuration file?"),
             style=wx.YES_NO | wx.YES_DEFAULT | wx.ICON_QUESTION,
         )

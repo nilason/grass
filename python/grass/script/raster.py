@@ -21,6 +21,8 @@ for details.
 import os
 import string
 import time
+from pathlib import Path
+
 
 from .core import (
     gisenv,
@@ -49,26 +51,25 @@ def raster_history(map, overwrite=False, env=None):
 
     """
     current_mapset = gisenv(env)["MAPSET"]
-    if find_file(name=map, env=env)["mapset"] == current_mapset:
-        if overwrite is True:
-            historyfile = tempfile(env=env)
-            f = open(historyfile, "w")
-            f.write(os.environ["CMDLINE"])
-            f.close()
-            run_command("r.support", map=map, loadhistory=historyfile, env=env)
-            try_remove(historyfile)
-        else:
-            run_command("r.support", map=map, history=os.environ["CMDLINE"], env=env)
-        return True
-
-    warning(
-        _(
-            "Unable to write history for <%(map)s>. "
-            "Raster map <%(map)s> not found in current mapset."
-            % {"map": map, "map": map}
+    if find_file(name=map, env=env)["mapset"] != current_mapset:
+        warning(
+            _(
+                "Unable to write history for <%(map)s>. "
+                "Raster map <%(map)s> not found in current mapset."
+            )
+            % {"map": map},
+            env=env,
         )
-    )
-    return False
+        return False
+
+    if overwrite is True:
+        historyfile = tempfile(env=env)
+        Path(historyfile).write_text(os.environ["CMDLINE"])
+        run_command("r.support", map=map, loadhistory=historyfile, env=env)
+        try_remove(historyfile)
+    else:
+        run_command("r.support", map=map, history=os.environ["CMDLINE"], env=env)
+    return True
 
 
 def raster_info(map, env=None):
@@ -88,8 +89,7 @@ def raster_info(map, env=None):
     def float_or_null(s):
         if s == "NULL":
             return None
-        else:
-            return float(s)
+        return float(s)
 
     s = read_command("r.info", flags="gre", map=map, env=env)
     kv = parse_key_val(s)
@@ -144,7 +144,10 @@ def mapcalc(
             overwrite=overwrite,
         )
     except CalledModuleError:
-        fatal(_("An error occurred while running r.mapcalc" " with expression: %s") % e)
+        fatal(
+            _("An error occurred while running r.mapcalc with expression: %s") % e,
+            env=env,
+        )
 
 
 def mapcalc_start(
@@ -215,16 +218,12 @@ def raster_what(map, coord, env=None, localized=False):
     [{'elevation': {'color': '255:214:000', 'label': '', 'value': '102.479'}}]
 
     :param str map: the map name
-    :param list coord: a list of list containing all the point that you want
-                       query
+    :param list coord: a list of list containing all the point that you want to query
     :param env:
     """
-    if isinstance(map, (bytes, str)):
-        map_list = [map]
-    else:
-        map_list = map
+    map_list = [map] if isinstance(map, (bytes, str)) else map
 
-    coord_list = list()
+    coord_list = []
     if isinstance(coord, tuple):
         coord_list.append("%f,%f" % (coord[0], coord[1]))
     else:
@@ -244,7 +243,7 @@ def raster_what(map, coord, env=None, localized=False):
         quiet=True,
         env=env,
     )
-    data = list()
+    data = []
     if not ret:
         return data
 
@@ -255,8 +254,7 @@ def raster_what(map, coord, env=None, localized=False):
     for item in ret.splitlines():
         line = item.split(sep)[3:]
         for i, map_name in enumerate(map_list):
-            tmp_dict = {}
-            tmp_dict[map_name] = {}
+            tmp_dict = {map_name: {}}
             for j in range(len(labels)):
                 tmp_dict[map_name][labels[j]] = line[i * len(labels) + j]
 
