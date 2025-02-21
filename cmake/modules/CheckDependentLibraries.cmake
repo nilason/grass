@@ -30,11 +30,18 @@ if(PROJ_FOUND)
 endif()
 
 find_package(GDAL REQUIRED)
+if(TARGET GDAL::GDAL)
+  get_target_property(GDAL_INCLUDES GDAL::GDAL INCLUDE_DIRECTORIES)
+  message(STATUS "GDAL_INCLUDES: ${GDAL_INCLUDES}")
+endif()
+
 if(GDAL_FOUND)
-  add_library(GDAL INTERFACE IMPORTED GLOBAL)
-  set_property(TARGET GDAL PROPERTY INTERFACE_LINK_LIBRARIES ${GDAL_LIBRARY})
-  set_property(TARGET GDAL PROPERTY INTERFACE_INCLUDE_DIRECTORIES
-                                    ${GDAL_INCLUDE_DIR})
+  message(STATUS "!!! use alias")
+  add_library(GDAL ALIAS GDAL::GDAL)
+  # add_library(GDAL INTERFACE IMPORTED GLOBAL)
+  # set_property(TARGET GDAL PROPERTY INTERFACE_LINK_LIBRARIES ${GDAL_LIBRARY})
+  # set_property(TARGET GDAL PROPERTY INTERFACE_INCLUDE_DIRECTORIES
+  #                                   ${GDAL_INCLUDE_DIR})
 endif()
 
 find_package(ZLIB REQUIRED)
