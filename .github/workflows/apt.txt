@@ -15,7 +15,6 @@ libproj-dev
 libreadline-dev
 libsvm-dev
 libzstd-dev
-ninja-build
 pdal
 proj-bin
 python3-dateutil
