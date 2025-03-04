@@ -117,13 +117,6 @@ endif()
 
 if(WITH_LIBPNG)
   find_package(PNG REQUIRED)
-  if(PNG_FOUND)
-    add_library(LIBPNG INTERFACE IMPORTED GLOBAL)
-    set_property(TARGET LIBPNG PROPERTY INTERFACE_LINK_LIBRARIES
-                                        ${PNG_LIBRARY${find_library_suffix}})
-    set_property(TARGET LIBPNG PROPERTY INTERFACE_INCLUDE_DIRECTORIES
-                                        ${PNG_INCLUDE_DIR})
-  endif()
 endif()
 
 # Data storage options
