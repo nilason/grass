@@ -4,11 +4,7 @@ name: Ubuntu
 # Build and run tests on Ubuntu
 
 on:
-  push:
-    branches:
-      - main
-      - releasebranch_*
-  pull_request:
+  - push
 
 permissions: {}
 
