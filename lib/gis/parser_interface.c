@@ -355,4 +355,5 @@ void G__usage_xml(void)
     G__describe_option_rules_xml(stdout);
 
     fprintf(stdout, "</task>\n");
+    fflush(stdout);
 }

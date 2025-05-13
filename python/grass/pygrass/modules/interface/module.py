@@ -1,6 +1,6 @@
 from multiprocessing import cpu_count, Process, Queue
 import time
-from xml.etree.ElementTree import fromstring
+from xml.etree.ElementTree import fromstring, ParseError
 
 from grass.exceptions import CalledModuleError, GrassError, ParameterError
 from grass.script.core import Popen, PIPE, use_temp_region, del_temp_region
@@ -557,10 +557,14 @@ class Module:
             str_err = "Error running: `%s --interface-description`."
             raise GrassError(str_err % self.name) from e
         # get the xml of the module
-        self.xml = get_cmd_xml.communicate()[0]
+        self.xml, errr = get_cmd_xml.communicate()
         # transform and parse the xml into an Element class:
         # https://docs.python.org/library/xml.etree.elementtree.html
-        tree = fromstring(self.xml)
+        try:
+            tree = fromstring(self.xml)
+        except ParseError as pe:
+            str_err = f"{pe} {self.name} {errr}"
+            raise GrassError(str_err) from pe
 
         for e in tree:
             if e.tag not in {"parameter", "flag"}:
