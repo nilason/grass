@@ -1,6 +1,7 @@
 from multiprocessing import cpu_count, Process, Queue
 import time
 from xml.etree.ElementTree import fromstring, ParseError
+from shutil import which
 
 from grass.exceptions import CalledModuleError, GrassError, ParameterError
 from grass.script.core import Popen, PIPE, use_temp_region, del_temp_region
@@ -550,8 +551,9 @@ class Module:
             raise GrassError(msg)
         self.name = cmd
         try:
+            cmd_full = which(cmd)
             # call the command with --interface-description
-            get_cmd_xml = Popen([cmd, "--interface-description"], stdout=PIPE)
+            get_cmd_xml = Popen([cmd_full, "--interface-description"], stdout=PIPE)
         except OSError as e:
             print("OSError error({0}): {1}".format(e.errno, e.strerror))
             str_err = "Error running: `%s --interface-description`."
