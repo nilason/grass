@@ -86,7 +86,7 @@ class Popen(subprocess.Popen):
 
 PIPE = subprocess.PIPE
 STDOUT = subprocess.STDOUT
-
+TimeoutExpired = subprocess.TimeoutExpired
 
 raise_on_error = False  # raise exception instead of calling fatal()
 _capture_stderr = False  # capture stderr of subprocesses if possible

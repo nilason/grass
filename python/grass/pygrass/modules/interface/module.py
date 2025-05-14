@@ -4,7 +4,13 @@ from xml.etree.ElementTree import fromstring, ParseError
 from shutil import which
 
 from grass.exceptions import CalledModuleError, GrassError, ParameterError
-from grass.script.core import Popen, PIPE, use_temp_region, del_temp_region
+from grass.script.core import (
+    Popen,
+    PIPE,
+    TimeoutExpired,
+    use_temp_region,
+    del_temp_region,
+)
 from grass.script.utils import encode, decode
 from .docstring import docstring_property
 from .parameter import Parameter
@@ -558,6 +564,15 @@ class Module:
             print("OSError error({0}): {1}".format(e.errno, e.strerror))
             str_err = "Error running: `%s --interface-description`."
             raise GrassError(str_err % self.name) from e
+        except TimeoutExpired as e:
+            print("TimeoutExpired error({0}): {1}".format(e.errno, e.strerror))
+            str_err = "Error running: `%s --interface-description`."
+            raise GrassError(str_err % self.name) from e
+        except:
+            print("General error")
+            str_err = "Error running: `%s --interface-description`."
+            raise GrassError(str_err % self.name)
+
         # get the xml of the module
         self.xml, errr = get_cmd_xml.communicate()
         # transform and parse the xml into an Element class:
