@@ -563,7 +563,7 @@ class Module:
         try:
             tree = fromstring(self.xml)
         except ParseError as pe:
-            str_err = f"{pe} {self.name} {errr}"
+            str_err = f"{pe} {self.name} {errr} res:!{self.xml}!"
             raise GrassError(str_err) from pe
 
         for e in tree:
