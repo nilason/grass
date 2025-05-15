@@ -2,11 +2,7 @@
 name: OSGeo4W
 
 on:
-  push:
-    branches:
-      - main
-      - releasebranch_*
-  pull_request:
+  - push
 
 permissions: {}
 
