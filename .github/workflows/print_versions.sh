@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-
+set -x
 # Print versions, esp. versions of dependencies.
 
 python --version
@@ -19,7 +19,12 @@ cat << EOF > test_r_mapcalc.sh
 #!/usr/bin/env bash
 
 g.gisenv set="DEBUG=3"
-r.mapcalc "foo = 1"
+if ! r.mapcalc "foo = 1"
+then
+    echo "Failed"
+    exit 1
+fi
+echo "Success"
 EOF
 chmod +x test_r_mapcalc.sh
 grass --tmp-project XY --exec test_r_mapcalc.sh
