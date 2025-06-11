@@ -10,7 +10,6 @@ git --version
 
 # This will fail if the build failed.
 grass --version
-grass  $HOME/nc_spm_full_v2alpha2/PERMANENT --exec bash -c "r.univar -g map=elevation percentile=90.0 nprocs=0 separator='=' format=plain --v"
 
 grass --tmp-project XY --exec g.version -ergb
 # Detailed Python version info (in one line thanks to echo)
