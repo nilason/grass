@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # fail on non-zero return code from a subprocess
-set -e
+set -ex
 
 SAMPLE_DATA_URL=${SAMPLE_DATA_URL:-"https://grass.osgeo.org/sampledata/north_carolina/nc_spm_full_v2alpha2.tar.gz"}
 
