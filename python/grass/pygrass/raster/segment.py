@@ -3,6 +3,7 @@ Created on Mon Jun 11 18:02:27 2012
 
 @author: pietro
 """
+
 import ctypes
 import grass.lib.gis as libgis
 import grass.lib.raster as libraster
@@ -130,6 +131,8 @@ class Segment:
     def release(self):
         """Free memory allocated to segment.
         Releases the allocated memory associated with the segment file seg.
-        Note: Does not close the file. Does not flush the data which may be
-        pending from previous Segment_put() calls."""
+
+        .. note:: Does not close the file. Does not flush the data which may be
+                  pending from previous Segment_put() calls.
+        """
         libseg.Segment_release(self.c_seg)
