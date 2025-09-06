@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-08-23 15:39+0000\n"
+"POT-Creation-Date: 2025-09-06 15:43+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -11936,8 +11936,8 @@ msgstr ""
 msgid "Predict with a Support Vector Machine"
 msgstr ""
 
-#. GTC: SVM training input
 #. GTC: SVM prediction input
+#. GTC: SVM training input
 #: ../imagery/i.svm.predict/main.c:60 ../imagery/i.svm.train/main.c:62
 msgid "Maps with feature values (attributes)"
 msgstr ""
@@ -20803,7 +20803,7 @@ msgstr ""
 msgid "Maximum difference between this and last increment: %g"
 msgstr ""
 
-#: ../raster/r.gwflow/main.c:563 ../raster3d/r3.gwflow/main.c:286
+#: ../raster/r.gwflow/main.c:563 ../raster3d/r3.gwflow/main.c:298
 msgid "Unable to create and solve the linear equation system"
 msgstr ""
 
@@ -31890,7 +31890,7 @@ msgstr ""
 msgid "Wrong 3D raster datatype! Cannot create raster map"
 msgstr ""
 
-#: ../raster3d/r3.cross.rast/main.c:342 ../raster3d/r3.gwflow/main.c:415
+#: ../raster3d/r3.cross.rast/main.c:342 ../raster3d/r3.gwflow/main.c:427
 #: ../raster3d/r3.info/main.c:1004 ../raster3d/r3.null/main.c:153
 #: ../raster3d/r3.out.vtk/errorHandling.c:62
 #, c-format
@@ -32111,7 +32111,11 @@ msgid ""
 "Consider to choose a full filled quadratic matrix with flag -f "
 msgstr ""
 
-#: ../raster3d/r3.gwflow/main.c:368 ../raster3d/r3.in.lidar/main.c:488
+#: ../raster3d/r3.gwflow/main.c:236
+msgid "No sink map provided. Initializing zero sink..."
+msgstr ""
+
+#: ../raster3d/r3.gwflow/main.c:380 ../raster3d/r3.in.lidar/main.c:488
 #: ../raster3d/r3.in.lidar/main.c:496 ../raster3d/r3.in.lidar/main.c:504
 #: ../raster3d/r3.in.lidar/main.c:512 ../raster3d/r3.in.lidar/main.c:520
 #: ../raster3d/r3.in.lidar/main.c:529 ../raster3d/r3.in.lidar/main.c:537
