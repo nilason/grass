@@ -2,15 +2,7 @@
 name: CMake
 
 on:
-  push:
-    paths-ignore:
-      - "doc/**"
-    branches:
-      - main
-      - releasebranch_*
-  pull_request:
-    paths-ignore:
-      - "doc/**"
+  - push
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.head_ref || github.sha }}
@@ -79,6 +71,10 @@ jobs:
       - name: Add the bin directory to PATH
         run: |
           echo "${HOME}/install/bin" >> "${GITHUB_PATH}"
+      - name: Print GRASSConfig.cmake
+        shell: bash -el {0}
+        run: |
+          cat "${HOME}/install/lib/cmake/GRASS/GRASSConfig.cmake"
       - name: Print installed versions
         if: always()
         run: .github/workflows/print_versions.sh
