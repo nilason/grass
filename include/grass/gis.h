@@ -727,6 +727,8 @@ struct ilist {
     int alloc_values;
 };
 
+typedef struct GPercentContext GPercentContext;
+
 /*============================== Prototypes ================================*/
 
 /* Since there are so many prototypes for the gis library they are stored */
