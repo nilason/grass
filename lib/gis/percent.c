@@ -21,8 +21,9 @@
 
 #include <grass/gis.h>
 
-#define LOG_CAPACITY 1024
-#define LOG_MSG_SIZE 128
+#define LOG_CAPACITY       1024
+#define LOG_MSG_SIZE       128
+#define TIME_RATE_LIMIT_MS 100
 
 typedef enum { EV_LOG, EV_PROGRESS } event_type_t;
 
@@ -59,8 +60,9 @@ static telemetry_t g_percent_telemetry;
 static atomic_bool g_percent_initialized = false;
 static atomic_bool g_percent_consumer_started = false;
 
+static GPercentContext *context_create(size_t, size_t, long);
 static bool telemetry_has_pending_events(telemetry_t *);
-static void telemetry_init(telemetry_t *, size_t, long);
+static void telemetry_init_time(telemetry_t *, size_t, long);
 static void telemetry_init_percent(telemetry_t *, size_t, size_t);
 static void enqueue_event(telemetry_t *, event_t *);
 static void telemetry_log(telemetry_t *, const char *);
@@ -86,31 +88,36 @@ static long now_ns(void);
 ///   is silenced by environment variable `GRASS_MESSAGE_FORMAT` or
 ///   verbosity level is below `1`.
 GPercentContext *G_percent_context_create(size_t total_num_elements,
-                                          size_t step,
-                                          G_PERCENT_INCR_TYPE incr_type)
+                                          size_t step)
+{
+    return context_create(total_num_elements, step,
+                          (step == 0 ? TIME_RATE_LIMIT_MS : 0));
+}
+
+GPercentContext *G_percent_context_create_time(size_t total_num_elements,
+                                               long interval_ms)
+{
+    return context_create(total_num_elements, 0, interval_ms);
+}
+
+static GPercentContext *context_create(size_t total_num_elements, size_t step,
+                                       long interval_ms)
 {
     if (output_is_silenced())
-        return;
+        return NULL;
 
     GPercentContext *ctx = G_calloc(1, sizeof(*ctx));
 
     atomic_init(&ctx->initialized, true);
 
-    switch (incr_type) {
-    case G_PERCENT_INCR_STEP:
-        assert(step <= 100 && step > 0);
-        telemetry_init_percent(
-            &ctx->telemetry,
-            ((total_num_elements > 0) ? total_num_elements : 0),
-            ((step > 0) ? step : 0));
-        break;
-    case G_PERCENT_INCR_TIME:
-        assert(step >= 0);
-        telemetry_init(&ctx->telemetry,
-                       ((total_num_elements > 0) ? total_num_elements : 0),
-                       (long)((step > 0) ? step : 0));
-    default:
-        break;
+    assert(step <= 100);
+
+    if (step == 0) {
+        assert(interval_ms > 0);
+        telemetry_init_time(&ctx->telemetry, total_num_elements, interval_ms);
+    }
+    else {
+        telemetry_init_percent(&ctx->telemetry, total_num_elements, step);
     }
     atomic_init(&ctx->consumer_started, false);
 
@@ -141,7 +148,7 @@ void G_percent_context_destroy(GPercentContext *ctx)
     }
 
     if (!atomic_load_explicit(&ctx->initialized, memory_order_acquire)) {
-        free(ctx);
+        G_free(ctx);
         return;
     }
 
@@ -153,7 +160,7 @@ void G_percent_context_destroy(GPercentContext *ctx)
     }
 
     atomic_store_explicit(&ctx->initialized, false, memory_order_release);
-    free(ctx);
+    G_free(ctx);
 }
 
 /// Reports progress for an isolated `GPercentContext` instance.
@@ -179,7 +186,7 @@ void G_percent_r(GPercentContext *ctx, size_t current_element)
         return;
 
     telemetry_t *t = &ctx->telemetry;
-    if (t->total == 0 || t->percent_step == 0)
+    if (t->total == 0 || (t->percent_step == 0 && t->interval_ns == 0))
         return;
 
     size_t total = t->total;
@@ -332,7 +339,7 @@ static void *telemetry_consumer(void *arg)
     return NULL;
 }
 
-static void telemetry_init(telemetry_t *t, size_t total, long interval_ms)
+static void telemetry_init_time(telemetry_t *t, size_t total, long interval_ms)
 {
     atomic_init(&t->write_index, 0);
     t->read_index = 0;

@@ -729,11 +729,6 @@ struct ilist {
 
 typedef struct GPercentContext GPercentContext;
 
-typedef enum {
-    G_PERCENT_INCR_STEP,
-    G_PERCENT_INCR_TIME,
-} G_PERCENT_INCR_TYPE;
-
 /*============================== Prototypes ================================*/
 
 /* Since there are so many prototypes for the gis library they are stored */
