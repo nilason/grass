@@ -105,40 +105,6 @@ GPercentContext *G_percent_context_create_time(size_t total_num_elements,
     return context_create(total_num_elements, 0, interval_ms);
 }
 
-static GPercentContext *context_create(size_t total_num_elements, size_t step,
-                                       long interval_ms)
-{
-    if (output_is_silenced())
-        return NULL;
-
-    GPercentContext *ctx = G_calloc(1, sizeof(*ctx));
-
-    atomic_init(&ctx->initialized, true);
-
-    assert(step <= 100);
-
-    if (step == 0) {
-        assert(interval_ms > 0);
-        telemetry_init_time(&ctx->telemetry, total_num_elements, interval_ms);
-        ctx->report_progress = context_progress_time;
-    }
-    else {
-        telemetry_init_percent(&ctx->telemetry, total_num_elements, step);
-        ctx->report_progress = context_progress_percent;
-    }
-    atomic_init(&ctx->consumer_started, false);
-
-    bool expected_started = false;
-    if (atomic_compare_exchange_strong_explicit(
-            &ctx->consumer_started, &expected_started, true,
-            memory_order_acq_rel, memory_order_relaxed)) {
-        pthread_create(&ctx->consumer_thread, NULL, telemetry_consumer,
-                       &ctx->telemetry);
-    }
-
-    return ctx;
-}
-
 /// Destroys a `GPercentContext` and releases any resources it owns.
 ///
 /// This function stops the context's background telemetry consumer, waits for
@@ -204,51 +170,6 @@ void G_percent_r(GPercentContext *ctx, size_t current_element)
     ctx->report_progress(t, completed);
 }
 
-static void context_progress_percent(telemetry_t *t, size_t completed)
-{
-    size_t total = t->total;
-    size_t current_pct = (size_t)((completed * 100) / total);
-    size_t expected =
-        atomic_load_explicit(&t->next_percent_threshold, memory_order_relaxed);
-    while (current_pct >= expected && expected <= 100) {
-        size_t next = expected + t->percent_step;
-        if (next > 100)
-            next = 101;
-        if (atomic_compare_exchange_strong_explicit(
-                &t->next_percent_threshold, &expected, next,
-                memory_order_acq_rel, memory_order_relaxed)) {
-            event_t ev = {0};
-            ev.type = EV_PROGRESS;
-            ev.completed = completed;
-            ev.total = total;
-            enqueue_event(t, &ev);
-            return;
-        }
-    }
-}
-
-static void context_progress_time(telemetry_t *t, size_t completed)
-{
-    long now = now_ns();
-    long last =
-        atomic_load_explicit(&t->last_progress_ns, memory_order_relaxed);
-
-    if (now - last < t->interval_ns) {
-        return;
-    }
-    if (!atomic_compare_exchange_strong_explicit(&t->last_progress_ns, &last,
-                                                 now, memory_order_acq_rel,
-                                                 memory_order_relaxed)) {
-        return;
-    }
-
-    event_t ev = {0};
-    ev.type = EV_PROGRESS;
-    ev.completed = completed;
-    ev.total = t->total;
-    enqueue_event(t, &ev);
-}
-
 /// Reports global progress when completion crosses the next percentage step.
 ///
 /// This function initializes the shared global telemetry stream on first use,
@@ -307,6 +228,85 @@ void G_percent(long current_element, long total_num_elements, int percent_step)
         }
         // CAS failed; expected updated, loop continues
     }
+}
+
+static GPercentContext *context_create(size_t total_num_elements, size_t step,
+                                       long interval_ms)
+{
+    if (output_is_silenced())
+        return NULL;
+
+    GPercentContext *ctx = G_calloc(1, sizeof(*ctx));
+
+    atomic_init(&ctx->initialized, true);
+
+    assert(step <= 100);
+
+    if (step == 0) {
+        assert(interval_ms > 0);
+        telemetry_init_time(&ctx->telemetry, total_num_elements, interval_ms);
+        ctx->report_progress = context_progress_time;
+    }
+    else {
+        telemetry_init_percent(&ctx->telemetry, total_num_elements, step);
+        ctx->report_progress = context_progress_percent;
+    }
+    atomic_init(&ctx->consumer_started, false);
+
+    bool expected_started = false;
+    if (atomic_compare_exchange_strong_explicit(
+            &ctx->consumer_started, &expected_started, true,
+            memory_order_acq_rel, memory_order_relaxed)) {
+        pthread_create(&ctx->consumer_thread, NULL, telemetry_consumer,
+                       &ctx->telemetry);
+    }
+
+    return ctx;
+}
+
+static void context_progress_percent(telemetry_t *t, size_t completed)
+{
+    size_t total = t->total;
+    size_t current_pct = (size_t)((completed * 100) / total);
+    size_t expected =
+        atomic_load_explicit(&t->next_percent_threshold, memory_order_relaxed);
+    while (current_pct >= expected && expected <= 100) {
+        size_t next = expected + t->percent_step;
+        if (next > 100)
+            next = 101;
+        if (atomic_compare_exchange_strong_explicit(
+                &t->next_percent_threshold, &expected, next,
+                memory_order_acq_rel, memory_order_relaxed)) {
+            event_t ev = {0};
+            ev.type = EV_PROGRESS;
+            ev.completed = completed;
+            ev.total = total;
+            enqueue_event(t, &ev);
+            return;
+        }
+    }
+}
+
+static void context_progress_time(telemetry_t *t, size_t completed)
+{
+    long now = now_ns();
+    long last =
+        atomic_load_explicit(&t->last_progress_ns, memory_order_relaxed);
+
+    if (now - last < t->interval_ns) {
+        return;
+    }
+    if (!atomic_compare_exchange_strong_explicit(&t->last_progress_ns, &last,
+                                                 now, memory_order_acq_rel,
+                                                 memory_order_relaxed)) {
+        return;
+    }
+
+    event_t ev = {0};
+    ev.type = EV_PROGRESS;
+    ev.completed = completed;
+    ev.total = t->total;
+    enqueue_event(t, &ev);
 }
 
 /// Consumes queued telemetry events and emits log or progress output until
