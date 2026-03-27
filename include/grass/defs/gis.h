@@ -663,10 +663,11 @@ int G_stat(const char *, struct stat *);
 int G_owner(const char *);
 
 /* percent.c */
-GPercentContext *G_percent_context_create(size_t, size_t);
+GPercentContext *G_percent_context_create(size_t, size_t, G_PERCENT_INCR_TYPE);
 void G_percent_context_destroy(GPercentContext *);
 void G_percent_r(GPercentContext *, size_t);
 void G_percent(long, long, int);
+void G_percent_old(long, long, int);
 void G_percent_reset(void);
 void G_progress(long, int);
 void G_set_percent_routine(int (*)(int));

@@ -10,7 +10,7 @@
 
    \author GRASS Development Team
  */
-
+#include <assert.h>
 #include <stdio.h>
 #include <sched.h>
 #include <pthread.h>
@@ -41,7 +41,6 @@ typedef struct {
     atomic_size_t completed;
     size_t total;
     int info_format;
-    bool output_enabled;
     atomic_long last_progress_ns;
     long interval_ns;
     size_t percent_step;
@@ -60,17 +59,17 @@ static telemetry_t g_percent_telemetry;
 static atomic_bool g_percent_initialized = false;
 static atomic_bool g_percent_consumer_started = false;
 
-static long now_ns(void);
 static bool telemetry_has_pending_events(telemetry_t *);
 static void telemetry_init(telemetry_t *, size_t, long);
 static void telemetry_init_percent(telemetry_t *, size_t, size_t);
 static void enqueue_event(telemetry_t *, event_t *);
 static void telemetry_log(telemetry_t *, const char *);
-static void telemetry_set_info_format(telemetry_t *t);
-static void telemetry_set_output_enabled(telemetry_t *t);
+static void telemetry_set_info_format(telemetry_t *);
 static void telemetry_progress(telemetry_t *, size_t);
 static void *telemetry_consumer(void *);
 static void start_global_percent(size_t, size_t);
+static bool output_is_silenced(void);
+static long now_ns(void);
 
 /// Creates an isolated progress-reporting context for concurrent work.
 ///
@@ -80,38 +79,61 @@ static void start_global_percent(size_t, size_t);
 /// runtime configuration, this function also starts the background consumer
 /// thread used to flush queued telemetry events.
 ///
-/// - Parameter total_num_elements: Total number of elements to process.
-/// - Parameter percent_step: Minimum percentage increment that triggers a
+/// \param total_num_elements Total number of elements to process.
+/// \param step Minimum percentage increment that triggers a
 ///   progress event.
-/// - Returns: A newly allocated `GPercentContext`, or `NULL` if allocation
-///   fails.
+/// \return A newly allocated `GPercentContext`, or `NULL` if output
+///   is silenced by environment variable `GRASS_MESSAGE_FORMAT` or
+///   verbosity level is below `1`.
 GPercentContext *G_percent_context_create(size_t total_num_elements,
-                                          size_t percent_step)
+                                          size_t step,
+                                          G_PERCENT_INCR_TYPE incr_type)
 {
-    GPercentContext *ctx = calloc(1, sizeof(*ctx));
-    if (!ctx) {
-        return NULL;
-    }
+    if (output_is_silenced())
+        return;
+
+    GPercentContext *ctx = G_calloc(1, sizeof(*ctx));
 
     atomic_init(&ctx->initialized, true);
-    telemetry_init_percent(&ctx->telemetry,
-                           ((total_num_elements > 0) ? total_num_elements : 0),
-                           ((percent_step > 0) ? percent_step : 0));
+
+    switch (incr_type) {
+    case G_PERCENT_INCR_STEP:
+        assert(step <= 100 && step > 0);
+        telemetry_init_percent(
+            &ctx->telemetry,
+            ((total_num_elements > 0) ? total_num_elements : 0),
+            ((step > 0) ? step : 0));
+        break;
+    case G_PERCENT_INCR_TIME:
+        assert(step >= 0);
+        telemetry_init(&ctx->telemetry,
+                       ((total_num_elements > 0) ? total_num_elements : 0),
+                       (long)((step > 0) ? step : 0));
+    default:
+        break;
+    }
     atomic_init(&ctx->consumer_started, false);
 
-    if (ctx->telemetry.output_enabled) {
-        bool expected_started = false;
-        if (atomic_compare_exchange_strong_explicit(
-                &ctx->consumer_started, &expected_started, true,
-                memory_order_acq_rel, memory_order_relaxed)) {
-            pthread_create(&ctx->consumer_thread, NULL, telemetry_consumer,
-                           &ctx->telemetry);
-        }
+    bool expected_started = false;
+    if (atomic_compare_exchange_strong_explicit(
+            &ctx->consumer_started, &expected_started, true,
+            memory_order_acq_rel, memory_order_relaxed)) {
+        pthread_create(&ctx->consumer_thread, NULL, telemetry_consumer,
+                       &ctx->telemetry);
     }
 
     return ctx;
 }
 
+/// Destroys a `GPercentContext` and releases any resources it owns.
+///
+/// This function stops the context's background telemetry consumer, waits for
+/// the consumer thread to finish when it was started, marks the context as no
+/// longer initialized, and frees the context memory. Passing `NULL` is safe and
+/// has no effect.
+///
+/// \param ctx The progress-reporting context previously created by
+///   `G_percent_context_create()`, or `NULL`.
 void G_percent_context_destroy(GPercentContext *ctx)
 {
     if (!ctx) {
@@ -125,8 +147,7 @@ void G_percent_context_destroy(GPercentContext *ctx)
 
     atomic_store_explicit(&ctx->telemetry.stop, true, memory_order_release);
 
-    if (ctx->telemetry.output_enabled &&
-        atomic_exchange_explicit(&ctx->consumer_started, false,
+    if (atomic_exchange_explicit(&ctx->consumer_started, false,
                                  memory_order_acq_rel)) {
         pthread_join(ctx->consumer_thread, NULL);
     }
@@ -135,6 +156,21 @@ void G_percent_context_destroy(GPercentContext *ctx)
     free(ctx);
 }
 
+/// Reports progress for an isolated `GPercentContext` instance.
+///
+/// This re-entrant variant of `G_percent` is intended for concurrent or
+/// context-specific work. It validates that `ctx` is initialized, clamps
+/// `current_element` to the valid `0...total` range, and enqueues a progress
+/// event only when the computed percentage reaches the next configured
+/// threshold for the context.
+///
+/// Callers typically create the context with `G_percent_context_create()`, call
+/// this function as work advances, and later release resources with
+/// `G_percent_context_destroy()`.
+///
+/// \param ctx The progress-reporting context created by
+///   `G_percent_context_create()`.
+/// \param current_element: The current completed element index or count.
 void G_percent_r(GPercentContext *ctx, size_t current_element)
 {
     if (!ctx)
@@ -143,7 +179,7 @@ void G_percent_r(GPercentContext *ctx, size_t current_element)
         return;
 
     telemetry_t *t = &ctx->telemetry;
-    if (t->total == 0 || t->percent_step == 0 || !t->output_enabled)
+    if (t->total == 0 || t->percent_step == 0)
         return;
 
     size_t total = t->total;
@@ -171,9 +207,26 @@ void G_percent_r(GPercentContext *ctx, size_t current_element)
     }
 }
 
+/// Reports global progress when completion crosses the next percentage step.
+///
+/// This function initializes the shared global telemetry stream on first use,
+/// clamps `current_element` into the valid `0...total_num_elements` range, and
+/// enqueues a progress update only when the computed percentage reaches the
+/// next configured threshold. When progress reaches the total, the background
+/// consumer is asked to stop after pending events have been flushed.
+///
+/// Callers typically invoke this before the expensive unit of work in a loop
+/// and then make a final call such as `G_percent(1, 1, 1)` to ensure `100%` is
+/// emitted.
+///
+///  \param current_element The current completed element index or count.
+///  \param total_num_elements The total number of elements to process. Values
+///    less than or equal to `0` disable reporting.
+///  \param percent_step The minimum percentage increment required before a new
+///    progress event is emitted.
 void G_percent(long current_element, long total_num_elements, int percent_step)
 {
-    if (total_num_elements <= 0)
+    if (total_num_elements <= 0 || output_is_silenced())
         return;
 
     start_global_percent((size_t)total_num_elements, (size_t)percent_step);
@@ -186,8 +239,7 @@ void G_percent(long current_element, long total_num_elements, int percent_step)
     if (completed > total)
         completed = total;
 
-    if (g_percent_telemetry.percent_step == 0 ||
-        !g_percent_telemetry.output_enabled)
+    if (g_percent_telemetry.percent_step == 0)
         return; // not configured
 
     size_t current_pct = (size_t)((completed * 100) / total);
@@ -215,6 +267,13 @@ void G_percent(long current_element, long total_num_elements, int percent_step)
     }
 }
 
+/// Consumes queued telemetry events and emits log or progress output until
+/// shutdown is requested and the event buffer has been drained.
+///
+/// \param arg Pointer to the `telemetry_t` instance whose ring buffer and
+///   formatting settings should be consumed.
+/// \return `NULL` after the consumer loop exits and any global consumer state
+///   has been reset.
 static void *telemetry_consumer(void *arg)
 {
     telemetry_t *t = arg;
@@ -285,7 +344,6 @@ static void telemetry_init(telemetry_t *t, size_t total, long interval_ms)
     atomic_init(&t->completed, 0);
     t->total = total;
     telemetry_set_info_format(t);
-    telemetry_set_output_enabled(t);
 
     atomic_init(&t->last_progress_ns, 0);
     t->interval_ns = interval_ms * 1000000L;
@@ -296,6 +354,18 @@ static void telemetry_init(telemetry_t *t, size_t total, long interval_ms)
     atomic_init(&t->stop, false);
 }
 
+/// Initializes telemetry state for percentage-based progress reporting.
+///
+/// Resets the telemetry ring buffer and counters, disables time-based
+/// throttling, and configures the next progress event to be emitted when the
+/// completed work reaches the first `percent_step` threshold.
+///
+/// \param t The telemetry instance to reset and configure.
+/// \param total The total number of work units expected for the tracked
+///   operation.
+/// \param percent_step The percentage increment that controls when
+///   progress updates are emitted. A value of `0` disables percentage-based
+///   thresholds.
 static void telemetry_init_percent(telemetry_t *t, size_t total,
                                    size_t percent_step)
 {
@@ -307,7 +377,6 @@ static void telemetry_init_percent(telemetry_t *t, size_t total,
     atomic_init(&t->completed, 0);
     t->total = total;
     telemetry_set_info_format(t);
-    telemetry_set_output_enabled(t);
 
     // disable time-based gating
     atomic_init(&t->last_progress_ns, 0);
@@ -321,6 +390,14 @@ static void telemetry_init_percent(telemetry_t *t, size_t total,
     atomic_init(&t->stop, false);
 }
 
+/// Queues a telemetry event into the ring buffer for later consumption.
+///
+/// Waits until the destination slot becomes available, copies the event payload
+/// into that slot, and then marks the slot as ready using release semantics so
+/// readers can safely observe the published event.
+///
+/// \param t The telemetry instance that owns the event buffer.
+/// \param src The event payload to enqueue.
 static void enqueue_event(telemetry_t *t, event_t *src)
 {
     size_t idx =
@@ -340,6 +417,16 @@ static void enqueue_event(telemetry_t *t, event_t *src)
     atomic_store_explicit(&dst->ready, true, memory_order_release);
 }
 
+/// Determines whether the telemetry ring buffer still contains unread events.
+///
+/// Checks for pending work by first comparing the consumer read position with
+/// the producer write position, then verifying whether the current buffer slot
+/// has been published and marked ready. Acquire loads ensure the caller
+/// observes event availability consistently across threads.
+///
+/// \param t The telemetry instance whose event queue is being inspected.
+/// \return `true` when at least one event is available to consume; otherwise
+///   `false`.
 static bool telemetry_has_pending_events(telemetry_t *t)
 {
     if (t->read_index !=
@@ -360,15 +447,15 @@ static void telemetry_log(telemetry_t *t, const char *msg)
     enqueue_event(t, &ev);
 }
 
+/// Captures the current GRASS info output format for subsequent telemetry.
+///
+/// Reads the process-wide info formatting mode and stores it on the telemetry
+/// instance so later progress and log events can format output consistently.
+///
+/// \param t The telemetry state that caches the active info format.
 static void telemetry_set_info_format(telemetry_t *t)
 {
     t->info_format = G_info_format();
-}
-
-static void telemetry_set_output_enabled(telemetry_t *t)
-{
-    t->output_enabled =
-        t->info_format != G_INFO_FORMAT_SILENT && G_verbose() >= 1;
 }
 
 /// Records completed work and enqueues a progress event when the next
@@ -381,8 +468,8 @@ static void telemetry_set_output_enabled(telemetry_t *t)
 /// compare-and-swap operations ensure that only one caller emits an event for a
 /// given threshold or interval.
 ///
-/// - Parameter t: The telemetry state to update and publish through.
-/// - Parameter step: The number of newly completed units of work to add.
+/// \param t The telemetry state to update and publish through.
+/// \param step The number of newly completed units of work to add.
 static void telemetry_progress(telemetry_t *t, size_t step)
 {
     size_t new_completed =
@@ -441,10 +528,10 @@ static void telemetry_progress(telemetry_t *t, size_t step)
 /// set. If output is disabled or the consumer thread cannot be created, no
 /// further progress consumer setup is performed.
 ///
-/// - Parameter total_num_elements: The total number of elements used to compute
-/// progress percentages.
-/// - Parameter percent_step: The percentage increment that controls when
-/// progress updates are emitted.
+/// \param total_num_elements The total number of elements used to compute
+///   progress percentages.
+/// \param percent_step The percentage increment that controls when
+///   progress updates are emitted.
 static void start_global_percent(size_t total_num_elements, size_t percent_step)
 {
     bool expected_init = false;
@@ -457,10 +544,6 @@ static void start_global_percent(size_t total_num_elements, size_t percent_step)
     telemetry_init_percent(&g_percent_telemetry,
                            ((total_num_elements > 0) ? total_num_elements : 0),
                            ((percent_step > 0) ? percent_step : 0));
-
-    if (!g_percent_telemetry.output_enabled) {
-        return;
-    }
 
     bool expected_started = false;
     if (atomic_compare_exchange_strong_explicit(
@@ -480,6 +563,11 @@ static void start_global_percent(size_t total_num_elements, size_t percent_step)
         }
         pthread_attr_destroy(&attr);
     }
+}
+
+static bool output_is_silenced(void)
+{
+    return (G_info_format() == G_INFO_FORMAT_SILENT || G_verbose() < 1);
 }
 
 /// Returns the current UTC time in nanoseconds.
