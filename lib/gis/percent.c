@@ -68,6 +68,7 @@ static bool telemetry_has_pending_events(telemetry_t *);
 static void telemetry_init_time(telemetry_t *, size_t, long);
 static void telemetry_init_percent(telemetry_t *, size_t, size_t);
 static void enqueue_event(telemetry_t *, event_t *);
+static void telemetry_enqueue_final_progress(telemetry_t *);
 static void telemetry_log(telemetry_t *, const char *);
 static void telemetry_set_info_format(telemetry_t *);
 static void telemetry_progress(telemetry_t *, size_t);
@@ -82,9 +83,13 @@ static long now_ns(void);
 ///
 /// The returned context tracks progress for `total_num_elements` items and
 /// emits progress updates whenever completion advances by at least
-/// `percent_step` percentage points. If output is enabled by the current
-/// runtime configuration, this function also starts the background consumer
-/// thread used to flush queued telemetry events.
+/// `percent_step` percentage points. `total_num_elements` must match the
+/// actual number of work units that will be reported through `G_percent_r()`.
+/// In particular, callers should pass a completed-work count, not a raw loop
+/// index or a larger container size, otherwise the terminal `100%` update may
+/// never be reached. If output is enabled by the current runtime
+/// configuration, this function also starts the background consumer thread
+/// used to flush queued telemetry events.
 ///
 /// \param total_num_elements Total number of elements to process.
 /// \param step Minimum percentage increment that triggers a
@@ -123,6 +128,13 @@ void G_percent_context_destroy(GPercentContext *ctx)
     if (!atomic_load_explicit(&ctx->initialized, memory_order_acquire)) {
         G_free(ctx);
         return;
+    }
+
+    if (atomic_load_explicit(&ctx->telemetry.completed, memory_order_acquire) >=
+            ctx->telemetry.total &&
+        atomic_load_explicit(&ctx->telemetry.next_percent_threshold,
+                             memory_order_acquire) <= 100) {
+        telemetry_enqueue_final_progress(&ctx->telemetry);
     }
 
     atomic_store_explicit(&ctx->telemetry.stop, true, memory_order_release);
@@ -167,6 +179,7 @@ void G_percent_r(GPercentContext *ctx, size_t current_element)
     if (completed > total)
         completed = total;
 
+    atomic_store_explicit(&t->completed, completed, memory_order_release);
     ctx->report_progress(t, completed);
 }
 
@@ -175,12 +188,9 @@ void G_percent_r(GPercentContext *ctx, size_t current_element)
 /// This function initializes the shared global telemetry stream on first use,
 /// clamps `current_element` into the valid `0...total_num_elements` range, and
 /// enqueues a progress update only when the computed percentage reaches the
-/// next configured threshold. When progress reaches the total, the background
-/// consumer is asked to stop after pending events have been flushed.
-///
-/// Callers typically invoke this before the expensive unit of work in a loop
-/// and then make a final call such as `G_percent(1, 1, 1)` to ensure `100%` is
-/// emitted.
+/// next configured threshold. When progress reaches the total, a terminal
+/// `100%` event is always queued and the background consumer is asked to stop
+/// after pending events have been flushed.
 ///
 ///  \param current_element The current completed element index or count.
 ///  \param total_num_elements The total number of elements to process. Values
@@ -205,12 +215,24 @@ void G_percent(long current_element, long total_num_elements, int percent_step)
     if (g_percent_telemetry.percent_step == 0)
         return; // not configured
 
+    atomic_store_explicit(&g_percent_telemetry.completed, completed,
+                          memory_order_release);
+
+    if (completed == total) {
+        telemetry_enqueue_final_progress(&g_percent_telemetry);
+        atomic_store_explicit(&g_percent_telemetry.stop, true,
+                              memory_order_release);
+        return;
+    }
+
     size_t current_pct = (size_t)((completed * 100) / total);
     size_t expected = atomic_load_explicit(
         &g_percent_telemetry.next_percent_threshold, memory_order_relaxed);
     while (current_pct >= expected && expected <= 100) {
         size_t next = expected + g_percent_telemetry.percent_step;
-        if (next > 100)
+        if (expected < 100 && next > 100)
+            next = 100;
+        else if (next > 100)
             next = 101;
         if (atomic_compare_exchange_strong_explicit(
                 &g_percent_telemetry.next_percent_threshold, &expected, next,
@@ -267,12 +289,20 @@ static GPercentContext *context_create(size_t total_num_elements, size_t step,
 static void context_progress_percent(telemetry_t *t, size_t completed)
 {
     size_t total = t->total;
+
+    if (completed == total) {
+        telemetry_enqueue_final_progress(t);
+        return;
+    }
+
     size_t current_pct = (size_t)((completed * 100) / total);
     size_t expected =
         atomic_load_explicit(&t->next_percent_threshold, memory_order_relaxed);
     while (current_pct >= expected && expected <= 100) {
         size_t next = expected + t->percent_step;
-        if (next > 100)
+        if (expected < 100 && next > 100)
+            next = 100;
+        else if (next > 100)
             next = 101;
         if (atomic_compare_exchange_strong_explicit(
                 &t->next_percent_threshold, &expected, next,
@@ -289,6 +319,11 @@ static void context_progress_percent(telemetry_t *t, size_t completed)
 
 static void context_progress_time(telemetry_t *t, size_t completed)
 {
+    if (completed == t->total) {
+        telemetry_enqueue_final_progress(t);
+        return;
+    }
+
     long now = now_ns();
     long last =
         atomic_load_explicit(&t->last_progress_ns, memory_order_relaxed);
@@ -345,14 +380,16 @@ static void *telemetry_consumer(void *arg)
             switch (t->info_format) {
             case G_INFO_FORMAT_STANDARD:
                 fprintf(stderr, "%4d%%\b\b\b\b\b", (int)pct);
+                if ((int)pct == 100)
+                    fprintf(stderr, "\n");
                 break;
             case G_INFO_FORMAT_GUI:
-                fprintf(stderr, "GRASS_INFO_PERCENT: %d", (int)pct);
+                fprintf(stderr, "GRASS_INFO_PERCENT: %d\n", (int)pct);
                 fflush(stderr);
                 break;
             case G_INFO_FORMAT_PLAIN:
                 fprintf(stderr, "%d%s", (int)pct,
-                        ((int)pct == 100 ? "" : ".."));
+                        ((int)pct == 100 ? "\n" : ".."));
                 break;
             default:
                 break;
@@ -459,16 +496,27 @@ static void enqueue_event(telemetry_t *t, event_t *src)
     atomic_store_explicit(&dst->ready, true, memory_order_release);
 }
 
-/// Determines whether the telemetry ring buffer still contains unread events.
+/// Queues a terminal `100%` progress event for a telemetry stream.
 ///
-/// Checks for pending work by first comparing the consumer read position with
-/// the producer write position, then verifying whether the current buffer slot
-/// has been published and marked ready. Acquire loads ensure the caller
-/// observes event availability consistently across threads.
+/// This helper records the stream as fully completed, disables further
+/// percentage-threshold reporting, and enqueues one last progress event with
+/// `completed == total` so the consumer can emit the final `100%` update.
 ///
-/// \param t The telemetry instance whose event queue is being inspected.
-/// \return `true` when at least one event is available to consume; otherwise
-///   `false`.
+/// \param t The telemetry instance to finalize.
+static void telemetry_enqueue_final_progress(telemetry_t *t)
+{
+    event_t ev = {0};
+
+    atomic_store_explicit(&t->completed, t->total, memory_order_release);
+    atomic_store_explicit(&t->next_percent_threshold, 101,
+                          memory_order_release);
+
+    ev.type = EV_PROGRESS;
+    ev.completed = t->total;
+    ev.total = t->total;
+    enqueue_event(t, &ev);
+}
+
 static bool telemetry_has_pending_events(telemetry_t *t)
 {
     if (t->read_index !=
@@ -519,12 +567,19 @@ static void telemetry_progress(telemetry_t *t, size_t step)
         step;
 
     if (t->percent_step > 0 && t->total > 0) {
+        if (new_completed >= t->total) {
+            telemetry_enqueue_final_progress(t);
+            return;
+        }
+
         size_t current_pct = (size_t)((new_completed * 100) / t->total);
         size_t expected = atomic_load_explicit(&t->next_percent_threshold,
                                                memory_order_relaxed);
         while (current_pct >= expected && expected <= 100) {
             size_t next = expected + t->percent_step;
-            if (next > 100)
+            if (expected < 100 && next > 100)
+                next = 100;
+            else if (next > 100)
                 next = 101; // sentinel beyond 100 to stop further emits
             if (atomic_compare_exchange_strong_explicit(
                     &t->next_percent_threshold, &expected, next,

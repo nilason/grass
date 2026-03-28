@@ -43,9 +43,10 @@ int write_output_map(char *output, int offset)
     G_message(_("Writing output raster map <%s>..."), output);
 
     ptr = map;
-
+    GPercentContext *ctx = G_percent_context_create(window.rows, 2);
     for (row = 0; row < window.rows; row++) {
-        G_percent(row, window.rows, 2);
+        //        G_percent(row + 1, window.rows, 2);
+        G_percent_r(ctx, row);
         col = window.cols;
         if (!offset) {
             while (col-- > 0)
@@ -71,6 +72,7 @@ int write_output_map(char *output, int offset)
     }
 
     G_percent(row, window.rows, 2);
+    G_percent_context_destroy(ctx);
     G_free(cell);
 
     if (offset)
