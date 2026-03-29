@@ -155,7 +155,7 @@ void G_percent_reset(void)
 
    \return always returns 0
  */
-void G_progress(long n, int s)
+void G_progress_old(long n, int s)
 {
     int format;
 

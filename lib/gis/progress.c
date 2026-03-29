@@ -216,6 +216,21 @@ void G_progress_update(GProgressContext *ctx, size_t completed)
     ctx->report_progress(t, completed);
 }
 
+void G_progress_increment(GProgressContext *ctx, size_t step)
+{
+    if (!ctx || step == 0)
+        return;
+    if (!atomic_load_explicit(&ctx->initialized, memory_order_acquire))
+        return;
+
+    telemetry_progress(&ctx->telemetry, step);
+}
+
+void G_progress_tick(GProgressContext *ctx)
+{
+    G_progress_increment(ctx, 1);
+}
+
 // Compatibility layer for legacy percent routine API
 void G_set_percent_routine(int (*fn)(int))
 {
@@ -310,6 +325,54 @@ void G_percent(long current_element, long total_num_elements, int percent_step)
         }
         // CAS failed; expected updated, loop continues
     }
+}
+
+void G_progress(long n, int s)
+{
+    // Mirror legacy behavior: emit on multiples of s, and handle first tick
+    // formatting. We route through the global telemetry so it benefits from the
+    // consumer thread.
+
+    if (s <= 0 || output_is_silenced())
+        return;
+
+    // Initialize global telemetry if needed with percent_step=0 to disable
+    // percent thresholds
+    start_global_percent(0, 0);
+
+    // Use time-based gating if an interval is configured; otherwise, we emit
+    // only on multiples of s. Here, we implement the modulo gating explicitly.
+
+    if (n == s && n == 1) {
+        // For default sink, legacy prints a leading CR/Newline depending on
+        // format. We simulate this by enqueueing a LOG event when using default
+        // sink; custom sinks can ignore.
+        if (g_percent_telemetry.sink.on_progress == NULL) {
+            switch (g_percent_telemetry.info_format) {
+            case G_INFO_FORMAT_PLAIN:
+                telemetry_log(&g_percent_telemetry, "\n");
+                break;
+            case G_INFO_FORMAT_GUI:
+                // No-op; GUI variant prints on progress events
+                break;
+            default:
+                // STANDARD and others: carriage return
+                telemetry_log(&g_percent_telemetry, "\r");
+                break;
+            }
+        }
+        return;
+    }
+
+    if (n % s != 0)
+        return;
+
+    // For counter mode, we do not know total; publish completed=n, total=0
+    event_t ev = {0};
+    ev.type = EV_PROGRESS;
+    ev.completed = (n < 0 ? 0 : (size_t)n);
+    ev.total = 0; // unknown total; consumer/sink can render raw counts
+    enqueue_event(&g_percent_telemetry, &ev);
 }
 
 static GProgressContext *context_create(size_t total_num_elements, size_t step,
@@ -462,23 +525,43 @@ static void *telemetry_consumer(void *arg)
                 t->sink.on_progress(&pe, t->sink.user_data);
             }
             else {
-                // Default rendering honors info_format
-                switch (t->info_format) {
-                case G_INFO_FORMAT_STANDARD:
-                    fprintf(stderr, "%4d%%\b\b\b\b\b", (int)pct);
-                    if ((int)pct == 100)
-                        fprintf(stderr, "\n");
-                    break;
-                case G_INFO_FORMAT_GUI:
-                    fprintf(stderr, "GRASS_INFO_PERCENT: %d\n", (int)pct);
-                    fflush(stderr);
-                    break;
-                case G_INFO_FORMAT_PLAIN:
-                    fprintf(stderr, "%d%s", (int)pct,
-                            ((int)pct == 100 ? "\n" : ".."));
-                    break;
-                default:
-                    break;
+                // Default rendering honors info_format; when total==0, print
+                // raw counts like legacy G_progress
+                if (ev->total == 0) {
+                    switch (t->info_format) {
+                    case G_INFO_FORMAT_PLAIN:
+                        fprintf(stderr, "%zu..", ev->completed);
+                        break;
+                    case G_INFO_FORMAT_GUI:
+                        fprintf(stderr, "GRASS_INFO_PROGRESS: %zu\n",
+                                ev->completed);
+                        fflush(stderr);
+                        break;
+                    case G_INFO_FORMAT_STANDARD:
+                    default:
+                        fprintf(stderr, "%10zu\b\b\b\b\b\b\b\b\b\b",
+                                ev->completed);
+                        break;
+                    }
+                }
+                else {
+                    switch (t->info_format) {
+                    case G_INFO_FORMAT_STANDARD:
+                        fprintf(stderr, "%4d%%\b\b\b\b\b", (int)pct);
+                        if ((int)pct == 100)
+                            fprintf(stderr, "\n");
+                        break;
+                    case G_INFO_FORMAT_GUI:
+                        fprintf(stderr, "GRASS_INFO_PERCENT: %d\n", (int)pct);
+                        fflush(stderr);
+                        break;
+                    case G_INFO_FORMAT_PLAIN:
+                        fprintf(stderr, "%d%s", (int)pct,
+                                ((int)pct == 100 ? "\n" : ".."));
+                        break;
+                    default:
+                        break;
+                    }
                 }
             }
         }

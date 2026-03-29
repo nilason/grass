@@ -679,6 +679,9 @@ void G_progress_update(GProgressContext *, size_t);
 void G_percent_set_sink(const GProgressSink *sink);
 void G_progress_context_set_sink(GProgressContext *ctx,
                                  const GProgressSink *sink);
+// Counter-style progress API (unknown total)
+void G_progress_increment(GProgressContext *ctx, size_t step);
+void G_progress_tick(GProgressContext *ctx);
 
 /* popen.c */
 void G_popen_clear(struct Popen *);
