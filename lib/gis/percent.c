@@ -114,7 +114,7 @@ void G_percent_old(long n, long d, int s)
 /*!
    \brief Reset G_percent() to 0%; do not add newline.
  */
-void G_percent_reset(void)
+void G_percent_reset_old(void)
 {
     st->prev = -1;
     st->first = 1;

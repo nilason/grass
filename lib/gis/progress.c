@@ -70,16 +70,7 @@ static void *telemetry_consumer(void *);
 static void start_global_percent(size_t, size_t);
 static bool output_is_silenced(void);
 static long now_ns(void);
-
-// Legacy compatibility: adapter for void (*fn)(int)
-static void legacy_percent_adapter(const GProgressEvent *e, void *ud)
-{
-    void (*fn)(int) = (void (*)(int))ud;
-    if (fn) {
-        int pct = (int)(e->percent);
-        fn(pct);
-    }
-}
+static void legacy_percent_adapter(const GProgressEvent *e, void *ud);
 
 /// Creates an isolated progress-reporting context for concurrent work.
 ///
@@ -163,8 +154,8 @@ void G_progress_context_set_sink(GProgressContext *ctx,
         ctx->sink.on_log = NULL;
         ctx->sink.user_data = NULL;
     }
-    // update telemetry copy; safe because sink is read-only by consumer after
-    // set
+    // update telemetry copy; safe because sink is read-only
+    // by consumer after set
     ctx->telemetry.sink = ctx->sink;
 }
 
@@ -229,6 +220,13 @@ void G_progress_increment(GProgressContext *ctx, size_t step)
 void G_progress_tick(GProgressContext *ctx)
 {
     G_progress_increment(ctx, 1);
+}
+
+// Transitional no-op: retained for compatibility with legacy callers
+void G_percent_reset(void)
+{
+    // No global state to reset in the concurrent API.
+    // Kept to avoid breaking legacy code paths that call G_percent_reset().
 }
 
 // Compatibility layer for legacy percent routine API
@@ -857,4 +855,14 @@ static long now_ns(void)
     struct timespec ts;
     timespec_get(&ts, TIME_UTC);
     return (long)ts.tv_sec * 1000000000L + ts.tv_nsec;
+}
+
+// Legacy compatibility: adapter for void (*fn)(int)
+static void legacy_percent_adapter(const GProgressEvent *e, void *ud)
+{
+    void (*fn)(int) = (void (*)(int))ud;
+    if (fn) {
+        int pct = (int)(e->percent);
+        fn(pct);
+    }
 }
