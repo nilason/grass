@@ -20,6 +20,7 @@
 /*============================= Include Files ==============================*/
 
 /* System include files */
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdarg.h>
 
@@ -728,6 +729,23 @@ struct ilist {
 };
 
 typedef struct GProgressContext GProgressContext;
+// Sink-based callback protocol for decoupled output
+typedef struct {
+    size_t completed;
+    size_t total;
+    double percent;   // 0.0 ... 100.0
+    bool is_terminal; // completed >= total and total > 0
+} GProgressEvent;
+
+typedef void (*GProgressCallback)(const GProgressEvent *event, void *user_data);
+
+typedef void (*GLogCallback)(const char *message, void *user_data);
+
+typedef struct {
+    GProgressCallback on_progress; // optional
+    GLogCallback on_log;           // optional
+    void *user_data;               // opaque sink context
+} GProgressSink;
 
 /*============================== Prototypes ================================*/
 

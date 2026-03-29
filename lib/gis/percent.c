@@ -189,7 +189,7 @@ void G_progress(long n, int s)
 
    \param percent_routine routine will be called like this: percent_routine(x)
  */
-void G_set_percent_routine(int (*percent_routine)(int))
+void G_set_percent_routine_old(int (*percent_routine)(int))
 {
     ext_percent = percent_routine;
 }
@@ -200,7 +200,7 @@ void G_set_percent_routine(int (*percent_routine)(int))
 
    Percentage progress messages are printed directly to stderr.
  */
-void G_unset_percent_routine(void)
+void G_unset_percent_routine_old(void)
 {
     ext_percent = NULL;
 }

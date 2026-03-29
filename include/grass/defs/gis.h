@@ -675,6 +675,10 @@ GProgressContext *G_progress_context_create(size_t, size_t);
 GProgressContext *G_progress_context_create_time(size_t, long);
 void G_progress_context_destroy(GProgressContext *);
 void G_progress_update(GProgressContext *, size_t);
+// Sink setters (global and per-context)
+void G_percent_set_sink(const GProgressSink *sink);
+void G_progress_context_set_sink(GProgressContext *ctx,
+                                 const GProgressSink *sink);
 
 /* popen.c */
 void G_popen_clear(struct Popen *);

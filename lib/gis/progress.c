@@ -16,11 +16,11 @@
 typedef enum { EV_LOG, EV_PROGRESS } event_type_t;
 
 typedef struct {
-    atomic_bool ready;
     event_type_t type;
     size_t completed;
     size_t total;
     char message[LOG_MSG_SIZE];
+    atomic_bool ready;
 } event_t;
 
 typedef struct {
@@ -35,6 +35,8 @@ typedef struct {
     size_t percent_step;
     atomic_size_t next_percent_threshold;
     atomic_bool stop;
+    GProgressSink
+        sink; // optional sink; if callbacks are NULL, fall back to info_format
 } telemetry_t;
 
 typedef void (*context_progress_fn)(telemetry_t *, size_t);
@@ -42,6 +44,7 @@ typedef void (*context_progress_fn)(telemetry_t *, size_t);
 struct GProgressContext {
     telemetry_t telemetry;
     context_progress_fn report_progress;
+    GProgressSink sink; // per-context override (optional)
     atomic_bool initialized;
     pthread_t consumer_thread;
     atomic_bool consumer_started;
@@ -50,6 +53,7 @@ struct GProgressContext {
 static telemetry_t g_percent_telemetry;
 static atomic_bool g_percent_initialized = false;
 static atomic_bool g_percent_consumer_started = false;
+static GProgressSink g_percent_sink = {0};
 
 static GProgressContext *context_create(size_t, size_t, long);
 static bool telemetry_has_pending_events(telemetry_t *);
@@ -66,6 +70,16 @@ static void *telemetry_consumer(void *);
 static void start_global_percent(size_t, size_t);
 static bool output_is_silenced(void);
 static long now_ns(void);
+
+// Legacy compatibility: adapter for void (*fn)(int)
+static void legacy_percent_adapter(const GProgressEvent *e, void *ud)
+{
+    void (*fn)(int) = (void (*)(int))ud;
+    if (fn) {
+        int pct = (int)(e->percent);
+        fn(pct);
+    }
+}
 
 /// Creates an isolated progress-reporting context for concurrent work.
 ///
@@ -136,6 +150,38 @@ void G_progress_context_destroy(GProgressContext *ctx)
     G_free(ctx);
 }
 
+void G_progress_context_set_sink(GProgressContext *ctx,
+                                 const GProgressSink *sink)
+{
+    if (!ctx)
+        return;
+    if (sink) {
+        ctx->sink = *sink;
+    }
+    else {
+        ctx->sink.on_progress = NULL;
+        ctx->sink.on_log = NULL;
+        ctx->sink.user_data = NULL;
+    }
+    // update telemetry copy; safe because sink is read-only by consumer after
+    // set
+    ctx->telemetry.sink = ctx->sink;
+}
+
+void G_percent_set_sink(const GProgressSink *sink)
+{
+    if (sink) {
+        g_percent_sink = *sink;
+    }
+    else {
+        g_percent_sink.on_progress = NULL;
+        g_percent_sink.on_log = NULL;
+        g_percent_sink.user_data = NULL;
+    }
+    // apply immediately to global telemetry if initialized
+    g_percent_telemetry.sink = g_percent_sink;
+}
+
 /// Reports progress for an isolated `GPercentContext` instance.
 ///
 /// This re-entrant variant of `G_percent` is intended for concurrent or
@@ -168,6 +214,33 @@ void G_progress_update(GProgressContext *ctx, size_t completed)
 
     atomic_store_explicit(&t->completed, completed, memory_order_release);
     ctx->report_progress(t, completed);
+}
+
+// Compatibility layer for legacy percent routine API
+void G_set_percent_routine(int (*fn)(int))
+{
+    // The historical signature in gis.h declares int (*)(int), but actual
+    // implementers often used void(*)(int). We accept int-returning and ignore
+    // the return value.
+    if (!fn) {
+        // Reset to default behavior
+        G_percent_set_sink(NULL);
+        return;
+    }
+    // Wrap the legacy function pointer in a sink that casts and calls with
+    // percent
+    GProgressSink s = {0};
+    s.on_progress = legacy_percent_adapter;
+    // Store the function pointer in user_data with a cast that preserves
+    // address
+    s.user_data = (void *)fn;
+    G_percent_set_sink(&s);
+}
+
+void G_unset_percent_routine(void)
+{
+    // Reset to default (env-driven G_info_format output)
+    G_percent_set_sink(NULL);
 }
 
 /// Reports global progress when completion crosses the next percentage step.
@@ -260,6 +333,14 @@ static GProgressContext *context_create(size_t total_num_elements, size_t step,
         telemetry_init_percent(&ctx->telemetry, total_num_elements, step);
         ctx->report_progress = context_progress_percent;
     }
+
+    ctx->sink.on_progress = NULL;
+    ctx->sink.on_log = NULL;
+    ctx->sink.user_data = NULL;
+
+    // propagate context sink to telemetry by default
+    ctx->telemetry.sink = ctx->sink;
+
     atomic_init(&ctx->consumer_started, false);
 
     bool expected_started = false;
@@ -357,29 +438,48 @@ static void *telemetry_consumer(void *arg)
 
         // handle event
         if (ev->type == EV_LOG) {
-            printf("[LOG] %s\n", ev->message);
+            if (t->sink.on_log) {
+                t->sink.on_log(ev->message, t->sink.user_data);
+            }
+            else {
+                // default logging
+                printf("[LOG] %s\n", ev->message);
+            }
         }
         else if (ev->type == EV_PROGRESS) {
             double pct = (ev->total > 0)
                              ? (double)ev->completed * 100.0 / (double)ev->total
                              : 0.0;
+            bool is_terminal = (ev->total > 0 && ev->completed >= ev->total);
 
-            switch (t->info_format) {
-            case G_INFO_FORMAT_STANDARD:
-                fprintf(stderr, "%4d%%\b\b\b\b\b", (int)pct);
-                if ((int)pct == 100)
-                    fprintf(stderr, "\n");
-                break;
-            case G_INFO_FORMAT_GUI:
-                fprintf(stderr, "GRASS_INFO_PERCENT: %d\n", (int)pct);
-                fflush(stderr);
-                break;
-            case G_INFO_FORMAT_PLAIN:
-                fprintf(stderr, "%d%s", (int)pct,
-                        ((int)pct == 100 ? "\n" : ".."));
-                break;
-            default:
-                break;
+            if (t->sink.on_progress) {
+                GProgressEvent pe = {
+                    .completed = ev->completed,
+                    .total = ev->total,
+                    .percent = pct,
+                    .is_terminal = is_terminal,
+                };
+                t->sink.on_progress(&pe, t->sink.user_data);
+            }
+            else {
+                // Default rendering honors info_format
+                switch (t->info_format) {
+                case G_INFO_FORMAT_STANDARD:
+                    fprintf(stderr, "%4d%%\b\b\b\b\b", (int)pct);
+                    if ((int)pct == 100)
+                        fprintf(stderr, "\n");
+                    break;
+                case G_INFO_FORMAT_GUI:
+                    fprintf(stderr, "GRASS_INFO_PERCENT: %d\n", (int)pct);
+                    fflush(stderr);
+                    break;
+                case G_INFO_FORMAT_PLAIN:
+                    fprintf(stderr, "%d%s", (int)pct,
+                            ((int)pct == 100 ? "\n" : ".."));
+                    break;
+                default:
+                    break;
+                }
             }
         }
 
@@ -393,6 +493,7 @@ static void *telemetry_consumer(void *arg)
                               memory_order_release);
         atomic_store_explicit(&g_percent_initialized, false,
                               memory_order_release);
+        // keep g_percent_sink as-is; no change needed on shutdown
     }
 
     return NULL;
@@ -418,6 +519,11 @@ static void telemetry_init_time(telemetry_t *t, size_t total, long interval_ms)
     atomic_init(&t->next_percent_threshold, 0);
 
     atomic_init(&t->stop, false);
+
+    // default: no custom sink; callbacks NULL imply fallback to info_format
+    t->sink.on_progress = NULL;
+    t->sink.on_log = NULL;
+    t->sink.user_data = NULL;
 }
 
 /// Initializes telemetry state for percentage-based progress reporting.
@@ -454,6 +560,11 @@ static void telemetry_init_percent(telemetry_t *t, size_t total,
     atomic_init(&t->next_percent_threshold, first);
 
     atomic_init(&t->stop, false);
+
+    // default: no custom sink; callbacks NULL imply fallback to info_format
+    t->sink.on_progress = NULL;
+    t->sink.on_log = NULL;
+    t->sink.user_data = NULL;
 }
 
 /// Queues a telemetry event into the ring buffer for later consumption.
@@ -628,6 +739,9 @@ static void start_global_percent(size_t total_num_elements, size_t percent_step)
     telemetry_init_percent(&g_percent_telemetry,
                            ((total_num_elements > 0) ? total_num_elements : 0),
                            ((percent_step > 0) ? percent_step : 0));
+
+    // attach current global sink (may be empty for default behavior)
+    g_percent_telemetry.sink = g_percent_sink;
 
     bool expected_started = false;
     if (atomic_compare_exchange_strong_explicit(
