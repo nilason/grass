@@ -727,7 +727,7 @@ struct ilist {
     int alloc_values;
 };
 
-typedef struct GPercentContext GPercentContext;
+typedef struct GProgressContext GProgressContext;
 
 /*============================== Prototypes ================================*/
 
