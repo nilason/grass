@@ -239,6 +239,15 @@ void G_progress_tick(GProgressContext *ctx)
     G_progress_increment(ctx, 1);
 }
 
+void G_progress_log(GProgressContext *ctx, const char *message)
+{
+    if (!ctx || !message)
+        return;
+    if (!atomic_load_explicit(&ctx->initialized, memory_order_acquire))
+        return;
+    telemetry_log(&ctx->telemetry, message);
+}
+
 // Transitional no-op: retained for compatibility with legacy callers
 void G_percent_reset(void)
 {
