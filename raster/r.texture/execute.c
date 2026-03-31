@@ -104,13 +104,13 @@ int execute_texture(CELL **data, struct dimensions *dim,
     else
         G_message(_("Calculating %s..."), measure_menu[measure_idx[0]].desc);
 
-    GPercentContext *ctx = G_percent_context_create(last_row - first_row, 10);
+    GProgressContext *ctx = G_progress_context_create(last_row - first_row, 10);
 #pragma omp parallel private(row, col, i, j, measure, trow) default(shared)
     {
 #pragma omp for schedule(static, 1) ordered
         for (row = first_row; row < last_row; row++) {
             trow = row % threads; /* Obtain thread row id */
-            G_percent_r(ctx, row - first_row + 1);
+            G_progress_update(ctx, row - first_row + 1);
             //            G_percent(row, nrows, 1);
 
             /* initialize the output row */
@@ -167,7 +167,7 @@ int execute_texture(CELL **data, struct dimensions *dim,
         }
     }
     //    G_percent(1, 1, 1);
-    G_percent_context_destroy(ctx);
+    G_progress_context_destroy(ctx);
 
     for (i = 0; i < threads; i++) {
         for (j = 0; j < n_outputs; j++)

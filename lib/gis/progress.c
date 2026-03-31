@@ -1,3 +1,42 @@
+/// \file lib/gis/progress.c
+///
+/// Progress reporting and telemetry support for GRASS GIS operations.
+///
+/// This file implements the `G_progress_*` API used to report incremental work
+/// completion for long-running operations. It supports both percentage-based
+/// and time-based progress contexts, plus compatibility wrappers for the legacy
+/// global G_percent() and G_progress() entry points.
+///
+/// The implementation is organized as a telemetry pipeline. Producer-side API
+/// calls update atomic progress state and enqueue ::event_type_t `EV_PROGRESS`
+/// or `EV_LOG` records into a bounded ring buffer. A single consumer thread
+/// drains that buffer, converts raw records into `GProgressEvent` values, and
+/// forwards them either to installed sink callbacks or to default renderers
+/// selected from the current G_info_format() mode.
+///
+/// Concurrency is designed as multi-producer, single-consumer per telemetry
+/// stream. Producers reserve slots with an atomic `write_index`, publish events
+/// by setting a per-slot `ready` flag with release semantics, and use atomic
+/// compare-and-swap to ensure that only one producer emits a given percent
+/// threshold or time-gated update. The consumer advances a non-atomic
+/// `read_index`, waits for published slots, processes events in FIFO order, and
+/// then marks slots free again.
+///
+/// Two lifecycle models are used. Isolated `GProgressContext` instances create
+/// a dedicated consumer thread that is joined during destruction. The legacy
+/// process-wide G_percent() path initializes one shared telemetry instance and
+/// a detached consumer thread on first use.
+///
+/// (C) 2026 by the GRASS Development Team
+///
+/// SPDX-License-Identifier: GPL-2.0-or-later
+///
+/// \author Nicklas Larsson
+
+#include <grass/gis.h>
+
+#if defined(G_USE_PROGRESS_NG)
+
 #include <assert.h>
 #include <stdio.h>
 #include <sched.h>
@@ -6,8 +45,6 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <time.h>
-
-#include <grass/gis.h>
 
 #define LOG_CAPACITY       1024
 #define LOG_MSG_SIZE       128
@@ -23,6 +60,11 @@ typedef struct {
     atomic_bool ready;
 } event_t;
 
+/// Internal telemetry state shared by the progress producer and consumer.
+///
+/// `telemetry_t` owns the ring buffer of queued log/progress events, the
+/// counters and thresholds used for time- or percent-based emission, and the
+/// sink configuration that determines how flushed events are rendered.
 typedef struct {
     event_t buffer[LOG_CAPACITY];
     atomic_size_t write_index;
@@ -35,8 +77,7 @@ typedef struct {
     size_t percent_step;
     atomic_size_t next_percent_threshold;
     atomic_bool stop;
-    GProgressSink
-        sink; // optional sink; if callbacks are NULL, fall back to info_format
+    GProgressSink sink; // optional sink
 } telemetry_t;
 
 typedef void (*context_progress_fn)(telemetry_t *, size_t);
@@ -69,6 +110,7 @@ static void context_progress_percent(telemetry_t *, size_t);
 static void context_progress_time(telemetry_t *, size_t);
 static void *telemetry_consumer(void *);
 static void start_global_percent(size_t, size_t);
+static void set_global_sink(const GProgressSink *sink);
 static bool output_is_silenced(void);
 static long now_ns(void);
 static void legacy_percent_adapter(const GProgressEvent *e, void *ud);
@@ -102,6 +144,23 @@ GProgressContext *G_progress_context_create(size_t total_num_elements,
                           (step == 0 ? TIME_RATE_LIMIT_MS : 0));
 }
 
+/// Creates an isolated progress-reporting context with time-based updates.
+///
+/// Unlike `G_progress_context_create()`, which emits progress events when
+/// completion crosses percentage thresholds, this variant rate-limits progress
+/// emission by elapsed time. The returned context tracks
+/// `total_num_elements` work units and reports updates no more frequently than
+/// once every `interval_ms` milliseconds while work is in progress.
+///
+/// Callers should report monotonically increasing completed-work counts through
+/// `G_progress_update()` and destroy the context with
+/// `G_progress_context_destroy()` when processing finishes.
+///
+/// \param total_num_elements Total number of elements to process.
+/// \param interval_ms Minimum time interval, in milliseconds, between emitted
+///   progress updates.
+/// \return A newly allocated `GProgressContext`, or `NULL` if output is
+///   silenced by the current runtime configuration.
 GProgressContext *G_progress_context_create_time(size_t total_num_elements,
                                                  long interval_ms)
 {
@@ -146,6 +205,28 @@ void G_progress_context_destroy(GProgressContext *ctx)
     G_free(ctx);
 }
 
+/// Sets or clears the output sink used by a progress context.
+///
+/// Installs a per-context `GProgressSink` override for progress and log events
+/// emitted by `ctx`. When `sink` is non-`NULL`, its callbacks and `user_data`
+/// are copied into the context and used by the telemetry consumer. Passing
+/// `NULL` clears any custom sink so the context falls back to its default
+/// output behavior.
+///
+/// \param ctx The progress context to update. If `NULL`, the function has
+///   no effect.
+/// \param sink The sink configuration to copy into the context, or `NULL`
+///   to remove the custom sink.
+///
+/// Example:
+/// ```c
+/// GProgressSink sink = {
+///     .on_progress = my_progress_handler,
+///     .on_log = my_log_handler,
+///     .user_data = my_context,
+/// };
+/// G_progress_context_set_sink(progress_ctx, &sink);
+/// ```
 void G_progress_context_set_sink(GProgressContext *ctx,
                                  const GProgressSink *sink)
 {
@@ -164,32 +245,6 @@ void G_progress_context_set_sink(GProgressContext *ctx,
     ctx->telemetry.sink = ctx->sink;
 }
 
-void G_percent_set_sink(const GProgressSink *sink)
-{
-    if (sink) {
-        g_percent_sink = *sink;
-    }
-    else {
-        g_percent_sink.on_progress = NULL;
-        g_percent_sink.on_log = NULL;
-        g_percent_sink.user_data = NULL;
-    }
-
-    // apply to global telemetry if initialized
-    if (atomic_load_explicit(&g_percent_initialized, memory_order_acquire)) {
-        if (g_percent_sink.on_progress || g_percent_sink.on_log) {
-            g_percent_telemetry.sink = g_percent_sink;
-        }
-        else {
-            // reinstall defaults based on current info_format
-            g_percent_telemetry.sink.on_progress = NULL;
-            g_percent_telemetry.sink.on_log = NULL;
-            g_percent_telemetry.sink.user_data = NULL;
-            telemetry_install_default_sink(&g_percent_telemetry);
-        }
-    }
-}
-
 /// Reports progress for an isolated `GPercentContext` instance.
 ///
 /// This re-entrant variant of `G_percent` is intended for concurrent or
@@ -201,6 +256,23 @@ void G_percent_set_sink(const GProgressSink *sink)
 /// Callers typically create the context with `G_percent_context_create()`, call
 /// this function as work advances, and later release resources with
 /// `G_percent_context_destroy()`.
+///
+/// Example:
+/// ```c
+/// size_t n_rows = window.rows;  // total number of rows
+/// size_t step = 10;  // output step, every 10%
+/// GProgressContext *ctx = G_progress_context_create(n_rows, step);
+/// for (row = 0; row < window.rows; row++) {
+///     // costly calculation ...
+///
+///     // note: not counting from zero, as for loop never reaches n_rows
+///     //       and we want to reach 100%
+///     size_t completed_row = row + 1;
+///
+///     G_progress_update(ctx, completed_row);
+/// }
+/// G_progress_context_destroy(ctx);
+/// ```
 ///
 /// \param ctx The progress-reporting context created by
 ///   `G_percent_context_create()`.
@@ -263,7 +335,7 @@ void G_set_percent_routine(int (*fn)(int))
     // the return value.
     if (!fn) {
         // Reset to default behavior
-        G_percent_set_sink(NULL);
+        set_global_sink(NULL);
         return;
     }
     // Wrap the legacy function pointer in a sink that casts and calls with
@@ -272,13 +344,13 @@ void G_set_percent_routine(int (*fn)(int))
     s.on_progress = legacy_percent_adapter;
     // Store the function pointer in user_data
     s.user_data = (void *)fn;
-    G_percent_set_sink(&s);
+    set_global_sink(&s);
 }
 
 void G_unset_percent_routine(void)
 {
     // Reset to default (env-driven G_info_format output)
-    G_percent_set_sink(NULL);
+    set_global_sink(NULL);
 }
 
 /// Reports global progress when completion crosses the next percentage step.
@@ -398,6 +470,21 @@ void G_progress(long n, int s)
     enqueue_event(&g_percent_telemetry, &ev);
 }
 
+/// Creates and initializes a progress reporting context.
+///
+/// The created context configures its reporting mode based on `step`. When
+/// `step` is `0`, progress updates are emitted using a time-based interval
+/// controlled by `interval_ms`. Otherwise, progress updates are emitted at
+/// percentage increments defined by `step`.
+///
+/// \param total_num_elements Total number of elements expected for the
+///   operation being tracked.
+/// \param step Percentage increment for reporting progress. A value of `0`
+///   selects time-based reporting instead.
+/// \param interval_ms Time interval in milliseconds between progress updates
+///   when `step` is `0`.
+/// \return A newly allocated and initialized `GProgressContext`, or `NULL`
+///   if output is currently silenced.
 static GProgressContext *context_create(size_t total_num_elements, size_t step,
                                         long interval_ms)
 {
@@ -870,6 +957,46 @@ static void start_global_percent(size_t total_num_elements, size_t percent_step)
     }
 }
 
+/// Sets or clears the global sink used by `G_percent` progress reporting.
+///
+/// Copies `sink` into the shared global progress configuration used by the
+/// legacy `G_percent` API. When `sink` is non-`NULL`, its callbacks and
+/// `user_data` are used for subsequent progress and log events. Passing `NULL`
+/// clears the custom sink and restores the default output behavior derived from
+/// the current runtime info format.
+///
+/// If global progress telemetry has already been initialized, the active
+/// telemetry sink is updated immediately so later events follow the new
+/// configuration.
+///
+/// \param sink The sink configuration to install globally, or `NULL` to remove
+///   the custom sink and fall back to the default renderer.
+static void set_global_sink(const GProgressSink *sink)
+{
+    if (sink) {
+        g_percent_sink = *sink;
+    }
+    else {
+        g_percent_sink.on_progress = NULL;
+        g_percent_sink.on_log = NULL;
+        g_percent_sink.user_data = NULL;
+    }
+
+    // apply to global telemetry if initialized
+    if (atomic_load_explicit(&g_percent_initialized, memory_order_acquire)) {
+        if (g_percent_sink.on_progress || g_percent_sink.on_log) {
+            g_percent_telemetry.sink = g_percent_sink;
+        }
+        else {
+            // reinstall defaults based on current info_format
+            g_percent_telemetry.sink.on_progress = NULL;
+            g_percent_telemetry.sink.on_log = NULL;
+            g_percent_telemetry.sink.user_data = NULL;
+            telemetry_install_default_sink(&g_percent_telemetry);
+        }
+    }
+}
+
 static bool output_is_silenced(void)
 {
     return (G_info_format() == G_INFO_FORMAT_SILENT || G_verbose() < 1);
@@ -927,7 +1054,11 @@ static void sink_progress_gui(const GProgressEvent *e, void *ud)
         return;
     }
     int pct = (int)(e->percent);
-    fprintf(stderr, "GRASS_INFO_PERCENT: %d\n", pct);
+
+    int comp = (int)e->completed;
+    int tot = (int)e->total;
+
+    fprintf(stderr, "GRASS_INFO_PERCENT: %d (%d/%d)\n", pct, comp, tot);
     fflush(stderr);
 }
 
@@ -937,3 +1068,5 @@ static void sink_log_default(const char *message, void *ud)
     // default logging to stdout
     printf("[LOG] %s\n", message);
 }
+
+#endif // defined(G_USE_PROGRESS_NG)

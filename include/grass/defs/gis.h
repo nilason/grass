@@ -664,25 +664,23 @@ int G_owner(const char *);
 
 /* percent.c */
 void G_percent(long, long, int);
-void G_percent_old(long, long, int);
 void G_percent_reset(void);
 void G_progress(long, int);
 void G_set_percent_routine(int (*)(int));
 void G_unset_percent_routine(void);
 
 /* progress.c */
+#if defined(G_USE_PROGRESS_NG)
 GProgressContext *G_progress_context_create(size_t, size_t);
 GProgressContext *G_progress_context_create_time(size_t, long);
 void G_progress_context_destroy(GProgressContext *);
 void G_progress_update(GProgressContext *, size_t);
 void G_progress_log(GProgressContext *ctx, const char *message);
-// Sink setters (global and per-context)
-void G_percent_set_sink(const GProgressSink *sink);
 void G_progress_context_set_sink(GProgressContext *ctx,
                                  const GProgressSink *sink);
-// Counter-style progress API (unknown total)
 void G_progress_increment(GProgressContext *ctx, size_t step);
 void G_progress_tick(GProgressContext *ctx);
+#endif // G_USE_PROGRESS_NG
 
 /* popen.c */
 void G_popen_clear(struct Popen *);

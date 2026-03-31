@@ -11,8 +11,11 @@
    \author GRASS Development Team
  */
 
-#include <stdio.h>
 #include <grass/gis.h>
+
+#if !defined(G_USE_PROGRESS_NG)
+
+#include <stdio.h>
 
 static struct state {
     int prev;
@@ -58,7 +61,7 @@ static int (*ext_percent)(int);
    \param d total number of elements
    \param s increment size
  */
-void G_percent_old(long n, long d, int s)
+void G_percent(long n, long d, int s)
 {
     int x, format;
 
@@ -114,7 +117,7 @@ void G_percent_old(long n, long d, int s)
 /*!
    \brief Reset G_percent() to 0%; do not add newline.
  */
-void G_percent_reset_old(void)
+void G_percent_reset(void)
 {
     st->prev = -1;
     st->first = 1;
@@ -155,7 +158,7 @@ void G_percent_reset_old(void)
 
    \return always returns 0
  */
-void G_progress_old(long n, int s)
+void G_progress(long n, int s)
 {
     int format;
 
@@ -189,7 +192,7 @@ void G_progress_old(long n, int s)
 
    \param percent_routine routine will be called like this: percent_routine(x)
  */
-void G_set_percent_routine_old(int (*percent_routine)(int))
+void G_set_percent_routine(int (*percent_routine)(int))
 {
     ext_percent = percent_routine;
 }
@@ -200,7 +203,9 @@ void G_set_percent_routine_old(int (*percent_routine)(int))
 
    Percentage progress messages are printed directly to stderr.
  */
-void G_unset_percent_routine_old(void)
+void G_unset_percent_routine(void)
 {
     ext_percent = NULL;
 }
+
+#endif // !defined(G_USE_PROGRESS_NG)
