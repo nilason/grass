@@ -95,6 +95,7 @@ static telemetry_t g_percent_telemetry;
 static atomic_bool g_percent_initialized = false;
 static atomic_bool g_percent_consumer_started = false;
 static GProgressSink g_percent_sink = {0};
+static int (*g_legacy_percent_routine)(int) = NULL;
 
 static GProgressContext *context_create(size_t, size_t, long);
 static bool telemetry_has_pending_events(telemetry_t *);
@@ -335,15 +336,15 @@ void G_set_percent_routine(int (*fn)(int))
     // the return value.
     if (!fn) {
         // Reset to default behavior
+        g_legacy_percent_routine = NULL;
         set_global_sink(NULL);
         return;
     }
-    // Wrap the legacy function pointer in a sink that casts and calls with
-    // percent
+    // Route legacy callbacks through a dedicated function-pointer slot.
     GProgressSink s = {0};
     s.on_progress = legacy_percent_adapter;
-    // Store the function pointer in user_data
-    s.user_data = (void *)fn;
+    s.user_data = NULL;
+    g_legacy_percent_routine = fn;
     set_global_sink(&s);
 }
 
@@ -1013,10 +1014,11 @@ static long now_ns(void)
 // Legacy compatibility: adapter for void (*fn)(int)
 static void legacy_percent_adapter(const GProgressEvent *e, void *ud)
 {
-    void (*fn)(int) = (void (*)(int))ud;
+    int (*fn)(int) = g_legacy_percent_routine;
+    (void)ud;
     if (fn) {
         int pct = (int)(e->percent);
-        fn(pct);
+        (void)fn(pct);
     }
 }
 
