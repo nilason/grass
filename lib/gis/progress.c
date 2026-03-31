@@ -45,6 +45,9 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <time.h>
+#if defined(__MINGW32__)
+#include <sys/time.h>
+#endif
 
 #define LOG_CAPACITY       1024
 #define LOG_MSG_SIZE       128
@@ -1006,9 +1009,21 @@ static bool output_is_silenced(void)
 /// Returns the current UTC time in nanoseconds.
 static long now_ns(void)
 {
+#if defined(TIME_UTC)
     struct timespec ts;
     timespec_get(&ts, TIME_UTC);
     return (long)ts.tv_sec * 1000000000L + ts.tv_nsec;
+#elif defined(CLOCK_REALTIME)
+    struct timespec ts;
+    clock_gettime(CLOCK_REALTIME, &ts);
+    return (long)ts.tv_sec * 1000000000L + ts.tv_nsec;
+#elif defined(__MINGW32__)
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return (long)tv.tv_sec * 1000000000L + (long)tv.tv_usec * 1000L;
+#else
+    return (long)time(NULL) * 1000000000L;
+#endif
 }
 
 // Legacy compatibility: adapter for void (*fn)(int)
