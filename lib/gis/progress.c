@@ -27,6 +27,10 @@
 /// process-wide G_percent() path initializes one shared telemetry instance and
 /// a detached consumer thread on first use.
 ///
+/// The requirements of the new `G_progress_*` API is support of C11 atomic
+/// operations and presens of pthreads, which --if fulfilled-- is indicated by
+/// the definition of G_USE_PROGRESS_NG.
+///
 /// (C) 2026 by the GRASS Development Team
 ///
 /// SPDX-License-Identifier: GPL-2.0-or-later
@@ -111,14 +115,14 @@ static void context_progress_percent(telemetry_t *, size_t);
 static void context_progress_time(telemetry_t *, size_t);
 static void *telemetry_consumer(void *);
 static void start_global_percent(size_t, size_t);
-static void set_global_sink(const GProgressSink *sink);
+static void set_global_sink(const GProgressSink *);
 static bool output_is_silenced(void);
 static long now_ns(void);
-static void legacy_percent_adapter(const GProgressEvent *e, void *ud);
-static void sink_progress_standard(const GProgressEvent *e, void *ud);
-static void sink_progress_plain(const GProgressEvent *e, void *ud);
-static void sink_progress_gui(const GProgressEvent *e, void *ud);
-static void sink_log_default(const char *message, void *ud);
+static void legacy_percent_adapter(const GProgressEvent *, void *);
+static void sink_progress_standard(const GProgressEvent *, void *);
+static void sink_progress_plain(const GProgressEvent *, void *);
+static void sink_progress_gui(const GProgressEvent *, void *);
+static void sink_log_default(const char *, void *);
 
 /// Creates an isolated progress-reporting context for concurrent work.
 ///
@@ -319,156 +323,6 @@ void G_progress_log(GProgressContext *ctx, const char *message)
     if (!atomic_load_explicit(&ctx->initialized, memory_order_acquire))
         return;
     telemetry_log(&ctx->telemetry, message);
-}
-
-// Transitional no-op: retained for compatibility with legacy callers
-void G_percent_reset(void)
-{
-    // No global state to reset in the concurrent API.
-    // Kept to avoid breaking legacy code paths that call G_percent_reset().
-}
-
-// Compatibility layer for legacy percent routine API
-void G_set_percent_routine(int (*fn)(int))
-{
-    // The historical signature in gis.h declares int (*)(int), but actual
-    // implementers often used void(*)(int). We accept int-returning and ignore
-    // the return value.
-    if (!fn) {
-        // Reset to default behavior
-        g_legacy_percent_routine = NULL;
-        set_global_sink(NULL);
-        return;
-    }
-    // Route legacy callbacks through a dedicated function-pointer slot.
-    GProgressSink s = {0};
-    s.on_progress = legacy_percent_adapter;
-    s.user_data = NULL;
-    g_legacy_percent_routine = fn;
-    set_global_sink(&s);
-}
-
-void G_unset_percent_routine(void)
-{
-    // Reset to default (env-driven G_info_format output)
-    set_global_sink(NULL);
-}
-
-/// Reports global progress when completion crosses the next percentage step.
-///
-/// This function initializes the shared global telemetry stream on first use,
-/// clamps `current_element` into the valid `0...total_num_elements` range, and
-/// enqueues a progress update only when the computed percentage reaches the
-/// next configured threshold. When progress reaches the total, a terminal
-/// `100%` event is always queued and the background consumer is asked to stop
-/// after pending events have been flushed.
-///
-///  \param current_element The current completed element index or count.
-///  \param total_num_elements The total number of elements to process. Values
-///    less than or equal to `0` disable reporting.
-///  \param percent_step The minimum percentage increment required before a new
-///    progress event is emitted.
-void G_percent(long current_element, long total_num_elements, int percent_step)
-{
-    if (total_num_elements <= 0 || output_is_silenced())
-        return;
-
-    start_global_percent((size_t)total_num_elements, (size_t)percent_step);
-
-    // If someone initialized with different totals/steps, we keep the first
-    // ones for simplicity.
-
-    size_t total = (size_t)total_num_elements;
-    size_t completed = (current_element < 0) ? 0 : (size_t)current_element;
-    if (completed > total)
-        completed = total;
-
-    if (g_percent_telemetry.percent_step == 0)
-        return; // not configured
-
-    atomic_store_explicit(&g_percent_telemetry.completed, completed,
-                          memory_order_release);
-
-    if (completed == total) {
-        telemetry_enqueue_final_progress(&g_percent_telemetry);
-        atomic_store_explicit(&g_percent_telemetry.stop, true,
-                              memory_order_release);
-        return;
-    }
-
-    size_t current_pct = (size_t)((completed * 100) / total);
-    size_t expected = atomic_load_explicit(
-        &g_percent_telemetry.next_percent_threshold, memory_order_relaxed);
-    while (current_pct >= expected && expected <= 100) {
-        size_t next = expected + g_percent_telemetry.percent_step;
-        if (expected < 100 && next > 100)
-            next = 100;
-        else if (next > 100)
-            next = 101;
-        if (atomic_compare_exchange_strong_explicit(
-                &g_percent_telemetry.next_percent_threshold, &expected, next,
-                memory_order_acq_rel, memory_order_relaxed)) {
-            event_t ev = {0};
-            ev.type = EV_PROGRESS;
-            ev.completed = completed;
-            ev.total = total;
-            enqueue_event(&g_percent_telemetry, &ev);
-            if (completed == total) {
-                atomic_store_explicit(&g_percent_telemetry.stop, true,
-                                      memory_order_release);
-            }
-            return;
-        }
-        // CAS failed; expected updated, loop continues
-    }
-}
-
-void G_progress(long n, int s)
-{
-    // Mirror legacy behavior: emit on multiples of s, and handle first tick
-    // formatting. We route through the global telemetry so it benefits from the
-    // consumer thread.
-
-    if (s <= 0 || output_is_silenced())
-        return;
-
-    // Initialize global telemetry if needed with percent_step=0 to disable
-    // percent thresholds
-    start_global_percent(0, 0);
-
-    // Use time-based gating if an interval is configured; otherwise, we emit
-    // only on multiples of s. Here, we implement the modulo gating explicitly.
-
-    if (n == s && n == 1) {
-        // For default sink, legacy prints a leading CR/Newline depending on
-        // format. We simulate this by enqueueing a LOG event when using default
-        // sink; custom sinks can ignore.
-        if (g_percent_telemetry.sink.on_progress == NULL) {
-            switch (g_percent_telemetry.info_format) {
-            case G_INFO_FORMAT_PLAIN:
-                telemetry_log(&g_percent_telemetry, "\n");
-                break;
-            case G_INFO_FORMAT_GUI:
-                // No-op; GUI variant prints on progress events
-                break;
-            default:
-                // STANDARD and others: carriage return
-                telemetry_log(&g_percent_telemetry, "\r");
-                break;
-            }
-        }
-        return;
-    }
-
-    if (n % s != 0)
-        return;
-
-    // For counter mode, we do not know total; publish completed=n, total=0
-    event_t ev = {0};
-    ev.type = EV_PROGRESS;
-    ev.completed = (n < 0 ? 0 : (size_t)n);
-    ev.total = 0; // unknown total; consumer/sink can render raw counts
-    enqueue_event(&g_percent_telemetry, &ev);
 }
 
 /// Creates and initializes a progress reporting context.
@@ -1081,6 +935,223 @@ static void sink_log_default(const char *message, void *ud)
     (void)ud;
     // default logging to stdout
     printf("[LOG] %s\n", message);
+}
+
+// Legacy API
+
+/// Reports global progress when completion crosses the next percentage step.
+///
+/// This routine prints a percentage complete message to stderr. The
+/// percentage complete is `(current_element/total_num_elements)\*100`, and
+/// these are printed only for each __s__ percentage. This is perhaps best
+/// explained by example:
+///
+/// ```c
+/// #include <stdio.h>
+/// #include <grass/gis.h>
+///
+/// int nrows = 1352; // 1352 is not a special value - example only
+///
+/// G_message(_("Percent complete..."));
+/// for (int row = 0; row < nrows; row++)
+/// {
+///     G_percent(row, nrows, 10);
+///     do_calculation(row);
+/// }
+/// G_percent(1, 1, 1);
+/// ```
+///
+/// This example code will print completion messages at 10% increments;
+/// i.e., 0%, 10%, 20%, 30%, etc., up to 100%. Each message does not appear
+/// on a new line, but rather erases the previous message.
+///
+/// This function initializes the shared global telemetry stream on first use,
+/// clamps `current_element` into the valid `0...total_num_elements` range, and
+/// enqueues a progress update only when the computed percentage reaches the
+/// next configured threshold. When progress reaches the total, a terminal
+/// `100%` event is always queued and the background consumer is asked to stop
+/// after pending events have been flushed.
+///
+///  \param current_element The current completed element index or count.
+///  \param total_num_elements The total number of elements to process. Values
+///    less than or equal to `0` disable reporting.
+///  \param percent_step The minimum percentage increment required before a new
+///    progress event is emitted.
+void G_percent(long current_element, long total_num_elements, int percent_step)
+{
+    if (total_num_elements <= 0 || output_is_silenced())
+        return;
+
+    start_global_percent((size_t)total_num_elements, (size_t)percent_step);
+
+    // If someone initialized with different totals/steps, we keep the first
+    // ones for simplicity.
+
+    size_t total = (size_t)total_num_elements;
+    size_t completed = (current_element < 0) ? 0 : (size_t)current_element;
+    if (completed > total)
+        completed = total;
+
+    if (g_percent_telemetry.percent_step == 0)
+        return; // not configured
+
+    atomic_store_explicit(&g_percent_telemetry.completed, completed,
+                          memory_order_release);
+
+    if (completed == total) {
+        telemetry_enqueue_final_progress(&g_percent_telemetry);
+        atomic_store_explicit(&g_percent_telemetry.stop, true,
+                              memory_order_release);
+        return;
+    }
+
+    size_t current_pct = (size_t)((completed * 100) / total);
+    size_t expected = atomic_load_explicit(
+        &g_percent_telemetry.next_percent_threshold, memory_order_relaxed);
+    while (current_pct >= expected && expected <= 100) {
+        size_t next = expected + g_percent_telemetry.percent_step;
+        if (expected < 100 && next > 100)
+            next = 100;
+        else if (next > 100)
+            next = 101;
+        if (atomic_compare_exchange_strong_explicit(
+                &g_percent_telemetry.next_percent_threshold, &expected, next,
+                memory_order_acq_rel, memory_order_relaxed)) {
+            event_t ev = {0};
+            ev.type = EV_PROGRESS;
+            ev.completed = completed;
+            ev.total = total;
+            enqueue_event(&g_percent_telemetry, &ev);
+            if (completed == total) {
+                atomic_store_explicit(&g_percent_telemetry.stop, true,
+                                      memory_order_release);
+            }
+            return;
+        }
+        // CAS failed; expected updated, loop continues
+    }
+}
+
+/// Reset G_percent() to 0%; do not add newline.
+///
+/// \note Transitional no-op: retained for compatibility with legacy callers.
+///
+///  \deprecated For new or updated code G_percent_reset() is not needed.
+void G_percent_reset(void)
+{
+    // No global state to reset in the concurrent API.
+    // Kept to avoid breaking legacy code paths that call G_percent_reset().
+}
+
+/// Print progress info messages
+///
+/// Use G_progress_update(), or G_percent() for legacy code, when number of
+/// elements is defined.
+///
+/// This routine prints a progress info message to stderr. The value
+/// `n` is printed only for each `s`. This is perhaps best
+/// explained by example:
+///
+/// ```c
+/// #include <grass/vector.h>
+///
+/// int line = 0;
+
+/// G_message(_("Reading features..."));
+/// while(TRUE)
+/// {
+///     if (Vect_read_next_line(Map, Points, Cats) < 0)
+///         break;
+///     line++;
+///     G_progress(line, 1e3);
+/// }
+/// G_progress(1, 1);
+/// ```
+///
+/// This example code will print progress in messages at 1000 increments;
+/// i.e., 1000, 2000, 3000, 4000, etc., up to number of features for
+/// given vector map. Each message does not appear on a new line, but
+/// rather erases the previous message.
+///
+/// \param n current element
+/// \param s increment size
+void G_progress(long n, int s)
+{
+    // Mirror legacy behavior: emit on multiples of s, and handle first tick
+    // formatting. We route through the global telemetry so it benefits from the
+    // consumer thread.
+
+    if (s <= 0 || output_is_silenced())
+        return;
+
+    // Initialize global telemetry if needed with percent_step=0 to disable
+    // percent thresholds
+    start_global_percent(0, 0);
+
+    // Use time-based gating if an interval is configured; otherwise, we emit
+    // only on multiples of s. Here, we implement the modulo gating explicitly.
+
+    if (n == s && n == 1) {
+        // For default sink, legacy prints a leading CR/Newline depending on
+        // format. We simulate this by enqueueing a LOG event when using default
+        // sink; custom sinks can ignore.
+        if (g_percent_telemetry.sink.on_progress == NULL) {
+            switch (g_percent_telemetry.info_format) {
+            case G_INFO_FORMAT_PLAIN:
+                telemetry_log(&g_percent_telemetry, "\n");
+                break;
+            case G_INFO_FORMAT_GUI:
+                // No-op; GUI variant prints on progress events
+                break;
+            default:
+                // STANDARD and others: carriage return
+                telemetry_log(&g_percent_telemetry, "\n");
+                break;
+            }
+        }
+        return;
+    }
+
+    if (n % s != 0)
+        return;
+
+    // For counter mode, we do not know total; publish completed=n, total=0
+    event_t ev = {0};
+    ev.type = EV_PROGRESS;
+    ev.completed = (n < 0 ? 0 : (size_t)n);
+    ev.total = 0; // unknown total; consumer/sink can render raw counts
+    enqueue_event(&g_percent_telemetry, &ev);
+}
+
+// Compatibility layer for legacy percent routine API
+/// Establishes percent_routine as the routine that will handle the printing of
+/// percentage progress messages.
+///
+/// \param percent_routine routine will be called like this: percent_routine(x)
+
+void G_set_percent_routine(int (*fn)(int))
+{
+    // The historical signature in gis.h declares int (*)(int), but actual
+    // implementers often used void(*)(int). We accept int-returning and ignore
+    // the return value.
+    if (!fn) {
+        // Reset to default behavior
+        g_legacy_percent_routine = NULL;
+        set_global_sink(NULL);
+        return;
+    }
+    // Route legacy callbacks through a dedicated function-pointer slot.
+    GProgressSink s = {0};
+    s.on_progress = legacy_percent_adapter;
+    s.user_data = NULL;
+    g_legacy_percent_routine = fn;
+    set_global_sink(&s);
+}
+
+void G_unset_percent_routine(void)
+{
+    // Reset to default (env-driven G_info_format output)
+    set_global_sink(NULL);
 }
 
 #endif // defined(G_USE_PROGRESS_NG)
