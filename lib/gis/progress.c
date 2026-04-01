@@ -37,6 +37,8 @@
 ///
 /// \author Nicklas Larsson
 
+#if 0
+
 #include <grass/gis.h>
 
 #if defined(G_USE_PROGRESS_NG)
@@ -1155,3 +1157,5 @@ void G_unset_percent_routine(void)
 }
 
 #endif // defined(G_USE_PROGRESS_NG)
+
+#endif // 0
