@@ -290,6 +290,7 @@ typedef struct {
     event_type_t type;
     size_t completed;
     size_t total;
+    bool is_terminal;
     char message[LOG_MSG_SIZE];
     atomic_bool ready;
 } event_t;
@@ -339,6 +340,7 @@ static void telemetry_init_time(telemetry_t *, size_t, long);
 static void telemetry_init_percent(telemetry_t *, size_t, size_t);
 static void enqueue_event(telemetry_t *, event_t *);
 static void telemetry_enqueue_final_progress(telemetry_t *);
+static void telemetry_enqueue_final_counter(telemetry_t *);
 static void telemetry_log(telemetry_t *, const char *);
 static void telemetry_set_info_format(telemetry_t *);
 static void telemetry_install_default_sink(telemetry_t *t);
@@ -410,6 +412,27 @@ GProgressContext *G_progress_context_create_time(size_t total_num_elements,
 }
 
 /*!
+   \brief Creates an isolated progress-reporting context for open-ended
+   increments.
+
+   This convenience constructor creates a context intended for
+   `G_progress_increment()` when the total number of work units is not known up
+   front. The returned context behaves as a simple counter and emits updates
+   whenever the completed count advances by at least `increment_step` units.
+
+   \param increment_step Minimum completed-count increment that triggers a
+     progress event.
+
+   \return A newly allocated `GProgressContext`, or `NULL` if output is
+     silenced by the current runtime configuration.
+*/
+GProgressContext *G_progress_context_create_increment(size_t increment_step)
+{
+    assert(increment_step > 0);
+    return context_create(0, increment_step, 0);
+}
+
+/*!
    \brief Destroys a `GPercentContext` and releases any resources it owns.
 
    This function stops the context's background telemetry consumer, waits for
@@ -431,10 +454,17 @@ void G_progress_context_destroy(GProgressContext *ctx)
         return;
     }
 
-    if (atomic_load_explicit(&ctx->telemetry.completed, memory_order_acquire) >=
-            ctx->telemetry.total &&
-        atomic_load_explicit(&ctx->telemetry.next_percent_threshold,
-                             memory_order_acquire) <= 100) {
+    if (ctx->telemetry.total == 0) {
+        if (atomic_load_explicit(&ctx->telemetry.completed,
+                                 memory_order_acquire) > 0) {
+            telemetry_enqueue_final_counter(&ctx->telemetry);
+        }
+    }
+    else if (atomic_load_explicit(&ctx->telemetry.completed,
+                                  memory_order_acquire) >=
+                 ctx->telemetry.total &&
+             atomic_load_explicit(&ctx->telemetry.next_percent_threshold,
+                                  memory_order_acquire) <= 100) {
         telemetry_enqueue_final_progress(&ctx->telemetry);
     }
 
@@ -544,19 +574,14 @@ void G_progress_update(GProgressContext *ctx, size_t completed)
     ctx->report_progress(t, completed);
 }
 
-void G_progress_increment(GProgressContext *ctx, size_t step)
+void G_progress_increment(GProgressContext *ctx, size_t completed)
 {
-    if (!ctx || step == 0)
+    if (!ctx)
         return;
     if (!atomic_load_explicit(&ctx->initialized, memory_order_acquire))
         return;
 
-    telemetry_progress(&ctx->telemetry, step);
-}
-
-void G_progress_tick(GProgressContext *ctx)
-{
-    G_progress_increment(ctx, 1);
+    telemetry_progress(&ctx->telemetry, completed);
 }
 
 void G_progress_log(GProgressContext *ctx, const char *message)
@@ -595,7 +620,7 @@ static GProgressContext *context_create(size_t total_num_elements, size_t step,
 
     atomic_init(&ctx->initialized, true);
 
-    assert(step <= 100);
+    assert(step == 0 || total_num_elements == 0 || step <= 100);
 
     if (step == 0) {
         assert(interval_ms > 0);
@@ -724,7 +749,8 @@ static void *telemetry_consumer(void *arg)
             double pct = (ev->total > 0)
                              ? (double)ev->completed * 100.0 / (double)ev->total
                              : 0.0;
-            bool is_terminal = (ev->total > 0 && ev->completed >= ev->total);
+            bool is_terminal = ev->is_terminal ||
+                               (ev->total > 0 && ev->completed >= ev->total);
 
             if (t->sink.on_progress) {
                 GProgressEvent pe = {
@@ -888,6 +914,18 @@ static void telemetry_enqueue_final_progress(telemetry_t *t)
     ev.type = EV_PROGRESS;
     ev.completed = t->total;
     ev.total = t->total;
+    ev.is_terminal = true;
+    enqueue_event(t, &ev);
+}
+
+static void telemetry_enqueue_final_counter(telemetry_t *t)
+{
+    event_t ev = {0};
+
+    ev.type = EV_PROGRESS;
+    ev.completed = atomic_load_explicit(&t->completed, memory_order_acquire);
+    ev.total = 0;
+    ev.is_terminal = true;
     enqueue_event(t, &ev);
 }
 
@@ -929,29 +967,32 @@ static void telemetry_set_info_format(telemetry_t *t)
    \brief Records completed work and enqueues a progress event when the next
    reportable threshold is reached.
 
-   The function atomically increments the telemetry's completed counter by
-   `step`, then decides whether to emit a progress event using one of two
-   modes: percent-based reporting when `percent_step` and `total` are
-   configured, or time-based throttling when they are not. Atomic
-   compare-and-swap operations ensure that only one caller emits an event for a
-   given threshold or interval.
+   The function stores the current completed count in the telemetry state, then
+   decides whether to emit a progress event using one of two modes:
+   percent-based reporting when `percent_step` and `total` are configured, or
+   count-based/time-based throttling when they are not. Atomic compare-and-swap
+   operations ensure that only one caller emits an event for a given threshold
+   or interval.
 
    \param t The telemetry state to update and publish through.
-   \param step The number of newly completed units of work to add.
+   \param completed The current completed count.
 */
-static void telemetry_progress(telemetry_t *t, size_t step)
+static void telemetry_progress(telemetry_t *t, size_t completed)
 {
-    size_t new_completed =
-        atomic_fetch_add_explicit(&t->completed, step, memory_order_relaxed) +
-        step;
+    size_t previous = atomic_load_explicit(&t->completed, memory_order_acquire);
+    if (completed <= previous) {
+        return;
+    }
+
+    atomic_store_explicit(&t->completed, completed, memory_order_release);
 
     if (t->percent_step > 0 && t->total > 0) {
-        if (new_completed >= t->total) {
+        if (completed >= t->total) {
             telemetry_enqueue_final_progress(t);
             return;
         }
 
-        size_t current_pct = (size_t)((new_completed * 100) / t->total);
+        size_t current_pct = (size_t)((completed * 100) / t->total);
         size_t expected = atomic_load_explicit(&t->next_percent_threshold,
                                                memory_order_relaxed);
         while (current_pct >= expected && expected <= 100) {
@@ -974,6 +1015,21 @@ static void telemetry_progress(telemetry_t *t, size_t step)
             return;
         }
     }
+    else if (t->percent_step > 0) {
+        size_t expected = atomic_load_explicit(&t->next_percent_threshold,
+                                               memory_order_relaxed);
+        while (completed >= expected) {
+            size_t next = expected + t->percent_step;
+            if (atomic_compare_exchange_strong_explicit(
+                    &t->next_percent_threshold, &expected, next,
+                    memory_order_acq_rel, memory_order_relaxed)) {
+                break;
+            }
+        }
+        if (completed < expected) {
+            return;
+        }
+    }
     else {
         long now = now_ns();
         long last =
@@ -990,7 +1046,7 @@ static void telemetry_progress(telemetry_t *t, size_t step)
 
     event_t ev = {0};
     ev.type = EV_PROGRESS;
-    ev.completed = new_completed;
+    ev.completed = completed;
     ev.total = t->total;
 
     enqueue_event(t, &ev);
@@ -1156,7 +1212,10 @@ static void sink_progress_standard(const GProgressEvent *e, void *ud)
 {
     (void)ud;
     if (e->total == 0) {
-        fprintf(stderr, "%10zu\b\b\b\b\b\b\b\b\b\b", e->completed);
+        if (!e->is_terminal)
+            fprintf(stderr, "%10zu\b\b\b\b\b\b\b\b\b\b", e->completed);
+        else
+            fprintf(stderr, "\n");
         return;
     }
     int pct = (int)(e->percent);
@@ -1169,7 +1228,10 @@ static void sink_progress_plain(const GProgressEvent *e, void *ud)
 {
     (void)ud;
     if (e->total == 0) {
-        fprintf(stderr, "%zu..", e->completed);
+        if (e->is_terminal)
+            fprintf(stderr, "%s", "\n");
+        else
+            fprintf(stderr, "%zu..", e->completed);
         return;
     }
     int pct = (int)(e->percent);
@@ -1180,8 +1242,10 @@ static void sink_progress_gui(const GProgressEvent *e, void *ud)
 {
     (void)ud;
     if (e->total == 0) {
-        fprintf(stderr, "GRASS_INFO_PROGRESS: %zu\n", e->completed);
-        fflush(stderr);
+        if (!e->is_terminal) {
+            fprintf(stderr, "GRASS_INFO_PROGRESS: %zu\n", e->completed);
+            fflush(stderr);
+        }
         return;
     }
     int pct = (int)(e->percent);

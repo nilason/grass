@@ -671,12 +671,12 @@ void G_unset_percent_routine(void);
 #if defined(G_USE_PROGRESS_NG)
 GProgressContext *G_progress_context_create(size_t, size_t);
 GProgressContext *G_progress_context_create_time(size_t, long);
+GProgressContext *G_progress_context_create_increment(size_t);
 void G_progress_context_destroy(GProgressContext *);
 void G_progress_update(GProgressContext *, size_t);
 void G_progress_log(GProgressContext *, const char *);
 void G_progress_context_set_sink(GProgressContext *, const GProgressSink *);
 void G_progress_increment(GProgressContext *, size_t);
-void G_progress_tick(GProgressContext *);
 #endif // G_USE_PROGRESS_NG
 
 /* popen.c */
