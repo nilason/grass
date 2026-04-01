@@ -2,7 +2,7 @@
    \file lib/gis/percent.c
 
    \brief GIS Library - Progress reporting and telemetry support for
-     GRASS operations
+   GRASS operations
 
    This file implements the `G_progress_*` API used to report incremental work
    completion for long-running operations. It supports both percentage-based
@@ -294,11 +294,13 @@ typedef struct {
     atomic_bool ready;
 } event_t;
 
-/// Internal telemetry state shared by the progress producer and consumer.
-///
-/// `telemetry_t` owns the ring buffer of queued log/progress events, the
-/// counters and thresholds used for time- or percent-based emission, and the
-/// sink configuration that determines how flushed events are rendered.
+/*!
+   \brief Internal telemetry state shared by the progress producer and consumer.
+
+   `telemetry_t` owns the ring buffer of queued log/progress events, the
+   counters and thresholds used for time- or percent-based emission, and the
+   sink configuration that determines how flushed events are rendered.
+*/
 typedef struct {
     event_t buffer[LOG_CAPACITY];
     atomic_size_t write_index;
@@ -354,24 +356,26 @@ static void sink_progress_plain(const GProgressEvent *, void *);
 static void sink_progress_gui(const GProgressEvent *, void *);
 static void sink_log_default(const char *, void *);
 
-/// Creates an isolated progress-reporting context for concurrent work.
-///
-/// The returned context tracks progress for `total_num_elements` items and
-/// emits progress updates whenever completion advances by at least
-/// `percent_step` percentage points. `total_num_elements` must match the
-/// actual number of work units that will be reported through
-/// `G_progress_update()`. In particular, callers should pass a completed-work
-/// count, not a raw loop index or a larger container size, otherwise the
-/// terminal `100%` update may never be reached. If output is enabled by the
-/// current runtime configuration, this function also starts the background
-/// consumer thread used to flush queued telemetry events.
-///
-/// \param total_num_elements Total number of elements to process.
-/// \param step Minimum percentage increment that triggers a
-///   progress event.
-/// \return A newly allocated `GPercentContext`, or `NULL` if output
-///   is silenced by environment variable `GRASS_MESSAGE_FORMAT` or
-///   verbosity level is below `1`.
+/*!
+   \brief Creates an isolated progress-reporting context for concurrent work.
+
+   The returned context tracks progress for `total_num_elements` items and
+   emits progress updates whenever completion advances by at least
+   `percent_step` percentage points. `total_num_elements` must match the
+   actual number of work units that will be reported through
+   `G_progress_update()`. In particular, callers should pass a completed-work
+   count, not a raw loop index or a larger container size, otherwise the
+   terminal `100%` update may never be reached. If output is enabled by the
+   current runtime configuration, this function also starts the background
+   consumer thread used to flush queued telemetry events.
+
+   \param total_num_elements Total number of elements to process.
+   \param step Minimum percentage increment that triggers a
+     progress event.
+   \return A newly allocated `GPercentContext`, or `NULL` if output
+     is silenced by environment variable `GRASS_MESSAGE_FORMAT` or
+     verbosity level is below `1`.
+ */
 GProgressContext *G_progress_context_create(size_t total_num_elements,
                                             size_t step)
 {
@@ -379,38 +383,43 @@ GProgressContext *G_progress_context_create(size_t total_num_elements,
                           (step == 0 ? TIME_RATE_LIMIT_MS : 0));
 }
 
-/// Creates an isolated progress-reporting context with time-based updates.
-///
-/// Unlike `G_progress_context_create()`, which emits progress events when
-/// completion crosses percentage thresholds, this variant rate-limits progress
-/// emission by elapsed time. The returned context tracks
-/// `total_num_elements` work units and reports updates no more frequently than
-/// once every `interval_ms` milliseconds while work is in progress.
-///
-/// Callers should report monotonically increasing completed-work counts through
-/// `G_progress_update()` and destroy the context with
-/// `G_progress_context_destroy()` when processing finishes.
-///
-/// \param total_num_elements Total number of elements to process.
-/// \param interval_ms Minimum time interval, in milliseconds, between emitted
-///   progress updates.
-/// \return A newly allocated `GProgressContext`, or `NULL` if output is
-///   silenced by the current runtime configuration.
+/*!
+   \brief Creates an isolated progress-reporting context with time-based
+   updates.
+
+   Unlike `G_progress_context_create()`, which emits progress events when
+   completion crosses percentage thresholds, this variant rate-limits progress
+   emission by elapsed time. The returned context tracks
+   `total_num_elements` work units and reports updates no more frequently than
+   once every `interval_ms` milliseconds while work is in progress.
+
+   Callers should report monotonically increasing completed-work counts through
+   `G_progress_update()` and destroy the context with
+   `G_progress_context_destroy()` when processing finishes.
+
+   \param total_num_elements Total number of elements to process.
+   \param interval_ms Minimum time interval, in milliseconds, between emitted
+     progress updates.
+   \return A newly allocated `GProgressContext`, or `NULL` if output is
+     silenced by the current runtime configuration.
+*/
 GProgressContext *G_progress_context_create_time(size_t total_num_elements,
                                                  long interval_ms)
 {
     return context_create(total_num_elements, 0, interval_ms);
 }
 
-/// Destroys a `GPercentContext` and releases any resources it owns.
-///
-/// This function stops the context's background telemetry consumer, waits for
-/// the consumer thread to finish when it was started, marks the context as no
-/// longer initialized, and frees the context memory. Passing `NULL` is safe and
-/// has no effect.
-///
-/// \param ctx The progress-reporting context previously created by
-///   `G_percent_context_create()`, or `NULL`.
+/*!
+   \brief Destroys a `GPercentContext` and releases any resources it owns.
+
+   This function stops the context's background telemetry consumer, waits for
+   the consumer thread to finish when it was started, marks the context as no
+   longer initialized, and frees the context memory. Passing `NULL` is safe and
+   has no effect.
+
+   \param ctx The progress-reporting context previously created by
+     `G_percent_context_create()`, or `NULL`.
+*/
 void G_progress_context_destroy(GProgressContext *ctx)
 {
     if (!ctx) {
@@ -440,28 +449,30 @@ void G_progress_context_destroy(GProgressContext *ctx)
     G_free(ctx);
 }
 
-/// Sets or clears the output sink used by a progress context.
-///
-/// Installs a per-context `GProgressSink` override for progress and log events
-/// emitted by `ctx`. When `sink` is non-`NULL`, its callbacks and `user_data`
-/// are copied into the context and used by the telemetry consumer. Passing
-/// `NULL` clears any custom sink so the context falls back to its default
-/// output behavior.
-///
-/// \param ctx The progress context to update. If `NULL`, the function has
-///   no effect.
-/// \param sink The sink configuration to copy into the context, or `NULL`
-///   to remove the custom sink.
-///
-/// Example:
-/// ```c
-/// GProgressSink sink = {
-///     .on_progress = my_progress_handler,
-///     .on_log = my_log_handler,
-///     .user_data = my_context,
-/// };
-/// G_progress_context_set_sink(progress_ctx, &sink);
-/// ```
+/*!
+   \brief Sets or clears the output sink used by a progress context.
+
+   Installs a per-context `GProgressSink` override for progress and log events
+   emitted by `ctx`. When `sink` is non-`NULL`, its callbacks and `user_data`
+   are copied into the context and used by the telemetry consumer. Passing
+   `NULL` clears any custom sink so the context falls back to its default
+   output behavior.
+
+   Example:
+   ```c
+   GProgressSink sink = {
+       .on_progress = my_progress_handler,
+       .on_log = my_log_handler,
+       .user_data = my_context,
+   };
+   G_progress_context_set_sink(progress_ctx, &sink);
+ ```
+ \param ctx The progress context to update. If `NULL`, the function has
+   no effect.
+ \param sink The sink configuration to copy into the context, or `NULL`
+   to remove the custom sink.
+
+*/
 void G_progress_context_set_sink(GProgressContext *ctx,
                                  const GProgressSink *sink)
 {
@@ -480,38 +491,40 @@ void G_progress_context_set_sink(GProgressContext *ctx,
     ctx->telemetry.sink = ctx->sink;
 }
 
-/// Reports progress for an isolated `GProgressContext` instance.
-///
-/// This re-entrant variant of `G_percent` is intended for concurrent or
-/// context-specific work. It validates that `ctx` is initialized, clamps
-/// `current_element` to the valid `0...total` range, and enqueues a progress
-/// event only when the computed percentage reaches the next configured
-/// threshold for the context.
-///
-/// Callers typically create the context with `G_progress_context_create()`,
-/// call this function as work advances, and later release resources with
-/// `G_progress_context_destroy()`.
-///
-/// Example:
-/// ```c
-/// size_t n_rows = window.rows;  // total number of rows
-/// size_t step = 10;  // output step, every 10%
-/// GProgressContext *ctx = G_progress_context_create(n_rows, step);
-/// for (row = 0; row < window.rows; row++) {
-///     // costly calculation ...
-///
-///     // note: not counting from zero, as for loop never reaches n_rows
-///     //       and we want to reach 100%
-///     size_t completed_row = row + 1;
-///
-///     G_progress_update(ctx, completed_row);
-/// }
-/// G_progress_context_destroy(ctx);
-/// ```
-///
-/// \param ctx The progress-reporting context created by
-///   `G_percent_context_create()`.
-/// \param completed: The current completed element index or count.
+/*!
+   \brief Reports progress for an isolated `GProgressContext` instance.
+
+   This re-entrant variant of `G_percent` is intended for concurrent or
+   context-specific work. It validates that `ctx` is initialized, clamps
+   `current_element` to the valid `0...total` range, and enqueues a progress
+   event only when the computed percentage reaches the next configured
+   threshold for the context.
+
+   Callers typically create the context with `G_progress_context_create()`,
+   call this function as work advances, and later release resources with
+   `G_progress_context_destroy()`.
+
+   Example:
+   ```c
+   size_t n_rows = window.rows;  // total number of rows
+   size_t step = 10;  // output step, every 10%
+   GProgressContext *ctx = G_progress_context_create(n_rows, step);
+   for (row = 0; row < window.rows; row++) {
+       // costly calculation ...
+
+       // note: not counting from zero, as for loop never reaches n_rows
+       //       and we want to reach 100%
+       size_t completed_row = row + 1;
+
+       G_progress_update(ctx, completed_row);
+   }
+   G_progress_context_destroy(ctx);
+   ```
+
+   \param ctx The progress-reporting context created by
+     `G_percent_context_create()`.
+   \param completed The current completed element index or count.
+*/
 void G_progress_update(GProgressContext *ctx, size_t completed)
 {
     if (!ctx)
@@ -555,21 +568,23 @@ void G_progress_log(GProgressContext *ctx, const char *message)
     telemetry_log(&ctx->telemetry, message);
 }
 
-/// Creates and initializes a progress reporting context.
-///
-/// The created context configures its reporting mode based on `step`. When
-/// `step` is `0`, progress updates are emitted using a time-based interval
-/// controlled by `interval_ms`. Otherwise, progress updates are emitted at
-/// percentage increments defined by `step`.
-///
-/// \param total_num_elements Total number of elements expected for the
-///   operation being tracked.
-/// \param step Percentage increment for reporting progress. A value of `0`
-///   selects time-based reporting instead.
-/// \param interval_ms Time interval in milliseconds between progress updates
-///   when `step` is `0`.
-/// \return A newly allocated and initialized `GProgressContext`, or `NULL`
-///   if output is currently silenced.
+/*!
+   \brief Creates and initializes a progress reporting context.
+
+   The created context configures its reporting mode based on `step`. When
+   `step` is `0`, progress updates are emitted using a time-based interval
+   controlled by `interval_ms`. Otherwise, progress updates are emitted at
+   percentage increments defined by `step`.
+
+   \param total_num_elements Total number of elements expected for the
+     operation being tracked.
+   \param step Percentage increment for reporting progress. A value of `0`
+     selects time-based reporting instead.
+   \param interval_ms Time interval in milliseconds between progress updates
+     when `step` is `0`.
+   \return A newly allocated and initialized `GProgressContext`, or `NULL`
+     if output is currently silenced.
+*/
 static GProgressContext *context_create(size_t total_num_elements, size_t step,
                                         long interval_ms)
 {
@@ -670,13 +685,15 @@ static void context_progress_time(telemetry_t *t, size_t completed)
     enqueue_event(t, &ev);
 }
 
-/// Consumes queued telemetry events and emits log or progress output until
-/// shutdown is requested and the event buffer has been drained.
-///
-/// \param arg Pointer to the `telemetry_t` instance whose ring buffer and
-///   formatting settings should be consumed.
-/// \return `NULL` after the consumer loop exits and any global consumer state
-///   has been reset.
+/*!
+   \brief Consumes queued telemetry events and emits log or progress output
+   until shutdown is requested and the event buffer has been drained.
+
+   \param arg Pointer to the `telemetry_t` instance whose ring buffer and
+     formatting settings should be consumed.
+   \return `NULL` after the consumer loop exits and any global consumer state
+     has been reset.
+*/
 static void *telemetry_consumer(void *arg)
 {
     telemetry_t *t = arg;
@@ -778,18 +795,20 @@ static void telemetry_init_time(telemetry_t *t, size_t total, long interval_ms)
     telemetry_install_default_sink(t);
 }
 
-/// Initializes telemetry state for percentage-based progress reporting.
-///
-/// Resets the telemetry ring buffer and counters, disables time-based
-/// throttling, and configures the next progress event to be emitted when the
-/// completed work reaches the first `percent_step` threshold.
-///
-/// \param t The telemetry instance to reset and configure.
-/// \param total The total number of work units expected for the tracked
-///   operation.
-/// \param percent_step The percentage increment that controls when
-///   progress updates are emitted. A value of `0` disables percentage-based
-///   thresholds.
+/*!
+   \brief Initializes telemetry state for percentage-based progress reporting.
+
+   Resets the telemetry ring buffer and counters, disables time-based
+   throttling, and configures the next progress event to be emitted when the
+   completed work reaches the first `percent_step` threshold.
+
+   \param t The telemetry instance to reset and configure.
+   \param total The total number of work units expected for the tracked
+     operation.
+   \param percent_step The percentage increment that controls when
+     progress updates are emitted. A value of `0` disables percentage-based
+     thresholds.
+*/
 static void telemetry_init_percent(telemetry_t *t, size_t total,
                                    size_t percent_step)
 {
@@ -820,14 +839,16 @@ static void telemetry_init_percent(telemetry_t *t, size_t total,
     telemetry_install_default_sink(t);
 }
 
-/// Queues a telemetry event into the ring buffer for later consumption.
-///
-/// Waits until the destination slot becomes available, copies the event payload
-/// into that slot, and then marks the slot as ready using release semantics so
-/// readers can safely observe the published event.
-///
-/// \param t The telemetry instance that owns the event buffer.
-/// \param src The event payload to enqueue.
+/*!
+   \brief Queues a telemetry event into the ring buffer for later consumption.
+
+   Waits until the destination slot becomes available, copies the event payload
+   into that slot, and then marks the slot as ready using release semantics so
+   readers can safely observe the published event.
+
+   \param t The telemetry instance that owns the event buffer.
+   \param src The event payload to enqueue.
+*/
 static void enqueue_event(telemetry_t *t, event_t *src)
 {
     size_t idx =
@@ -847,13 +868,15 @@ static void enqueue_event(telemetry_t *t, event_t *src)
     atomic_store_explicit(&dst->ready, true, memory_order_release);
 }
 
-/// Queues a terminal `100%` progress event for a telemetry stream.
-///
-/// This helper records the stream as fully completed, disables further
-/// percentage-threshold reporting, and enqueues one last progress event with
-/// `completed == total` so the consumer can emit the final `100%` update.
-///
-/// \param t The telemetry instance to finalize.
+/*!
+   \brief Queues a terminal `100%` progress event for a telemetry stream.
+
+   This helper records the stream as fully completed, disables further
+   percentage-threshold reporting, and enqueues one last progress event with
+   `completed == total` so the consumer can emit the final `100%` update.
+
+   \param t The telemetry instance to finalize.
+*/
 static void telemetry_enqueue_final_progress(telemetry_t *t)
 {
     event_t ev = {0};
@@ -888,29 +911,34 @@ static void telemetry_log(telemetry_t *t, const char *msg)
     enqueue_event(t, &ev);
 }
 
-/// Captures the current GRASS info output format for subsequent telemetry.
-///
-/// Reads the process-wide info formatting mode and stores it on the telemetry
-/// instance so later progress and log events can format output consistently.
-///
-/// \param t The telemetry state that caches the active info format.
+/*!
+   \brief Captures the current GRASS info output format for subsequent
+   telemetry.
+
+   Reads the process-wide info formatting mode and stores it on the telemetry
+   instance so later progress and log events can format output consistently.
+
+   \param t The telemetry state that caches the active info format.
+*/
 static void telemetry_set_info_format(telemetry_t *t)
 {
     t->info_format = G_info_format();
 }
 
-/// Records completed work and enqueues a progress event when the next
-/// reportable threshold is reached.
-///
-/// The function atomically increments the telemetry's completed counter by
-/// `step`, then decides whether to emit a progress event using one of two
-/// modes: percent-based reporting when `percent_step` and `total` are
-/// configured, or time-based throttling when they are not. Atomic
-/// compare-and-swap operations ensure that only one caller emits an event for a
-/// given threshold or interval.
-///
-/// \param t The telemetry state to update and publish through.
-/// \param step The number of newly completed units of work to add.
+/*!
+   \brief Records completed work and enqueues a progress event when the next
+   reportable threshold is reached.
+
+   The function atomically increments the telemetry's completed counter by
+   `step`, then decides whether to emit a progress event using one of two
+   modes: percent-based reporting when `percent_step` and `total` are
+   configured, or time-based throttling when they are not. Atomic
+   compare-and-swap operations ensure that only one caller emits an event for a
+   given threshold or interval.
+
+   \param t The telemetry state to update and publish through.
+   \param step The number of newly completed units of work to add.
+*/
 static void telemetry_progress(telemetry_t *t, size_t step)
 {
     size_t new_completed =
@@ -992,18 +1020,20 @@ static void telemetry_install_default_sink(telemetry_t *t)
     t->sink.user_data = NULL;
 }
 
-/// Initializes shared percent-based telemetry and starts the detached consumer
-/// thread once.
-///
-/// This function performs one-time global setup for percent progress reporting.
-/// Repeated calls return immediately after the initialization state has been
-/// set. If output is disabled or the consumer thread cannot be created, no
-/// further progress consumer setup is performed.
-///
-/// \param total_num_elements The total number of elements used to compute
-///   progress percentages.
-/// \param percent_step The percentage increment that controls when
-///   progress updates are emitted.
+/*!
+   \brief Initializes shared percent-based telemetry and starts the detached
+   consumer thread once.
+
+   This function performs one-time global setup for percent progress reporting.
+   Repeated calls return immediately after the initialization state has been
+   set. If output is disabled or the consumer thread cannot be created, no
+   further progress consumer setup is performed.
+
+   \param total_num_elements The total number of elements used to compute
+     progress percentages.
+   \param percent_step The percentage increment that controls when
+     progress updates are emitted.
+*/
 static void start_global_percent(size_t total_num_elements, size_t percent_step)
 {
     bool expected_init = false;
@@ -1042,20 +1072,23 @@ static void start_global_percent(size_t total_num_elements, size_t percent_step)
     }
 }
 
-/// Sets or clears the global sink used by `G_percent` progress reporting.
-///
-/// Copies `sink` into the shared global progress configuration used by the
-/// legacy `G_percent` API. When `sink` is non-`NULL`, its callbacks and
-/// `user_data` are used for subsequent progress and log events. Passing `NULL`
-/// clears the custom sink and restores the default output behavior derived from
-/// the current runtime info format.
-///
-/// If global progress telemetry has already been initialized, the active
-/// telemetry sink is updated immediately so later events follow the new
-/// configuration.
-///
-/// \param sink The sink configuration to install globally, or `NULL` to remove
-///   the custom sink and fall back to the default renderer.
+/*!
+   \brief Sets or clears the global sink used by `G_percent` progress
+   reporting.
+
+   Copies `sink` into the shared global progress configuration used by the
+   legacy `G_percent` API. When `sink` is non-`NULL`, its callbacks and
+   `user_data` are used for subsequent progress and log events. Passing `NULL`
+   clears the custom sink and restores the default output behavior derived from
+   the current runtime info format.
+
+   If global progress telemetry has already been initialized, the active
+   telemetry sink is updated immediately so later events follow the new
+   configuration.
+
+   \param sink The sink configuration to install globally, or `NULL` to remove
+     the custom sink and fall back to the default renderer.
+*/
 static void set_global_sink(const GProgressSink *sink)
 {
     if (sink) {
@@ -1087,7 +1120,7 @@ static bool output_is_silenced(void)
     return (G_info_format() == G_INFO_FORMAT_SILENT || G_verbose() < 1);
 }
 
-/// Returns the current UTC time in nanoseconds.
+/*! \brief Returns the current UTC time in nanoseconds. */
 static long now_ns(void)
 {
 #if defined(TIME_UTC)
@@ -1169,20 +1202,23 @@ static void sink_log_default(const char *message, void *ud)
 
 // Legacy API
 
-/// Reports global progress when completion crosses the next percentage step.
-///
-/// This function initializes the shared global telemetry stream on first use,
-/// clamps `current_element` into the valid `0...total_num_elements` range, and
-/// enqueues a progress update only when the computed percentage reaches the
-/// next configured threshold. When progress reaches the total, a terminal
-/// `100%` event is always queued and the background consumer is asked to stop
-/// after pending events have been flushed.
-///
-///  \param current_element The current completed element index or count.
-///  \param total_num_elements The total number of elements to process. Values
-///    less than or equal to `0` disable reporting.
-///  \param percent_step The minimum percentage increment required before a new
-///    progress event is emitted.
+/*!
+   \brief Reports global progress when completion crosses the next percentage
+   step.
+
+   This function initializes the shared global telemetry stream on first use,
+   clamps `current_element` into the valid `0...total_num_elements` range, and
+   enqueues a progress update only when the computed percentage reaches the
+   next configured threshold. When progress reaches the total, a terminal
+   `100%` event is always queued and the background consumer is asked to stop
+   after pending events have been flushed.
+
+   \param current_element The current completed element index or count.
+   \param total_num_elements The total number of elements to process. Values
+     less than or equal to `0` disable reporting.
+   \param percent_step The minimum percentage increment required before a new
+     progress event is emitted.
+*/
 static void G__percent_ng(long current_element, long total_num_elements,
                           int percent_step)
 {
