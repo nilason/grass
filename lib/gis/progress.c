@@ -45,9 +45,6 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <time.h>
-#if defined(__MINGW32__)
-#include <sys/time.h>
-#endif
 
 #define LOG_CAPACITY       1024
 #define LOG_MSG_SIZE       128
@@ -1017,7 +1014,7 @@ static long now_ns(void)
     struct timespec ts;
     clock_gettime(CLOCK_REALTIME, &ts);
     return (long)ts.tv_sec * 1000000000L + ts.tv_nsec;
-#elif defined(__MINGW32__)
+#elif defined(HAVE_GETTIMEOFDAY)
     struct timeval tv;
     gettimeofday(&tv, NULL);
     return (long)tv.tv_sec * 1000000000L + (long)tv.tv_usec * 1000L;
