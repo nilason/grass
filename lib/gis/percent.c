@@ -1277,7 +1277,7 @@ static void G__progress_ng(long n, int s)
                 break;
             default:
                 // STANDARD and others: carriage return
-                telemetry_log(&g_percent_telemetry, "\n");
+                telemetry_log(&g_percent_telemetry, "\r");
                 break;
             }
         }
