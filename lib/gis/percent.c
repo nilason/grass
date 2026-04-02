@@ -213,8 +213,6 @@ void G_percent_reset(void)
 
    \param n current element
    \param s increment size
-
-   \return always returns 0
  */
 void G_progress(long n, int s)
 {
@@ -574,6 +572,27 @@ void G_progress_update(GProgressContext *ctx, size_t completed)
     ctx->report_progress(t, completed);
 }
 
+/**
+   \brief Reports progress for open-ended loops.
+
+   Use this function with contexts created by
+   `G_progress_context_create_increment()` when work is tracked as an open-ended
+   completed count instead of progress toward a known total. The function
+   ignores `NULL` or uninitialized contexts and forwards the completed-count
+   update to the context telemetry.
+
+   Example:
+   ```c
+   GProgressContext *ctx = G_progress_context_create_increment(100);
+   while (TRUE) {
+       G_progress_increment(ctx, rows_processed);
+   }
+   ```
+
+   \param ctx The increment-based progress context to update.
+   \param completed The current completed count used to determine whether a new
+     progress event should be emitted.
+*/
 void G_progress_increment(GProgressContext *ctx, size_t completed)
 {
     if (!ctx)
@@ -584,6 +603,24 @@ void G_progress_increment(GProgressContext *ctx, size_t completed)
     telemetry_progress(&ctx->telemetry, completed);
 }
 
+/**
+   \brief Enqueues a log message for a progress reporting context.
+
+   Use this function to attach informational output to an active
+   `GProgressContext`. The message is forwarded to the context telemetry and
+   emitted by the configured progress sink in the order it is queued. The
+   function ignores `NULL` messages and contexts that are `NULL` or not yet
+   initialized.
+
+   Example:
+   ```c
+   GProgressContext *ctx = G_progress_context_create_time(total_rows, 100);
+   G_progress_log(ctx, _("Starting import"));
+   ```
+
+   \param ctx The progress context that should receive the log message.
+   \param message A null-terminated message string to enqueue for output.
+*/
 void G_progress_log(GProgressContext *ctx, const char *message)
 {
     if (!ctx || !message)
@@ -1349,9 +1386,8 @@ static void G__percent_reset_ng(void)
 // Print progress info messages
 static void G__progress_ng(long n, int s)
 {
-    // Mirror legacy behavior: emit on multiples of s, and handle first tick
-    // formatting. We route through the global telemetry so it benefits from the
-    // consumer thread.
+    // Mirror legacy behavior: emit on multiples of s. Routing through the
+    // global telemetry.
 
     if (s <= 0 || output_is_silenced())
         return;
@@ -1360,27 +1396,15 @@ static void G__progress_ng(long n, int s)
     // percent thresholds
     start_global_percent(0, 0);
 
-    // Use time-based gating if an interval is configured; otherwise, we emit
-    // only on multiples of s. Here, we implement the modulo gating explicitly.
-
     if (n == s && n == 1) {
-        // For default sink, legacy prints a leading CR/Newline depending on
-        // format. We simulate this by enqueueing a LOG event when using default
-        // sink; custom sinks can ignore.
-        if (g_percent_telemetry.sink.on_progress == NULL) {
-            switch (g_percent_telemetry.info_format) {
-            case G_INFO_FORMAT_PLAIN:
-                telemetry_log(&g_percent_telemetry, "\n");
-                break;
-            case G_INFO_FORMAT_GUI:
-                // No-op; GUI variant prints on progress events
-                break;
-            default:
-                // STANDARD and others: carriage return
-                telemetry_log(&g_percent_telemetry, "\r");
-                break;
-            }
-        }
+        event_t ev = {0};
+
+        ev.type = EV_PROGRESS;
+        ev.completed = atomic_load_explicit(&g_percent_telemetry.completed,
+                                            memory_order_acquire);
+        ev.total = 0;
+        ev.is_terminal = true;
+        enqueue_event(&g_percent_telemetry, &ev);
         return;
     }
 
@@ -1392,6 +1416,8 @@ static void G__progress_ng(long n, int s)
     ev.type = EV_PROGRESS;
     ev.completed = (n < 0 ? 0 : (size_t)n);
     ev.total = 0; // unknown total; consumer/sink can render raw counts
+    atomic_store_explicit(&g_percent_telemetry.completed, ev.completed,
+                          memory_order_release);
     enqueue_event(&g_percent_telemetry, &ev);
 }
 
@@ -1399,8 +1425,8 @@ static void G__progress_ng(long n, int s)
 static void G__set_percent_routine_ng(int (*fn)(int))
 {
     // The historical signature in gis.h declares int (*)(int), but actual
-    // implementers often used void(*)(int). We accept int-returning and ignore
-    // the return value.
+    // implementers often used void(*)(int). We accept int-returning and
+    // ignore the return value.
     if (!fn) {
         // Reset to default behavior
         g_legacy_percent_routine = NULL;
