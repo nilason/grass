@@ -22,8 +22,18 @@
 #include "distance.h"
 #include <grass/raster.h>
 #include <grass/glocale.h>
+#include <grass/gis.h>
 
 /* write out result */
+
+static void sink_progress_buffer(const GProgressEvent *e, void *ud)
+{
+    (void)ud;
+    double pct = (int)(e->percent);
+    int comp = (int)e->completed;
+    int tot = (int)e->total;
+    printf("[PROGRESS] %4f (%d/%d)\n", pct, comp, tot);
+}
 
 int write_output_map(char *output, int offset)
 {
@@ -34,6 +44,9 @@ int write_output_map(char *output, int offset)
     register MAPTYPE *ptr;
     int k;
 
+    GProgressSink sink = {
+        .on_progress = sink_progress_buffer, .on_log = NULL, .user_data = NULL};
+
     fd_out = Rast_open_c_new(output);
 
     if (offset)
@@ -43,9 +56,13 @@ int write_output_map(char *output, int offset)
     G_message(_("Writing output raster map <%s>..."), output);
 
     ptr = map;
+    GProgressContext *ctx = G_progress_context_create_time(window.rows, 100);
+    G_progress_context_set_sink(ctx, &sink);
+    G_progress_log(ctx, "starting:");
 
     for (row = 0; row < window.rows; row++) {
-        G_percent(row, window.rows, 2);
+        //        G_percent(row, window.rows, 2);
+        G_progress_update(ctx, row + 1);
         col = window.cols;
         if (!offset) {
             while (col-- > 0)
@@ -70,7 +87,8 @@ int write_output_map(char *output, int offset)
         Rast_put_row(fd_out, cell, CELL_TYPE);
     }
 
-    G_percent(row, window.rows, 2);
+    //    G_percent(row, window.rows, 2);
+    G_progress_context_destroy(ctx);
     G_free(cell);
 
     if (offset)
