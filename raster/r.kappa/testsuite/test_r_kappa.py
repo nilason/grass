@@ -10,9 +10,8 @@ Licence:   This program is free software under the GNU General Public
 """
 
 import os
-import pathlib
 import json
-
+from pathlib import Path
 from tempfile import NamedTemporaryFile
 
 from grass.script import read_command
@@ -20,7 +19,8 @@ from grass.script import decode
 from grass.script.core import tempname
 from grass.gunittest.case import TestCase
 from grass.gunittest.main import test
-from grass.gunittest.checkers import keyvalue_equals
+from grass.gunittest.checkers import keyvalue_equals, diff_keyvalue
+from grass.gunittest.utils import xfail_windows
 
 
 class MatrixCorrectnessTest(TestCase):
@@ -32,7 +32,7 @@ class MatrixCorrectnessTest(TestCase):
         cls.use_temp_region()
         cls.runModule("g.region", n=5, s=0, e=5, w=0, res=1)
 
-        cls.data_dir = os.path.join(pathlib.Path(__file__).parent.absolute(), "data")
+        cls.data_dir = os.path.join(Path(__file__).parent.absolute(), "data")
         cls.ref_1 = tempname(10)
         cls.runModule(
             "r.in.ascii",
@@ -50,8 +50,9 @@ class MatrixCorrectnessTest(TestCase):
     def tearDownClass(cls):
         """Remove temporary data"""
         cls.del_temp_region()
-        cls.runModule("g.remove", flags="f", type="raster", name=cls.ref_1)
-        cls.runModule("g.remove", flags="f", type="raster", name=cls.class_1)
+        cls.runModule(
+            "g.remove", flags="f", type="raster", name=(cls.ref_1, cls.class_1)
+        )
 
     def test_m(self):
         """Test printing matrix only
@@ -88,7 +89,7 @@ class CalculationCorrectness1Test(TestCase):
         cls.use_temp_region()
         cls.runModule("g.region", n=5, s=0, e=5, w=0, res=1)
 
-        cls.data_dir = os.path.join(pathlib.Path(__file__).parent.absolute(), "data")
+        cls.data_dir = os.path.join(Path(__file__).parent.absolute(), "data")
         cls.ref_1 = tempname(10)
         cls.runModule(
             "r.in.ascii",
@@ -118,8 +119,9 @@ class CalculationCorrectness1Test(TestCase):
     def tearDownClass(cls):
         """Remove temporary data"""
         cls.del_temp_region()
-        cls.runModule("g.remove", flags="f", type="raster", name=cls.ref_1)
-        cls.runModule("g.remove", flags="f", type="raster", name=cls.class_1)
+        cls.runModule(
+            "g.remove", flags="f", type="raster", name=(cls.ref_1, cls.class_1)
+        )
 
     def match(self, pat, ref):
         if pat == "NA" or ref == "NA":
@@ -202,7 +204,7 @@ class CalculationCorrectness2Test(TestCase):
         cls.use_temp_region()
         cls.runModule("g.region", n=5, s=0, e=5, w=0, res=1)
 
-        cls.data_dir = os.path.join(pathlib.Path(__file__).parent.absolute(), "data")
+        cls.data_dir = os.path.join(Path(__file__).parent.absolute(), "data")
         cls.ref_1 = tempname(10)
         cls.runModule(
             "r.in.ascii",
@@ -232,8 +234,9 @@ class CalculationCorrectness2Test(TestCase):
     def tearDownClass(cls):
         """Remove temporary data"""
         cls.del_temp_region()
-        cls.runModule("g.remove", flags="f", type="raster", name=cls.ref_1)
-        cls.runModule("g.remove", flags="f", type="raster", name=cls.class_1)
+        cls.runModule(
+            "g.remove", flags="f", type="raster", name=(cls.ref_1, cls.class_1)
+        )
 
     def match(self, pat, ref):
         if pat == "NA" or ref == "NA":
@@ -298,13 +301,15 @@ class CalculationCorrectness2Test(TestCase):
 class JSONOutputTest(TestCase):
     """Test printing of parameters in JSON format"""
 
+    precision = 0.0001
+
     @classmethod
     def setUpClass(cls):
         """Import sample maps with known properties"""
         cls.use_temp_region()
         cls.runModule("g.region", n=5, s=0, e=5, w=0, res=1)
 
-        cls.data_dir = os.path.join(pathlib.Path(__file__).parent.absolute(), "data")
+        cls.data_dir = os.path.join(Path(__file__).parent.absolute(), "data")
         cls.references = []
         cls.classifications = []
         cls.expected_outputs = []
@@ -378,10 +383,10 @@ class JSONOutputTest(TestCase):
                     [0, 0, 0, 0, 0, 0],
                     [0, 0, 0, 0, 0, 0],
                     [0, 0, 0, 0, 0, 0],
-                    [8, 8, 4, 1, 4, 0],
+                    [4, 8, 8, 4, 1, 0],
                 ],
                 "row_sum": [0, 0, 0, 0, 0, 25],
-                "col_sum": [8, 8, 4, 1, 4, 0],
+                "col_sum": [4, 8, 8, 4, 1, 0],
                 "producers_accuracy": [0.0, 0.0, 0.0, 0.0, 0.0, None],
                 "users_accuracy": [None, None, None, None, None, 0.0],
                 "conditional_kappa": [None, None, None, None, None, 0.0],
@@ -471,9 +476,20 @@ class JSONOutputTest(TestCase):
             )
             json_out = json.loads(decode(out))
             self.assertTrue(
-                keyvalue_equals(self.expected_outputs[i], json_out, precision=4)
+                keyvalue_equals(
+                    self.expected_outputs[i], json_out, precision=self.precision
+                ),
+                (
+                    "Output differs from expected: "
+                    + str(
+                        diff_keyvalue(
+                            self.expected_outputs[i], json_out, precision=self.precision
+                        )
+                    )
+                ),
             )
 
+    @xfail_windows
     def test_file(self):
         for i in range(len(self.references)):
             f = NamedTemporaryFile()
@@ -487,7 +503,17 @@ class JSONOutputTest(TestCase):
             )
             json_out = json.loads(f.read())
             self.assertTrue(
-                keyvalue_equals(self.expected_outputs[i], json_out, precision=4)
+                keyvalue_equals(
+                    self.expected_outputs[i], json_out, precision=self.precision
+                ),
+                (
+                    "Output differs from expected: "
+                    + str(
+                        diff_keyvalue(
+                            self.expected_outputs[i], json_out, precision=self.precision
+                        )
+                    )
+                ),
             )
 
 

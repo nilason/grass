@@ -56,7 +56,7 @@ static void prof_int_internal(const toktype type, const char *key,
         return;
     }
     token[size].type = type;
-    G_snprintf(token[size].key, MAX_STR_LEN, "%s", key);
+    snprintf(token[size].key, MAX_STR_LEN, "%s", key);
     token[size].int_val = val;
     size++;
 }
@@ -79,7 +79,7 @@ static void prof_dbl_internal(const toktype type, const char *key,
         return;
     }
     token[size].type = type;
-    G_snprintf(token[size].key, MAX_STR_LEN, "%s", key);
+    snprintf(token[size].key, MAX_STR_LEN, "%s", key);
     token[size].dbl_val = val;
     size++;
 }
@@ -101,8 +101,8 @@ void prof_str(const char *key, const char *val)
         return;
     }
     token[size].type = T_STR;
-    G_snprintf(token[size].key, MAX_STR_LEN, "%s", key);
-    G_snprintf(token[size].str_val, MAX_STR_LEN, "%s", val);
+    snprintf(token[size].key, MAX_STR_LEN, "%s", key);
+    snprintf(token[size].str_val, MAX_STR_LEN, "%s", val);
     size++;
 }
 
@@ -121,7 +121,7 @@ void prof_sso(const char *key)
         return;
     }
     token[size].type = T_SSO;
-    G_snprintf(token[size].key, MAX_STR_LEN, "%s", key);
+    snprintf(token[size].key, MAX_STR_LEN, "%s", key);
     size++;
 }
 
@@ -145,42 +145,42 @@ void prof_pattern(const double o_elevation, const PATTERN *p)
 
     prof_sso("pattern");
     for (i = 0; i < NUM_DIRS; i++)
-        prof_int(dirname[i], p->pattern[i]);
+        prof_int(direction_name[i], p->pattern[i]);
     prof_eso();
 
     prof_sso("rel_elevation_m");
     for (i = 0; i < NUM_DIRS; i++)
-        prof_mtr(dirname[i], p->elevation[i]);
+        prof_mtr(direction_name[i], p->elevation[i]);
     prof_eso();
 
     prof_sso("abs_elevation_m");
     for (i = 0; i < NUM_DIRS; i++)
-        prof_mtr(dirname[i], o_elevation + p->elevation[i]);
+        prof_mtr(direction_name[i], o_elevation + p->elevation[i]);
     prof_eso();
 
     prof_sso("distance_m");
     for (i = 0; i < NUM_DIRS; i++)
-        prof_mtr(dirname[i], p->distance[i]);
+        prof_mtr(direction_name[i], p->distance[i]);
     prof_eso();
 
     prof_sso("offset_easting_m");
     for (i = 0; i < NUM_DIRS; i++)
-        prof_mtr(dirname[i], p->x[i]);
+        prof_mtr(direction_name[i], p->x[i]);
     prof_eso();
 
     prof_sso("offset_northing_m");
     for (i = 0; i < NUM_DIRS; i++)
-        prof_mtr(dirname[i], p->y[i]);
+        prof_mtr(direction_name[i], p->y[i]);
     prof_eso();
 
     prof_sso("easting");
     for (i = 0; i < NUM_DIRS; i++)
-        prof_dbl(dirname[i], p->e[i]);
+        prof_dbl(direction_name[i], p->e[i]);
     prof_eso();
 
     prof_sso("northing");
     for (i = 0; i < NUM_DIRS; i++)
-        prof_dbl(dirname[i], p->n[i]);
+        prof_dbl(direction_name[i], p->n[i]);
     prof_eso();
 }
 
@@ -213,7 +213,7 @@ static const char *quote_val(const toktype t, const char *v)
 
     if (t != T_STR)
         return v;
-    G_snprintf(buf, sizeof(buf), "\"%s\"", v);
+    snprintf(buf, sizeof(buf), "\"%s\"", v);
     return buf;
 }
 
@@ -225,19 +225,19 @@ static const char *format_token_common(const struct token *t)
     case T_BLN:
         return t->int_val ? "true" : "false";
     case T_INT:
-        G_snprintf(buf, sizeof(buf), "%d", t->int_val);
+        snprintf(buf, sizeof(buf), "%d", t->int_val);
         return buf;
     case T_DBL:
         if (isnan(t->dbl_val))
             return "null";
-        G_snprintf(buf, sizeof(buf), "%.8f", t->dbl_val);
+        snprintf(buf, sizeof(buf), "%.8f", t->dbl_val);
         return buf;
     case T_STR:
         return t->str_val;
     case T_MTR:
         if (isnan(t->dbl_val))
             return "null";
-        G_snprintf(buf, sizeof(buf), "%.2f", t->dbl_val);
+        snprintf(buf, sizeof(buf), "%.2f", t->dbl_val);
         return buf;
     default:
         return NULL;
@@ -330,7 +330,7 @@ static unsigned stack_push(const char *s)
         overflow = 1;
         return 0;
     }
-    G_snprintf(stack[stack_size], MAX_STR_LEN, "%s", s);
+    snprintf(stack[stack_size], MAX_STR_LEN, "%s", s);
     stack_size++;
     return 1;
 }

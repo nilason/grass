@@ -486,7 +486,7 @@ void gsd_swapbuffers(void)
      * the back buffer becomes undefined afterward */
 #if defined(OPENGL_X11)
     glXSwapBuffers(glXGetCurrentDisplay(), glXGetCurrentDrawable());
-#elif defined(OPENGL_AQUA)
+#elif defined(OPENGL_AGL)
     aglSwapBuffers(aglGetCurrentContext());
 #elif defined(OPENGL_WINDOWS)
     SwapBuffers(wglGetCurrentDC());
@@ -574,7 +574,7 @@ void gsd_getwindow(int *window, int *viewport, double *modelMatrix,
    \brief ADD
 
    \param pt
-   \param widnow
+   \param window
    \param viewport
    \param doubleMatrix
    \param projMatrix

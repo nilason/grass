@@ -91,15 +91,6 @@ class TestRandFunction(TestCase):
         self.assertModule("r.mapcalc", expression="nonrand_cell = 200")
         self.to_remove.append("nonrand_cell")
 
-    def test_seed_required(self):
-        """Test that seed is required when rand() is used
-
-        This test can, and probably should, generate an error message.
-        """
-        self.assertModuleFail("r.mapcalc", expression="rand_x = rand(1, 200)")
-        # TODO: assert map not exists but it would be handy here
-        # TODO: test that error message was generated
-
     def test_seed_cell(self):
         """Test given seed with CELL against reference map"""
         seed = 500
@@ -153,19 +144,15 @@ class TestRandFunction(TestCase):
         self.rinfo_contains_number("rand_fcell", seed)
 
     def test_auto_seed(self):
-        """Test that two runs with -s does not give same maps"""
-        self.assertModule(
-            "r.mapcalc", flags="s", expression="rand_auto_1 = rand(1., 2)"
-        )
+        """Test that two runs do not give same maps"""
+        self.assertModule("r.mapcalc", expression="rand_auto_1 = rand(1., 2)")
         self.to_remove.append("rand_auto_1")
-        self.assertModule(
-            "r.mapcalc", flags="s", expression="rand_auto_2 = rand(1., 2)"
-        )
+        self.assertModule("r.mapcalc", expression="rand_auto_2 = rand(1., 2)")
         self.to_remove.append("rand_auto_2")
         self.assertRastersDifference(
             "rand_auto_1",
             "rand_auto_2",
-            statistics=dict(min=-1, max=1, mean=0),
+            statistics={"min": -1, "max": 1, "mean": 0},
             precision=0.5,
         )  # low precision, we have few cells
 
@@ -197,7 +184,7 @@ class TestBasicOperations(TestCase):
 
     def test_difference_of_the_same_map_double(self):
         """Test zero difference of map with itself"""
-        self.runModule("r.mapcalc", flags="s", expression="a = rand(1.0, 200)")
+        self.runModule("r.mapcalc", expression="a = rand(1.0, 200)")
         self.to_remove.append("a")
         self.assertModule("r.mapcalc", expression="diff_a_a = a - a")
         self.to_remove.append("diff_a_a")
@@ -205,7 +192,7 @@ class TestBasicOperations(TestCase):
 
     def test_difference_of_the_same_map_float(self):
         """Test zero difference of map with itself"""
-        self.runModule("r.mapcalc", flags="s", expression="af = rand(float(1), 200)")
+        self.runModule("r.mapcalc", expression="af = rand(float(1), 200)")
         self.to_remove.append("af")
         self.assertModule("r.mapcalc", expression="diff_af_af = af - af")
         self.to_remove.append("diff_af_af")
@@ -213,7 +200,7 @@ class TestBasicOperations(TestCase):
 
     def test_difference_of_the_same_map_int(self):
         """Test zero difference of map with itself"""
-        self.runModule("r.mapcalc", flags="s", expression="ai = rand(1, 200)")
+        self.runModule("r.mapcalc", expression="ai = rand(1, 200)")
         self.to_remove.append("ai")
         self.assertModule("r.mapcalc", expression="diff_ai_ai = ai - ai")
         self.to_remove.append("diff_ai_ai")
@@ -279,17 +266,17 @@ class TestRegionOperations(TestCase):
             "r.info",
             map="test_region_4",
             flags="gr",
-            reference=dict(
-                min=6,
-                max=6,
-                cells=625,
-                north=30,
-                south=5,
-                west=5,
-                east=30,
-                nsres=1,
-                ewres=1,
-            ),
+            reference={
+                "min": 6,
+                "max": 6,
+                "cells": 625,
+                "north": 30,
+                "south": 5,
+                "west": 5,
+                "east": 30,
+                "nsres": 1,
+                "ewres": 1,
+            },
             precision=0.01,
             sep="=",
         )
@@ -308,17 +295,17 @@ class TestRegionOperations(TestCase):
             "r.info",
             map="test_region_5",
             flags="gr",
-            reference=dict(
-                min=6,
-                max=6,
-                cells=25,
-                north=20,
-                south=15,
-                west=15,
-                east=20,
-                nsres=1,
-                ewres=1,
-            ),
+            reference={
+                "min": 6,
+                "max": 6,
+                "cells": 25,
+                "north": 20,
+                "south": 15,
+                "west": 15,
+                "east": 20,
+                "nsres": 1,
+                "ewres": 1,
+            },
             precision=0.01,
             sep="=",
         )

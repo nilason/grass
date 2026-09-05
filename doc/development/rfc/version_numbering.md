@@ -1,4 +1,5 @@
-# RFC: Version Numbering
+<!-- markdownlint-disable-file line-length -->
+# RFC 9: Version Numbering
 
 Author: Vaclav Petras
 

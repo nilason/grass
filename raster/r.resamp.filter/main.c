@@ -482,18 +482,10 @@ int main(int argc, char *argv[])
     if (G_parser(argc, argv))
         exit(EXIT_FAILURE);
 
-    sscanf(parm.nprocs->answer, "%d", &nprocs);
-    if (nprocs < 1) {
-        G_fatal_error(_("<%d> is not valid number of threads."), nprocs);
-    }
-#if defined(_OPENMP)
-    omp_set_num_threads(nprocs);
-#else
-    if (nprocs != 1)
-        G_warning(_("GRASS is compiled without OpenMP support. Ignoring "
-                    "threads setting."));
-    nprocs = 1;
-#endif
+    nprocs = G_set_omp_num_threads(parm.nprocs);
+    nprocs = Rast_disable_omp_on_mask(nprocs);
+    if (nprocs < 1)
+        G_fatal_error(_("<%d> is not valid number of nprocs."), nprocs);
 
     if (parm.radius->answer) {
         if (parm.x_radius->answer || parm.y_radius->answer)
@@ -660,7 +652,8 @@ int main(int argc, char *argv[])
     Rast_close(outfile);
 
     /* record map metadata/history info */
-    sprintf(title, "Filter resample by %s", parm.method->answer);
+    snprintf(title, sizeof(title), "Filter resample by %s",
+             parm.method->answer);
     Rast_put_cell_title(parm.rastout->answer, title);
 
     {
