@@ -18,9 +18,11 @@ This program is free software under the GNU General Public License
 
 import platform
 import os
+from itertools import starmap
+from pathlib import Path
 
 import wx
-import wx.lib.agw.aui as aui
+from wx.lib.agw import aui
 
 from core import globalvar
 from core.debug import Debug
@@ -83,7 +85,7 @@ BaseIcons = {
     "mapDispSettings": MetaIcon(
         img="monitor-settings", label=_("Map Display Settings")
     ),
-    "mapDispDocking": MetaIcon(img="monitor-dock", label=_("(Un)dock Map Display")),
+    "docking": MetaIcon(img="monitor-dock", label=_("(Un)dock")),
 }
 
 
@@ -173,13 +175,11 @@ class ToolbarController:
             if isinstance(tool[0], tuple):
                 if tool[0][0] == "":  # separator
                     continue
-                else:
-                    internal_label = tool[0][0]
+                internal_label = tool[0][0]
             else:
                 if tool[0] == "":  # separator
                     continue
-                else:
-                    internal_label = tool[0]
+                internal_label = tool[0]
 
             label = vars(self.widget)[internal_label]
             if enable:
@@ -245,10 +245,7 @@ class ToolbarController:
 
     def _getToolbarData(self, data):
         """Define tool"""
-        retData = list()
-        for args in data:
-            retData.append(self._defineTool(*args))
-        return retData
+        return list(starmap(self._defineTool, data))
 
     def _defineTool(
         self, name=None, icon=None, handler=None, item=wx.ITEM_NORMAL, pos=-1
@@ -285,7 +282,7 @@ class ToolbarController:
         Button must be custom (not toolbar tool) to set smaller width.
         """
         arrowPath = os.path.join(IMGDIR, "small_down_arrow.png")
-        if os.path.isfile(arrowPath) and os.path.getsize(arrowPath):
+        if Path(arrowPath).is_file() and Path(arrowPath).stat().st_size:
             bitmap = wx.Bitmap(name=arrowPath)
         else:
             bitmap = wx.ArtProvider.GetBitmap(
@@ -330,7 +327,6 @@ class BaseToolbar(ToolBar):
 
     Following code shows how to create new basic toolbar:
 
-
         class MyToolbar(BaseToolbar):
             def __init__(self, parent):
                 BaseToolbar.__init__(self, parent)
@@ -368,7 +364,7 @@ class BaseToolbar(ToolBar):
 
     def _toolbarData(self):
         """Toolbar data (virtual)"""
-        return None
+        return
 
     def Enable(self, tool, enable=True):
         """@copydoc ToolbarController::Enable()"""
@@ -416,7 +412,7 @@ class AuiToolbar(aui.AuiToolBar):
 
     def _toolbarData(self):
         """Toolbar data (virtual)"""
-        return None
+        return
 
     def Enable(self, tool, enable=True):
         """@copydoc ToolbarController::Enable()"""

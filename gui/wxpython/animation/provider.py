@@ -19,11 +19,13 @@ This program is free software under the GNU General Public License
 
 @author Anna Petrasova <kratochanna gmail.com>
 """
+
 import os
 import sys
 import wx
 import tempfile
 from multiprocessing import Process, Queue
+from pathlib import Path
 
 from core.gcmd import GException, DecodeString
 from core.settings import UserSettings
@@ -92,9 +94,9 @@ class BitmapProvider:
         Applies to 2D mode.
 
         :param cmdsForComposition: list of lists of command lists
-                                   [[['d.rast', 'map=elev_2001'], ['d.vect', 'map=points']], # g.pnmcomp
-                                   [['d.rast', 'map=elev_2002'], ['d.vect', 'map=points']],
-                                   ...]
+                   [[['d.rast', 'map=elev_2001'], ['d.vect', 'map=points']], # g.pnmcomp
+                   [['d.rast', 'map=elev_2002'], ['d.vect', 'map=points']],
+                   ...]
         :param opacities: list of opacity values
         :param regions: list of regions
         """
@@ -120,8 +122,10 @@ class BitmapProvider:
     def _getUniqueCmds(self):
         """Returns list of unique commands.
         Takes into account the region assigned."""
-        unique = list()
-        for cmdList, region in zip(self._cmdsForComposition, self._regions):
+        unique = []
+        for cmdList, region in zip(
+            self._cmdsForComposition, self._regions, strict=False
+        ):
             for cmd in cmdList:
                 if region:
                     unique.append((tuple(cmd), tuple(sorted(region.items()))))
@@ -142,10 +146,14 @@ class BitmapProvider:
         """
         Debug.msg(2, "BitmapProvider.Unload")
         if self._cmdsForComposition:
-            for cmd, region in zip(self._uniqueCmds, self._regionsForUniqueCmds):
+            for cmd, region in zip(
+                self._uniqueCmds, self._regionsForUniqueCmds, strict=False
+            ):
                 del self._mapFilesPool[HashCmd(cmd, region)]
 
-            for cmdList, region in zip(self._cmdsForComposition, self._regions):
+            for cmdList, region in zip(
+                self._cmdsForComposition, self._regions, strict=False
+            ):
                 del self._bitmapPool[HashCmds(cmdList, region)]
             self._uniqueCmds = []
             self._cmdsForComposition = []
@@ -164,11 +172,11 @@ class BitmapProvider:
         :param regions: list of regions assigned to the commands
         """
         count = 0
-        for cmd, region in zip(uniqueCmds, regions):
+        for cmd, region in zip(uniqueCmds, regions, strict=False):
             filename = GetFileFromCmd(self._tempDir, cmd, region)
             if (
                 not force
-                and os.path.exists(filename)
+                and Path(filename).exists()
                 and self._mapFilesPool.GetSize(HashCmd(cmd, region))
                 == (self.imageWidth, self.imageHeight)
             ):
@@ -190,7 +198,7 @@ class BitmapProvider:
         :param force: if forced rerendering
         """
         count = 0
-        for cmdList, region in zip(cmdLists, regions):
+        for cmdList, region in zip(cmdLists, regions, strict=False):
             if (
                 not force
                 and HashCmds(cmdList, region) in self._bitmapPool
@@ -216,8 +224,9 @@ class BitmapProvider:
         """
         Debug.msg(
             2,
-            "BitmapProvider.Load: "
-            "force={f}, bgcolor={b}, nprocs={n}".format(f=force, b=bgcolor, n=nprocs),
+            "BitmapProvider.Load: force={f}, bgcolor={b}, nprocs={n}".format(
+                f=force, b=bgcolor, n=nprocs
+            ),
         )
         cmds = []
         regions = []
@@ -327,9 +336,8 @@ class BitmapProvider:
 
         if returncode == 0:
             return BitmapFromImage(autoCropImageFromFile(filename))
-        else:
-            os.remove(filename)
-            raise GException(messages)
+        os.remove(filename)
+        raise GException(messages)
 
 
 class BitmapRenderer:
@@ -365,13 +373,13 @@ class BitmapRenderer:
         cmd_list = []
 
         filteredCmdList = []
-        for cmd, region in zip(cmdList, regions):
+        for cmd, region in zip(cmdList, regions, strict=False):
             if cmd[0] == "m.nviz.image":
                 region = None
             filename = GetFileFromCmd(self._tempDir, cmd, region)
             if (
                 not force
-                and os.path.exists(filename)
+                and Path(filename).exists()
                 and self._mapFilesPool.GetSize(HashCmd(cmd, region))
                 == (self.imageWidth, self.imageHeight)
             ):
@@ -427,9 +435,9 @@ class BitmapRenderer:
                 for i in range(len(cmd_list)):
                     proc_list[i].join()
                     filename = queue_list[i].get()
-                    self._mapFilesPool[
-                        HashCmd(cmd_list[i][0], cmd_list[i][1])
-                    ] = filename
+                    self._mapFilesPool[HashCmd(cmd_list[i][0], cmd_list[i][1])] = (
+                        filename
+                    )
                     self._mapFilesPool.SetSize(
                         HashCmd(cmd_list[i][0], cmd_list[i][1]),
                         (self.imageWidth, self.imageHeight),
@@ -490,7 +498,7 @@ class BitmapComposer:
         cmd_lists = []
 
         filteredCmdLists = []
-        for cmdList, region in zip(cmdLists, regions):
+        for cmdList, region in zip(cmdLists, regions, strict=False):
             if (
                 not force
                 and HashCmds(cmdList, region) in self._bitmapPool
@@ -540,15 +548,17 @@ class BitmapComposer:
                     proc_list[i].join()
                     filename = queue_list[i].get()
                     if filename is None:
-                        self._bitmapPool[
-                            HashCmds(cmd_lists[i][0], cmd_lists[i][1])
-                        ] = createNoDataBitmap(
-                            self.imageWidth, self.imageHeight, text="Failed to render"
+                        self._bitmapPool[HashCmds(cmd_lists[i][0], cmd_lists[i][1])] = (
+                            createNoDataBitmap(
+                                self.imageWidth,
+                                self.imageHeight,
+                                text="Failed to render",
+                            )
                         )
                     else:
-                        self._bitmapPool[
-                            HashCmds(cmd_lists[i][0], cmd_lists[i][1])
-                        ] = BitmapFromImage(wx.Image(filename))
+                        self._bitmapPool[HashCmds(cmd_lists[i][0], cmd_lists[i][1])] = (
+                            BitmapFromImage(wx.Image(filename))
+                        )
                         os.remove(filename)
                 proc_count = 0
                 proc_list = []
@@ -655,7 +665,7 @@ def CompositeProcess(
     :param tempDir: directory for rendering
     :param cmdList: list of d.rast/d.vect commands
     :param region: region as a dict or None
-    :param opacites: list of opacities
+    :param opacities: list of opacities
     :param bgcolor: background color as a tuple of 3 values 0 to 255
     :param fileQueue: the inter process communication queue
                       storing the file name of the image
@@ -755,14 +765,15 @@ class MapFilesPool(DictRefCounter):
         Debug.msg(4, "MapFilesPool.Clear")
 
         for key in list(self.dictionary.keys()):
-            if self.referenceCount[key] <= 0:
-                name, ext = os.path.splitext(self.dictionary[key])
-                os.remove(self.dictionary[key])
-                if ext == ".ppm":
-                    os.remove(name + ".pgm")
-                del self.dictionary[key]
-                del self.referenceCount[key]
-                del self.size[key]
+            if self.referenceCount[key] > 0:
+                continue
+            name, ext = os.path.splitext(self.dictionary[key])
+            os.remove(self.dictionary[key])
+            if ext == ".ppm":
+                os.remove(name + ".pgm")
+            del self.dictionary[key]
+            del self.referenceCount[key]
+            del self.size[key]
 
 
 class BitmapPool(DictRefCounter):
@@ -781,7 +792,7 @@ class CleanUp:
     def __call__(self):
         import shutil
 
-        if os.path.exists(self._tempDir):
+        if Path(self._tempDir).exists():
             try:
                 shutil.rmtree(self._tempDir)
                 Debug.msg(5, "CleanUp: removed directory {t}".format(t=self._tempDir))
@@ -891,10 +902,10 @@ def test():
     mapFilesPool = MapFilesPool()
 
     tempDir = "/tmp/test"
-    if os.path.exists(tempDir):
+    if Path(tempDir).exists():
         shutil.rmtree(tempDir)
-    os.mkdir(tempDir)
-    # comment this line to keep the directory after prgm ends
+    Path(tempDir).mkdir()
+    # comment this line to keep the directory after program ends
     #    cleanUp = CleanUp(tempDir)
     #    import atexit
     #    atexit.register(cleanUp)
@@ -921,7 +932,7 @@ def test():
     prov.mapsLoaded.connect(lambda: sys.stdout.write("Maps loading finished\n"))
     cmdMatrix = layerListToCmdsMatrix(layerList)
     prov.SetCmds(cmdMatrix, [layer.opacity for layer in layerList])
-    app = wx.App()
+    wx.App()
 
     prov.Load(bgcolor=(13, 156, 230), nprocs=4)
 

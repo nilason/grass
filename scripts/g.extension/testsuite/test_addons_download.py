@@ -23,7 +23,10 @@ from grass.gunittest.case import TestCase
 from grass.gunittest.gmodules import SimpleModule
 from grass.gunittest.main import test
 from grass.gunittest.utils import silent_rmtree
+from grass.app.runtime import RuntimePaths
 
+runtime_paths = RuntimePaths()
+is_cmake = runtime_paths.is_cmake_build
 ms_windows = sys.platform == "win32" or sys.platform == "cygwin"
 
 
@@ -49,17 +52,17 @@ class TestModuleDownloadFromDifferentSources(TestCase):
     def setUp(self):
         """Make sure we are not dealing with some old files"""
         if self.install_prefix.exists():
-            files = list(path.name for path in self.install_prefix.iterdir())
+            files = [path.name for path in self.install_prefix.iterdir()]
             if files:
-                RuntimeError(
-                    f"Install prefix path '{self.install_prefix}' \
+                msg = f"Install prefix path '{self.install_prefix}' \
                     contains files {','.join(files)}"
-                )
+                raise RuntimeError(msg)
 
     def tearDown(self):
         """Remove created files"""
         silent_rmtree(str(self.install_prefix))
 
+    @unittest.skipIf(is_cmake, "currently not supported by CMake build")
     @unittest.skipIf(ms_windows, "currently not supported on MS Windows")
     def test_github_install(self):
         """Test installing extension from github"""
@@ -77,6 +80,7 @@ class TestModuleDownloadFromDifferentSources(TestCase):
             if file.suffix != ".html":
                 self.assertModule(str(file), help=True)
 
+    @unittest.skipIf(is_cmake, "currently not supported by CMake build")
     @unittest.skipIf(ms_windows, "currently not supported on MS Windows")
     def test_gitlab_install(self):
         """Test installing extension from gitlab"""
@@ -159,7 +163,7 @@ class TestModuleDownloadFromDifferentSources(TestCase):
 
         for file in files:
             self.assertFileExists(file)
-            if file.suffix != ".html" and file.suffix != ".py":
+            if file.suffix not in {".html", ".py"}:
                 self.assertModule(str(file), help=True)
 
     def test_github_install_official_non_exists_module(self):
@@ -203,8 +207,7 @@ class TestModuleDownloadFromDifferentSources(TestCase):
         )
         html_man_page = self.install_prefix / "docs" / "html" / "db.join.html"
         self.assertFileExists(str(html_man_page))
-        with open(html_man_page) as f:
-            content = f.read()
+        content = Path(html_man_page).read_text()
         for link_name in [f"{extension} source code", "history"]:
             url = re.search(rf"<a href=\"(.*)\">{link_name}</a>", content).group(1)
             self.assertTrue(url)
@@ -220,7 +223,7 @@ class TestModuleDownloadFromDifferentSources(TestCase):
     def test_github_install_official_multimodule_and_check_metadata(self):
         """Test installing multi-module extension from official addons
         repository without printing warning no metadata available message
-        for module wich install HTML page file only"""
+        for module which install HTML page file only"""
         extension = "i.sentinel"
         gextension = SimpleModule(
             "g.extension",
