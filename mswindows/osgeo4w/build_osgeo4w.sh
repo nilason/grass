@@ -13,7 +13,7 @@
 
 # stop on errors
 set -e
-
+set -x
 
 # compile
 export PATH=${OSGEO4W_ROOT_MSYS}/bin:/usr/bin:/mingw64/bin
@@ -103,11 +103,18 @@ fi
 
 echo "-- bin/grass.py: ${bin}/grass.py"
 cat ${bin}/grass.py
+# sys.stdout.write("%s\n" % r"D:/a/grass/grass/dist.x86_64-w64-mingw32/etc/python")
+
+
+
 gisbase="${OSGEO4W_ROOT_MSYS}/apps/grass/grass${ver}"
 escaped_gisbase=$(printf '%s\n' "$gisbase" | sed 's/[&|\]/\\&/g')
+echo "escaped_gisbase: <${escaped_gisbase}>"
+echo ${dist}/etc/python/grass/app/resource_paths.py
 sed -i "s|^\(GRASS_PREFIX = \"\)[^\"]*\"|\1${escaped_gisbase}\"|" \
     ${dist}/etc/python/grass/app/resource_paths.py
-
+echo "AFTER:"
+echo ${dist}/etc/python/grass/app/resource_paths.py
 
 # create batch files
 src_esc=$(echo ${SRC} | sed 's#^/\([a-z]\)#\1:#; s#/#\\\\\\\\#g')
