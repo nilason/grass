@@ -109,7 +109,16 @@ jobs:
       - name: Print installed versions
         if: always()
         shell: msys2 {0}
-        run: .github/workflows/print_versions.sh
+        run: |
+          echo "OSGeo4W.bat"
+          cat /c/OSGeo4W/OSGeo4W.bat
+          echo "grass86.bat"
+          cat /c/OSGeo4W\opt\grass\grass86.bat
+          echo "etc\env.bat"
+          cat /c/OSGeo4W\opt\grass\etc\env.bat
+          echo "resource_paths.py"
+          cat /c/OSGeo4W\apps\grass\grass86\etc\python\python/grass/app/resource_paths.py
+          .github/workflows/print_versions.sh
 
       - name: Test executing of the grass command
         run: .github/workflows/test_simple.bat '%O4WROOT%\opt\grass\grass86.bat'
