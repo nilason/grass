@@ -100,6 +100,14 @@ if [ "$UNITTEST" ]; then
     export PATH="$PATH:${SRC}/dist.${ARCH}/$bash_bin"
 fi
 
+
+gisbase="${OSGEO4W_ROOT_MSYS}/apps/grass/grass${ver}"
+sed -i "s/^\(GRASS_PREFIX = \"\)[^\"]*\"/\1${gisbase}\"/" \
+    ${dist}/etc/python/grass/app/resource_paths.py
+echo "-- bin/grass.py: ${bin}/grass.py"
+cat ${bin}/grass.py
+
+
 # create batch files
 src_esc=$(echo ${SRC} | sed 's#^/\([a-z]\)#\1:#; s#/#\\\\\\\\#g')
 dist_esc="$src_esc\\\\$dist"

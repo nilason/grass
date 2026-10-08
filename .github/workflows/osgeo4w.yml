@@ -110,13 +110,15 @@ jobs:
         if: always()
         shell: msys2 {0}
         run: |
-          echo "OSGeo4W.bat"
+          echo "-- OSGeo4W.bat"
           cat /c/OSGeo4W/OSGeo4W.bat
-          echo "grass86.bat"
+          echo "-- grass86.bat"
           cat /c/OSGeo4W/opt/grass/grass86.bat
-          echo "etc/env.bat"
+          echo "-- etc/env.bat"
           cat /c/OSGeo4W/opt/grass/etc/env.bat
-          echo "resource_paths.py"
+          echo "-- resource_paths.py"
+          cat /c/OSGeo4W/apps/grass/grass86/etc/python/grass/app/resource_paths.py
+          echo "-- grass"
           cat /c/OSGeo4W/apps/grass/grass86/etc/python/grass/app/resource_paths.py
           .github/workflows/print_versions.sh
 
