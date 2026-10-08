@@ -144,6 +144,7 @@ jobs:
         run: |
           call %OSGEO4W_ROOT%\opt\grass\etc\env.bat
           set GRASS_ETCDIR=%GISBASE%\etc
+          type %GISBASE%\etc\python\grass\app\resource_paths.py
           pytest ^
             @.github/workflows/pytest_args_ci.txt ^
             @.github/workflows/pytest_args_parallel.txt ^
@@ -167,6 +168,7 @@ jobs:
         run: |
           call %OSGEO4W_ROOT%\opt\grass\etc\env.bat
           set PYTHONPATH=%GISBASE%\etc\python;%PYTHONPATH%
+          type %GISBASE%\etc\python\grass\app\resource_paths.py
           set GRASS_ETCDIR=%GISBASE%\etc
           path %GISBASE%\lib;%GISBASE%\bin;%PATH%;%OSGEO4W_ROOT%\opt\grass
           pytest ^
