@@ -116,10 +116,6 @@ jobs:
           cat /c/OSGeo4W/opt/grass/grass86.bat
           echo "-- etc/env.bat"
           cat /c/OSGeo4W/opt/grass/etc/env.bat
-          echo "-- resource_paths.py"
-          cat /c/OSGeo4W/apps/grass/grass86/etc/python/grass/app/resource_paths.py
-          echo "-- grass"
-          cat /c/OSGeo4W/apps/grass/grass86/etc/python/grass/app/resource_paths.py
           .github/workflows/print_versions.sh
 
       - name: Test executing of the grass command
@@ -143,7 +139,9 @@ jobs:
       - name: Run pytest with multiple workers in parallel
         run: |
           call %OSGEO4W_ROOT%\opt\grass\etc\env.bat
-          set GRASS_ETCDIR=%GISBASE%\etc
+          echo OSGEO4W_ROOT-- %OSGEO4W_ROOT%
+          echo GISBASE-- %GISBASE%
+          set GRASS_PYDIR=%OSGEO4W_ROOT%\apps\grass\grass86\etc\python
           type %GISBASE%\etc\python\grass\app\resource_paths.py
           pytest ^
             @.github/workflows/pytest_args_ci.txt ^
@@ -157,6 +155,7 @@ jobs:
       - name: Run pytest with a single worker (for tests marked with needs_solo_run)
         run: |
           call %OSGEO4W_ROOT%\opt\grass\etc\env.bat
+          set GRASS_PYDIR=%OSGEO4W_ROOT%\apps\grass\grass86\etc\python
           pytest ^
             @.github/workflows/pytest_args_ci.txt ^
             @.github/workflows/pytest_args_not_parallel.txt ^
