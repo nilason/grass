@@ -101,14 +101,11 @@ if [ "$UNITTEST" ]; then
 fi
 
 
-echo "-- bin/grass.py: ${bin}/grass.py"
-cat ${bin}/grass.py
-# sys.stdout.write("%s\n" % r"D:/a/grass/grass/dist.x86_64-w64-mingw32/etc/python")
-# replacement="D:/new/path"
-# sed -i "s|r\"[^\"]*dist\.x86_64-w64-mingw32/etc/python\"|r\"${replacement}\"|" file.txt
+grass_pydir="${OSGEO4W_ROOT_MSYS}/ops/grass/etc/python"
+grass_pydir_esc=$(sed 's/[\/\*\.]/\\&/g' <<<"${grass_pydir}")
+sed -i "s|r\"[^\"]*dist\.x86_64-w64-mingw32/etc/python\"|r\"${grass_pydir_esc}\"|" ${bin}/grass.py
 
-
-gisbase="${OSGEO4W_ROOT_MSYS}/apps/grass/grass${ver}"
+gisbase="${OSGEO4W_ROOT_MSYS}/opt/grass"
 escaped_gisbase=$(printf '%s\n' "$gisbase" | sed 's/[&|\]/\\&/g')
 echo "escaped_gisbase: <${escaped_gisbase}>"
 cat ${dist}/etc/python/grass/app/resource_paths.py
