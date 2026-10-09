@@ -101,7 +101,7 @@ if [ "$UNITTEST" ]; then
 fi
 
 
-grass_pydir="${OSGEO4W_ROOT_MSYS}/ops/grass/etc/python"
+grass_pydir="${OSGEO4W_ROOT_MSYS}/opt/grass/etc/python"
 grass_pydir_esc=$(sed 's/[\/\*\.]/\\&/g' <<<"${grass_pydir}")
 sed -i "s|r\"[^\"]*dist\.x86_64-w64-mingw32/etc/python\"|r\"${grass_pydir_esc}\"|" ${bin}/grass.py
 
