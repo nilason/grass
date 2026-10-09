@@ -206,3 +206,11 @@ if [ "$UNITTEST" ]; then
     printf "export PATH=\"${OSGEO4W_ROOT_MSYS}/bin:/usr/bin:/mingw64/bin:${SRC}/dist.${ARCH}/bin:${SRC}/dist.${ARCH}/$bash_bin\"\nexport PYTHONHOME=\"${PYTHONHOME}\"\nexport PYTHONUTF8=1" > $HOME/.profile
     printf "export PATH=\"${OSGEO4W_ROOT_MSYS}/bin:/usr/bin:/mingw64/bin:${SRC}/dist.${ARCH}/bin:${SRC}/dist.${ARCH}/$bash_bin\"\nexport PYTHONHOME=\"${PYTHONHOME}\"\nexport PYTHONUTF8=1" > $HOME/.bashrc
 fi
+
+echo OSGEO4W_ROOT_MSYS
+echo "----------------"
+find ${OSGEO4W_ROOT_MSYS}
+
+echo dist
+echo "----------------"
+find ${dist}
