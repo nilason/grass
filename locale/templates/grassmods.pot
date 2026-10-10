@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-03 18:51+0000\n"
+"POT-Creation-Date: 2026-10-10 19:31+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -90,7 +90,7 @@ msgstr ""
 #: ../general/g.mapset/main.c:34 ../general/g.mapsets/list.c:34
 #: ../misc/m.measure/main.c:179 ../raster/r.distance/report.c:135
 #: ../raster/r.regression.line/main.c:266
-#: ../raster/r.regression.multi/main.c:693 ../raster/r.sim/simlib/summary.c:135
+#: ../raster/r.regression.multi/main.c:693 ../raster/r.sim/simlib/summary.c:137
 #: ../raster/r.stats.quantile/main.c:472 ../raster/r.volume/main.c:445
 #: ../raster3d/r3.info/main.c:990 ../temporal/t.connect/main.c:214
 #: ../vector/v.class/main.c:386 ../vector/v.db.connect/main.c:427
@@ -152,10 +152,10 @@ msgstr ""
 #: ../raster/r.out.gdal/main.c:139 ../raster/r.profile/main.c:116
 #: ../raster/r.proj/main.c:203 ../raster/r.proj/main.c:214
 #: ../raster/r.proj/main.c:226 ../raster/r.proj/main.c:235
-#: ../raster/r.sim/r.sim.sediment/main.c:310
-#: ../raster/r.sim/r.sim.sediment/main.c:313
-#: ../raster/r.sim/r.sim.water/main.c:345
-#: ../raster/r.sim/r.sim.water/main.c:348 ../raster/r.stats/main.c:157
+#: ../raster/r.sim/r.sim.sediment/main.c:305
+#: ../raster/r.sim/r.sim.sediment/main.c:308
+#: ../raster/r.sim/r.sim.water/main.c:340
+#: ../raster/r.sim/r.sim.water/main.c:343 ../raster/r.stats/main.c:157
 #: ../raster/r.sunmask/main.c:230 ../raster/r.sunmask/main.c:236
 #: ../raster/r.univar/r.univar_main.c:124
 #: ../raster/r.univar/r3.univar_main.c:86 ../raster/r.what/main.c:131
@@ -346,7 +346,7 @@ msgstr ""
 #: ../raster/r.info/main.c:144 ../raster/r.kappa/print_json.c:25
 #: ../raster/r.proj/main.c:478 ../raster/r.regression.line/main.c:98
 #: ../raster/r.regression.multi/main.c:194
-#: ../raster/r.regression.multi/main.c:563 ../raster/r.sim/simlib/summary.c:73
+#: ../raster/r.regression.multi/main.c:563 ../raster/r.sim/simlib/summary.c:74
 #: ../raster/r.stats.quantile/main.c:430 ../raster/r.stats.quantile/main.c:447
 #: ../raster/r.univar/stats.c:101 ../raster/r.univar/stats.c:145
 #: ../raster/r.univar/stats.c:436 ../raster/r.volume/main.c:406
@@ -1914,7 +1914,7 @@ msgstr ""
 #: ../raster/r.li/r.li.pielou/pielou.c:46 ../raster/r.li/r.li.renyi/renyi.c:47
 #: ../raster/r.li/r.li.richness/richness.c:42
 #: ../raster/r.li/r.li.shannon/shannon.c:43 ../raster/r.li/r.li.shape/main.c:45
-#: ../raster/r.li/r.li.simpson/simpson.c:43 ../raster/r.mapcalc/main.c:106
+#: ../raster/r.li/r.li.simpson/simpson.c:43 ../raster/r.mapcalc/main.c:105
 #: ../raster/r.mask.status/main.c:33 ../raster/r.mfilter/main.c:62
 #: ../raster/r.mode/main.c:50 ../raster/r.neighbors/main.c:178
 #: ../raster/r.null/main.c:55 ../raster/r.object.geometry/main.c:73
@@ -2309,7 +2309,7 @@ msgstr ""
 #: ../raster/r.carve/vect.c:27 ../raster/r.contour/main.c:152
 #: ../raster/r.drain/main.c:201 ../raster/r.flow/flow_io.c:181
 #: ../raster/r.path/main.c:258 ../raster/r.random/random.c:58
-#: ../raster/r.resamp.bspline/main.c:481 ../raster/r.sim/simlib/output.c:51
+#: ../raster/r.resamp.bspline/main.c:481 ../raster/r.sim/simlib/output.c:52
 #: ../raster/r.stream.extract/close.c:38 ../raster/r.to.vect/main.c:167
 #: ../raster/r.volume/main.c:229 ../raster3d/r3.flow/main.c:380
 #: ../scripts/v.what.strds/v.what.strds.py:226 ../vector/v.buffer/main.c:398
@@ -4106,7 +4106,6 @@ msgstr ""
 msgid "Get text color from cell color value"
 msgstr ""
 
-#. GTC Count of window rows
 #. GTC Count of raster rows
 #. GTC Count of window rows
 #: ../display/d.rast.num/main.c:208 ../raster/r.thin/io.c:110
@@ -5346,9 +5345,9 @@ msgstr ""
 #: ../raster/r.ros/main.c:379 ../raster/r.ros/main.c:384
 #: ../raster/r.ros/main.c:398 ../raster/r.ros/main.c:402
 #: ../raster/r.ros/main.c:417 ../raster/r.ros/main.c:421
-#: ../raster/r.ros/main.c:431 ../raster/r.sim/simlib/output.c:396
-#: ../raster/r.sim/simlib/output.c:422 ../raster/r.sim/simlib/output.c:462
-#: ../raster/r.sim/simlib/output.c:628
+#: ../raster/r.ros/main.c:431 ../raster/r.sim/simlib/output.c:398
+#: ../raster/r.sim/simlib/output.c:424 ../raster/r.sim/simlib/output.c:464
+#: ../raster/r.sim/simlib/output.c:630
 #: ../raster/r.smooth.edgepreserve/main.c:142 ../raster/r.spread/main.c:442
 #: ../raster/r.spread/main.c:445 ../raster/r.spread/main.c:448
 #: ../raster/r.spread/main.c:452 ../raster/r.spread/main.c:455
@@ -8652,7 +8651,7 @@ msgstr ""
 #: ../raster/r.sim/r.sim.sediment/main.c:253
 #: ../raster/r.sim/r.sim.sediment/main.c:262
 #: ../raster/r.sim/r.sim.sediment/main.c:280
-#: ../raster/r.sim/r.sim.sediment/main.c:305
+#: ../raster/r.sim/r.sim.sediment/main.c:300
 #: ../raster/r.sim/r.sim.water/main.c:235
 #: ../raster/r.sim/r.sim.water/main.c:244
 #: ../raster/r.sim/r.sim.water/main.c:256
@@ -8661,7 +8660,7 @@ msgstr ""
 #: ../raster/r.sim/r.sim.water/main.c:293
 #: ../raster/r.sim/r.sim.water/main.c:301
 #: ../raster/r.sim/r.sim.water/main.c:310
-#: ../raster/r.sim/r.sim.water/main.c:340 ../vector/v.surf.rst/main.c:162
+#: ../raster/r.sim/r.sim.water/main.c:335 ../vector/v.surf.rst/main.c:162
 #: ../vector/v.surf.rst/main.c:167 ../vector/v.surf.rst/main.c:190
 #: ../vector/v.surf.rst/main.c:265 ../vector/v.surf.rst/main.c:271
 #: ../vector/v.surf.rst/main.c:279 ../vector/v.surf.rst/main.c:288
@@ -12056,8 +12055,8 @@ msgstr ""
 msgid "Predict with a Support Vector Machine"
 msgstr ""
 
-#. GTC: SVM training input
 #. GTC: SVM prediction input
+#. GTC: SVM training input
 #: ../imagery/i.svm.predict/main.c:58 ../imagery/i.svm.train/main.c:60
 msgid "Maps with feature values (attributes)"
 msgstr ""
@@ -14306,7 +14305,7 @@ msgstr ""
 #: ../locale/scriptstrings/t.rast3d.algebra_to_translate.c:3
 #: ../locale/scriptstrings/t.rast3d.mapcalc_to_translate.c:3
 #: ../locale/scriptstrings/t.vect.algebra_to_translate.c:3
-#: ../raster/r.mapcalc/main.c:107 ../raster/r.mfilter/main.c:63
+#: ../raster/r.mapcalc/main.c:106 ../raster/r.mfilter/main.c:63
 #: ../raster/r.mode/main.c:52 ../raster/r.neighbors/main.c:179
 #: ../raster/r.quantile/main.c:298 ../raster/r.texture/main.c:96
 #: ../raster3d/r3.neighbors/main.c:202 ../vector/v.neighbors/main.c:116
@@ -18389,7 +18388,7 @@ msgid "Name of input raster files"
 msgstr ""
 
 #: ../raster/r.buildvrt/main.c:105 ../raster/r.external/main.c:181
-#: ../raster/r.mapcalc/main.c:174 ../raster/r.series.accumulate/main.c:204
+#: ../raster/r.mapcalc/main.c:173 ../raster/r.series.accumulate/main.c:204
 #: ../raster/r.series.interp/main.c:129 ../raster/r.series.interp/main.c:133
 #: ../raster/r.series.interp/main.c:145 ../raster/r.series.interp/main.c:149
 #: ../vector/v.colors/main.c:219
@@ -23407,72 +23406,73 @@ msgstr ""
 msgid "Known functions:"
 msgstr ""
 
-#: ../raster/r.mapcalc/main.c:108
+#: ../raster/r.mapcalc/main.c:107
 msgid "Raster map calculator."
 msgstr ""
 
-#: ../raster/r.mapcalc/main.c:115
+#: ../raster/r.mapcalc/main.c:114
 msgid "Expression to evaluate"
 msgstr ""
 
-#: ../raster/r.mapcalc/main.c:116 ../raster/r.mapcalc/main.c:141
+#: ../raster/r.mapcalc/main.c:115 ../raster/r.mapcalc/main.c:140
 msgid "Expression"
 msgstr ""
 
-#: ../raster/r.mapcalc/main.c:124
+#: ../raster/r.mapcalc/main.c:123
 msgid "The computational region that should be used."
 msgstr ""
 
-#: ../raster/r.mapcalc/main.c:130
+#: ../raster/r.mapcalc/main.c:129
 msgid "current uses the current region of the mapset"
 msgstr ""
 
-#: ../raster/r.mapcalc/main.c:131
+#: ../raster/r.mapcalc/main.c:130
 msgid "intersect computes the intersection region between all input maps and uses the smallest resolution"
 msgstr ""
 
-#: ../raster/r.mapcalc/main.c:133
+#: ../raster/r.mapcalc/main.c:132
 msgid "union computes the union extent of all map regions and uses the smallest resolution"
 msgstr ""
 
-#: ../raster/r.mapcalc/main.c:140
+#: ../raster/r.mapcalc/main.c:139
 msgid "File containing expression(s) to evaluate"
 msgstr ""
 
-#: ../raster/r.mapcalc/main.c:148
+#: ../raster/r.mapcalc/main.c:147 ../raster/r.sim/r.sim.sediment/main.c:288
+#: ../raster/r.sim/r.sim.water/main.c:323
 msgid "Generate random seed (result is non-deterministic) [deprecated]"
 msgstr ""
 
-#: ../raster/r.mapcalc/main.c:150
+#: ../raster/r.mapcalc/main.c:149
 msgid "This flag is deprecated and will be removed in a future release. Seeding is automatic or use parameter seed."
 msgstr ""
 
-#: ../raster/r.mapcalc/main.c:155
+#: ../raster/r.mapcalc/main.c:154
 msgid "List input and output maps"
 msgstr ""
 
-#: ../raster/r.mapcalc/main.c:178
+#: ../raster/r.mapcalc/main.c:177 ../raster/r.sim/simlib/random.c:33
 #, c-format
 msgid "%s= and -%c are mutually exclusive"
 msgstr ""
 
-#: ../raster/r.mapcalc/main.c:189
+#: ../raster/r.mapcalc/main.c:188
 msgid "parse error"
 msgstr ""
 
-#: ../raster/r.mapcalc/main.c:205
+#: ../raster/r.mapcalc/main.c:204
 msgid "Flag 's' is deprecated and will be removed in a future release. Seeding is automatic or use parameter seed."
 msgstr ""
 
-#: ../raster/r.mapcalc/main.c:243
+#: ../raster/r.mapcalc/main.c:240
 msgid "r3.mapcalc does not support parallel execution."
 msgstr ""
 
-#: ../raster/r.mapcalc/main.c:249
+#: ../raster/r.mapcalc/main.c:246
 msgid "Parallel execution is not supported with rand() function"
 msgstr ""
 
-#: ../raster/r.mapcalc/main.c:257 ../raster/r.mfilter/main.c:124
+#: ../raster/r.mapcalc/main.c:254 ../raster/r.mfilter/main.c:124
 #: ../raster/r.neighbors/main.c:301 ../raster/r.patch/main.c:105
 #: ../raster/r.resamp.filter/main.c:486 ../raster/r.resamp.interp/main.c:123
 #: ../raster/r.resamp.stats/main.c:438 ../raster/r.series/main.c:222
@@ -23480,10 +23480,6 @@ msgstr ""
 #: ../raster/r.univar/r.univar_main.c:244
 #, c-format
 msgid "<%d> is not valid number of nprocs."
-msgstr ""
-
-#: ../raster/r.mapcalc/main.c:269
-msgid "Floating point error(s) occurred in the calculation"
 msgstr ""
 
 #: ../raster/r.mapcalc/map.c:223 ../raster/r.mapcalc/map3.c:184
@@ -27429,97 +27425,68 @@ msgstr ""
 msgid "Water diffusion constant"
 msgstr ""
 
-#: ../raster/r.sim/r.sim.sediment/main.c:286
-#: ../raster/r.sim/r.sim.water/main.c:321
-msgid "Seed for random number generator"
+#: ../raster/r.sim/r.sim.sediment/main.c:290
+#: ../raster/r.sim/r.sim.water/main.c:325
+msgid "This flag is deprecated and will be removed in a future release. Seeding is automatic or use parameter random_seed."
 msgstr ""
 
-#: ../raster/r.sim/r.sim.sediment/main.c:288
-#: ../raster/r.sim/r.sim.water/main.c:323
-msgid "The same seed can be used to obtain same results or random seed can be generated by other means."
-msgstr ""
-
-#: ../raster/r.sim/r.sim.sediment/main.c:293
-#: ../raster/r.sim/r.sim.water/main.c:328
-msgid "Generate random seed"
-msgstr ""
-
-#: ../raster/r.sim/r.sim.sediment/main.c:295
-#: ../raster/r.sim/r.sim.water/main.c:330
-msgid "Automatically generates random seed for random number generator (use when you don't want to provide the seed option)"
+#: ../raster/r.sim/r.sim.sediment/main.c:299
+#: ../raster/r.sim/r.sim.water/main.c:334
+msgid "Number of threads which will be used for parallel computation."
 msgstr ""
 
 #: ../raster/r.sim/r.sim.sediment/main.c:304
 #: ../raster/r.sim/r.sim.water/main.c:339
-msgid "Number of threads which will be used for parallel computation."
-msgstr ""
-
-#: ../raster/r.sim/r.sim.sediment/main.c:309
-#: ../raster/r.sim/r.sim.water/main.c:344
 msgid "Print run summary to standard output"
 msgstr ""
 
-#: ../raster/r.sim/r.sim.sediment/main.c:321
-#: ../raster/r.sim/r.sim.water/main.c:357
+#: ../raster/r.sim/r.sim.sediment/main.c:316
+#: ../raster/r.sim/r.sim.water/main.c:352
 #, c-format
 msgid "Lat/Long project is not supported by %s. Please reproject the data to a projected coordinate system."
 msgstr ""
 
-#: ../raster/r.sim/r.sim.sediment/main.c:334
-#: ../raster/r.sim/r.sim.water/main.c:370
-#, c-format
-msgid "Generated random seed (-s): %ld"
-msgstr ""
-
-#: ../raster/r.sim/r.sim.sediment/main.c:339
-#: ../raster/r.sim/r.sim.water/main.c:375 ../raster/r.surf.fractal/main.c:65
-#: ../raster/r.surf.gauss/main.c:66 ../raster/r.surf.random/main.c:115
-#: ../vector/v.ppa/main.c:175
-#, c-format
-msgid "Read random seed from %s option: %ld"
-msgstr ""
-
-#: ../raster/r.sim/r.sim.sediment/main.c:396
-#: ../raster/r.sim/r.sim.water/main.c:447 ../vector/v.surf.rst/main.c:410
+#: ../raster/r.sim/r.sim.sediment/main.c:379
+#: ../raster/r.sim/r.sim.water/main.c:430 ../vector/v.surf.rst/main.c:410
 #, c-format
 msgid "<%d> is not valid number of threads. Number of threads will be set on <%d>"
 msgstr ""
 
-#: ../raster/r.sim/r.sim.sediment/main.c:402
-#: ../raster/r.sim/r.sim.water/main.c:453 ../raster/r.sun/main.c:575
+#: ../raster/r.sim/r.sim.sediment/main.c:385
+#: ../raster/r.sim/r.sim.water/main.c:436 ../raster/r.sun/main.c:575
 #: ../vector/v.surf.rst/main.c:424
 msgid "Parallel processing disabled due to active mask."
 msgstr ""
 
-#: ../raster/r.sim/r.sim.sediment/main.c:410
-#: ../raster/r.sim/r.sim.water/main.c:461
+#: ../raster/r.sim/r.sim.sediment/main.c:393
+#: ../raster/r.sim/r.sim.water/main.c:444
 #, c-format
 msgid "Number of threads: %d"
 msgstr ""
 
-#: ../raster/r.sim/r.sim.sediment/main.c:426
-#: ../raster/r.sim/r.sim.water/main.c:556
+#: ../raster/r.sim/r.sim.sediment/main.c:409
+#: ../raster/r.sim/r.sim.water/main.c:539
 msgid "More than 100 files are going to be created !!!!!"
 msgstr ""
 
-#: ../raster/r.sim/r.sim.sediment/main.c:432
-#: ../raster/r.sim/r.sim.water/main.c:562
+#: ../raster/r.sim/r.sim.sediment/main.c:415
+#: ../raster/r.sim/r.sim.water/main.c:545
 #, c-format
 msgid "default nwalk=%d, rwalk=%f"
 msgstr ""
 
-#: ../raster/r.sim/r.sim.sediment/main.c:441
-#: ../raster/r.sim/r.sim.water/main.c:572
+#: ../raster/r.sim/r.sim.sediment/main.c:424
+#: ../raster/r.sim/r.sim.water/main.c:555
 #, c-format
 msgid "Using metric conversion factor %f, step=%f"
 msgstr ""
 
-#: ../raster/r.sim/r.sim.sediment/main.c:451
+#: ../raster/r.sim/r.sim.sediment/main.c:434
 msgid "You are not outputting any raster or site files"
 msgstr ""
 
-#: ../raster/r.sim/r.sim.sediment/main.c:454
-#: ../raster/r.sim/r.sim.water/main.c:585 ../vector/v.surf.rst/main.c:685
+#: ../raster/r.sim/r.sim.sediment/main.c:437
+#: ../raster/r.sim/r.sim.water/main.c:568 ../vector/v.surf.rst/main.c:685
 #: ../vector/v.surf.rst/main.c:757 ../vector/v.vol.rst/main.c:912
 msgid "Input failed"
 msgstr ""
@@ -27597,91 +27564,96 @@ msgstr ""
 msgid "Time-series output"
 msgstr ""
 
-#: ../raster/r.sim/r.sim.water/main.c:582
+#: ../raster/r.sim/r.sim.water/main.c:565
 msgid "You are not outputting any raster maps"
 msgstr ""
 
-#: ../raster/r.sim/simlib/hydro.c:78
+#: ../raster/r.sim/simlib/hydro.c:87
+#, c-format
+msgid "%d walkers over %d time steps may draw more random numbers than one seed provides; the random numbers of some walkers then repeat those of others shifted by a constant"
+msgstr ""
+
+#: ../raster/r.sim/simlib/hydro.c:100
 #, c-format
 msgid "Processing block %d of %d"
 msgstr ""
 
-#: ../raster/r.sim/simlib/hydro.c:388
+#: ../raster/r.sim/simlib/hydro.c:407
 msgid "Unable to write raster maps"
 msgstr ""
 
-#: ../raster/r.sim/simlib/hydro.c:490
+#: ../raster/r.sim/simlib/hydro.c:509
 msgid "Cannot write raster maps"
 msgstr ""
 
-#: ../raster/r.sim/simlib/input.c:122
+#: ../raster/r.sim/simlib/input.c:123
 msgid "Manning's n raster map not found and manin_val undefined, choose one to be allowed to process"
 msgstr ""
 
-#: ../raster/r.sim/simlib/input.c:246
+#: ../raster/r.sim/simlib/input.c:247
 msgid "Zero value in Mannings n"
 msgstr ""
 
-#: ../raster/r.sim/simlib/input.c:309
+#: ../raster/r.sim/simlib/input.c:310
 msgid "No values in the elevation raster."
 msgstr ""
 
-#: ../raster/r.sim/simlib/input.c:344
+#: ../raster/r.sim/simlib/input.c:345
 #, c-format
 msgid "Time step of %.2f s is longer than output_step of %d s, some output steps may be skipped"
 msgstr ""
 
-#: ../raster/r.sim/simlib/input.c:349
+#: ../raster/r.sim/simlib/input.c:350
 #, c-format
 msgid ""
 "Min elevation \t= %.2f m\n"
 "Max elevation \t= %.2f m\n"
 msgstr ""
 
-#: ../raster/r.sim/simlib/input.c:351
+#: ../raster/r.sim/simlib/input.c:352
 #, c-format
 msgid "Mean Source Rate (rainf. excess or sediment) \t= %f m/s or kg/m2s \n"
 msgstr ""
 
-#: ../raster/r.sim/simlib/input.c:354
+#: ../raster/r.sim/simlib/input.c:355
 #, c-format
 msgid "Mean flow velocity \t= %f m/s\n"
 msgstr ""
 
-#: ../raster/r.sim/simlib/input.c:358
+#: ../raster/r.sim/simlib/input.c:359
 #, c-format
 msgid "Mean Mannings \t= %f\n"
 msgstr ""
 
-#: ../raster/r.sim/simlib/input.c:360
+#: ../raster/r.sim/simlib/input.c:361
 msgid "Mean Mannings \t= undefined (chmean is zero)\n"
 msgstr ""
 
-#: ../raster/r.sim/simlib/input.c:364
+#: ../raster/r.sim/simlib/input.c:365
 #, c-format
 msgid "Number of iterations \t= %d cell\n"
 msgid_plural "Number of iterations \t= %d cells\n"
 msgstr[0] ""
 msgstr[1] ""
 
-#: ../raster/r.sim/simlib/input.c:367
+#: ../raster/r.sim/simlib/input.c:368
 #, c-format
 msgid "Time step \t= %.2f s\n"
 msgstr ""
 
-#: ../raster/r.sim/simlib/input.c:369
+#: ../raster/r.sim/simlib/input.c:370
 #, c-format
 msgid ""
 "Sigmax \t= %f\n"
 "Max velocity \t= %f m/s\n"
 msgstr ""
 
-#: ../raster/r.sim/simlib/input.c:370
+#: ../raster/r.sim/simlib/input.c:371
 #, c-format
 msgid "Time step used \t= %.2f s\n"
 msgstr ""
 
-#: ../raster/r.sim/simlib/input.c:421
+#: ../raster/r.sim/simlib/input.c:422
 msgid "Unable to write et file"
 msgstr ""
 
@@ -27695,9 +27667,29 @@ msgstr ""
 msgid "Unable to open observation logfile %s for writing"
 msgstr ""
 
-#: ../raster/r.sim/simlib/output.c:367
+#: ../raster/r.sim/simlib/output.c:369
 #, c-format
 msgid "FP raster map <%s> not found"
+msgstr ""
+
+#: ../raster/r.sim/simlib/random.c:36
+#, c-format
+msgid "Flag '%c' is deprecated and will be removed in a future release. Seeding is automatic or use parameter %s."
+msgstr ""
+
+#: ../raster/r.sim/simlib/random.c:47
+#, c-format
+msgid "Invalid random seed <%s>"
+msgstr ""
+
+#: ../raster/r.sim/simlib/random.c:49
+#, c-format
+msgid "Read random seed from %s option: %<PRId64>"
+msgstr ""
+
+#: ../raster/r.sim/simlib/random.c:54
+#, c-format
+msgid "Generated random seed: %<PRId64>"
 msgstr ""
 
 #: ../raster/r.slope.aspect/main.c:165
@@ -29740,6 +29732,12 @@ msgstr ""
 msgid "Number of intermediate images to produce"
 msgstr ""
 
+#: ../raster/r.surf.fractal/main.c:65 ../raster/r.surf.gauss/main.c:66
+#: ../raster/r.surf.random/main.c:115 ../vector/v.ppa/main.c:175
+#, c-format
+msgid "Read random seed from %s option: %ld"
+msgstr ""
+
 #: ../raster/r.surf.fractal/main.c:71 ../raster/r.surf.gauss/main.c:72
 #: ../raster/r.surf.random/main.c:121 ../vector/v.ppa/main.c:180
 #, c-format
@@ -30058,7 +30056,6 @@ msgstr ""
 msgid "Input raster must be of type CELL."
 msgstr ""
 
-#. GTC Count of window columns
 #. GTC Count of raster columns
 #. GTC Count of window columns
 #: ../raster/r.thin/io.c:112 ../raster/r.thin/io.c:188
