@@ -5,17 +5,9 @@
 # AUTHOR(S): Anna Kratochvilova, Vaclav Petras
 # PURPOSE:   The Map Swipe is a wxGUI component which allows the user to
 #            interactively compare two maps
-# COPYRIGHT: (C) 2012-2013 by Anna Kratochvilova, and the GRASS Development Team
-#
-#  This program is free software; you can redistribute it and/or modify
-#  it under the terms of the GNU General Public License as published by
-#  the Free Software Foundation; either version 2 of the License, or
-#  (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
+# SPDX-FileCopyrightText: 2012-2013 Anna Kratochvilova
+# SPDX-FileCopyrightText: GRASS Development Team
+# SPDX-License-Identifier: GPL-2.0-or-later
 #
 ############################################################################
 
@@ -50,12 +42,12 @@
 # %end
 
 import os
-import grass.script as gscript
+import grass.script as gs
 
 
 def main():
-    gscript.set_raise_on_error(False)
-    options, flags = gscript.parser()
+    gs.set_raise_on_error(False)
+    options, flags = gs.parser()
 
     import wx
 
@@ -71,28 +63,28 @@ def main():
 
     if options["group"]:
         if not options["subgroup"]:
-            gscript.fatal(_("Name of subgroup required"))
-        group_name = gscript.find_file(name=options["group"], element="group")["name"]
+            gs.fatal(_("Name of subgroup required"))
+        group_name = gs.find_file(name=options["group"], element="group")["name"]
         if not group_name:
-            gscript.fatal(_("Group <%s> not found") % options["group"])
-        subgroups = gscript.read_command(
+            gs.fatal(_("Group <%s> not found") % options["group"])
+        subgroups = gs.read_command(
             "i.group", group=group_name, flags="sg"
         ).splitlines()
         if options["subgroup"] not in subgroups:
-            gscript.fatal(_("Subgroup <%s> not found") % options["subgroup"])
+            gs.fatal(_("Subgroup <%s> not found") % options["subgroup"])
         subgroup_name = options["subgroup"]
 
     if options["map"]:
-        map_name = gscript.find_file(name=options["map"], element="cell")["fullname"]
+        map_name = gs.find_file(name=options["map"], element="cell")["fullname"]
         if not map_name:
-            gscript.fatal(_("Raster map <%s> not found") % options["map"])
+            gs.fatal(_("Raster map <%s> not found") % options["map"])
 
     if options["trainingmap"]:
-        trainingmap_name = gscript.find_file(
-            name=options["trainingmap"], element="vector"
-        )["fullname"]
+        trainingmap_name = gs.find_file(name=options["trainingmap"], element="vector")[
+            "fullname"
+        ]
         if not trainingmap_name:
-            gscript.fatal(_("Vector map <%s> not found") % options["trainingmap"])
+            gs.fatal(_("Vector map <%s> not found") % options["trainingmap"])
 
     # define display driver
     driver = UserSettings.Get(group="display", key="driver", subkey="type")
@@ -108,7 +100,7 @@ def main():
     frame = wx.Frame(
         parent=None,
         size=globalvar.MAP_WINDOW_SIZE,
-        title=_("Supervised Classification Tool - GRASS GIS"),
+        title=_("Supervised Classification Tool - GRASS"),
     )
     frame = IClassMapDisplay(
         parent=frame,

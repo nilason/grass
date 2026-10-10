@@ -5,11 +5,8 @@
  * PURPOSE:      Calculates solar azimuth and angle, and
  *               sunshine hours (also called daytime period)
  *               Uses NREL SOLPOS
- * COPYRIGHT:    (C) 2010-2013 by the GRASS Development Team
- *
- *               This program is free software under the GNU General Public
- *               License (>=v2). Read the file COPYING that comes with GRASS
- *               for details.
+ * SPDX-FileCopyrightText: 2010-2013 GRASS Development Team
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  *****************************************************************************/
 
@@ -218,14 +215,14 @@ int main(int argc, char *argv[])
 
         /* read current projection info */
         if ((in_proj_info = G_get_projinfo()) == NULL)
-            G_fatal_error(_("Cannot get projection info of current location"));
+            G_fatal_error(_("Cannot get projection info of current project"));
 
         if ((in_unit_info = G_get_projunits()) == NULL)
-            G_fatal_error(_("Cannot get projection units of current location"));
+            G_fatal_error(_("Cannot get projection units of current project"));
 
         if (pj_get_kv(&iproj, in_proj_info, in_unit_info) < 0)
             G_fatal_error(
-                _("Cannot get projection key values of current location"));
+                _("Cannot get projection key values of current project"));
 
         G_free_key_value(in_proj_info);
         G_free_key_value(in_unit_info);

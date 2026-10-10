@@ -7,11 +7,8 @@
 #               Converted to Python by Glynn Clements
 # PURPOSE:      prints a graph of the correlation between data layers (in pairs)
 #               derived from <grass5>/src.local/d.correlate.sh
-# COPYRIGHT:    (C) 2005, 2008, 2011 by the GRASS Development Team
-#
-#               This program is free software under the GNU General Public
-#               License (>=v2). Read the file COPYING that comes with GRASS
-#               for details.
+# SPDX-FileCopyrightText: 2005, 2008, 2011 GRASS Development Team
+# SPDX-License-Identifier: GPL-2.0-or-later
 #
 #############################################################################
 
@@ -37,7 +34,7 @@ def main():
     layers = options["map"].split(",")
 
     if len(layers) < 2:
-        gcore.error(_("At least 2 maps are required"))
+        gcore.fatal(_("At least 2 maps are required"))
 
     tmpfile = gcore.tempfile()
 
@@ -54,8 +51,8 @@ def main():
 
     os.environ["GRASS_RENDER_FILE_READ"] = "TRUE"
 
-    colors = "red black blue green gray violet".split()
-    line = 2
+    colors = ["red", "black", "blue", "green", "gray", "violet"]
+    text_line = 2
     iloop = 0
     jloop = 0
     for iloop, i in enumerate(layers):
@@ -65,15 +62,19 @@ def main():
                 colors = colors[1:]
                 colors.append(color)
                 gcore.write_command(
-                    "d.text", color=color, size=4, line=line, stdin="%s %s" % (i, j)
+                    "d.text",
+                    color=color,
+                    size=4,
+                    line=text_line,
+                    stdin="%s %s" % (i, j),
                 )
-                line += 1
+                text_line += 1
 
                 ofile = open(tmpfile, "w")
                 gcore.run_command("r.stats", flags="cnA", input=(i, j), stdout=ofile)
                 ofile.close()
 
-                ifile = open(tmpfile, "r")
+                ifile = open(tmpfile)
                 first = True
                 for line in ifile:
                     f = line.rstrip("\r\n").split(" ")
@@ -83,14 +84,10 @@ def main():
                         minx = maxx = x
                         miny = maxy = y
                         first = False
-                    if minx > x:
-                        minx = x
-                    if maxx < x:
-                        maxx = x
-                    if miny > y:
-                        miny = y
-                    if maxy < y:
-                        maxy = y
+                    minx = min(minx, x)
+                    maxx = max(maxx, x)
+                    miny = min(miny, y)
+                    maxy = max(maxy, y)
                 ifile.close()
 
                 kx = 100.0 / (maxx - minx + 1)
@@ -99,7 +96,7 @@ def main():
                 p = gcore.feed_command("d.graph", color=color)
                 ofile = p.stdin
 
-                ifile = open(tmpfile, "r")
+                ifile = open(tmpfile)
                 for line in ifile:
                     f = line.rstrip("\r\n").split(" ")
                     x = float(f[0])

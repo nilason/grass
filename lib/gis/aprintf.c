@@ -6,20 +6,20 @@
  * Extracted from the aligned printf C library (libaprintf under GPL v3+) by
  * Huidae Cho.
  *
- * (C) 2020 by the GRASS Development Team
- *
- * This program is free software under the GNU General Public License
- * (>=v2). Read the file COPYING that comes with GRASS for details.
+ * SPDX-FileCopyrightText: 2020 GRASS Development Team
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  * \author Huidae Cho
  *
  * \date 2020
  */
 
+#include <limits.h>
+#include <stdarg.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdarg.h>
 
 #include <grass/gis.h>
 #include <grass/glocale.h>
@@ -37,7 +37,7 @@ struct options {
 };
 
 static int count_wide_chars(const char *);
-static int count_wide_chars_in_cols(const char *, int, int *);
+static int count_wide_chars_in_cols(const char *, int, ptrdiff_t *);
 static int ovprintf(struct options *, const char *, va_list);
 static int oprintf(struct options *, const char *, ...);
 static int oaprintf(struct options *, const char *, va_list);
@@ -75,7 +75,8 @@ static int count_wide_chars(const char *str)
  * \param[out] nbytes number of bytes (NULL for not counting)
  * \return number of wide characters in str
  */
-static int count_wide_chars_in_cols(const char *str, int ncols, int *nbytes)
+static int count_wide_chars_in_cols(const char *str, int ncols,
+                                    ptrdiff_t *nbytes)
 {
     const char *p = str - 1;
     int lead = 0, nwchars = 0;
@@ -199,11 +200,11 @@ static int oaprintf(struct options *opts, const char *format, va_list ap)
                 while (*++c && *q != *c)
                     ;
                 if (*c) {
-                    va_list ap_copy;
+                    va_list aq;
                     char tmp;
 
                     /* copy ap for ovprintf() */
-                    va_copy(ap_copy, ap);
+                    va_copy(aq, ap);
 
                     /* found a conversion specifier */
                     if (*c == 's') {
@@ -254,7 +255,7 @@ static int oaprintf(struct options *opts, const char *format, va_list ap)
                         }
                         if (*p_spec) {
                             /* illegal string specifier? */
-                            va_end(ap_copy);
+                            va_end(aq);
                             *(q + 1) = 0;
                             G_fatal_error(
                                 _("Failed to parse string specifier: %s"), p);
@@ -268,9 +269,16 @@ static int oaprintf(struct options *opts, const char *format, va_list ap)
 
                             if (wcount) {
                                 /* if there are wide characters */
-                                if (prec > 0)
+                                if (prec > 0) {
+                                    ptrdiff_t nbytes;
+
                                     width += count_wide_chars_in_cols(s, prec,
-                                                                      &prec);
+                                                                      &nbytes);
+                                    if (nbytes > INT_MAX)
+                                        G_fatal_error(
+                                            _("String precision is too large"));
+                                    prec = (int)nbytes;
+                                }
                                 else if (prec < 0)
                                     width += wcount;
                                 p_spec = spec;
@@ -290,7 +298,7 @@ static int oaprintf(struct options *opts, const char *format, va_list ap)
                         if (use_ovprintf) {
                             tmp = *(q + 1);
                             *(q + 1) = 0;
-                            nbytes += ovprintf(opts, p, ap_copy);
+                            nbytes += ovprintf(opts, p, aq);
                             *(q + 1) = tmp;
                         }
                     }
@@ -298,7 +306,7 @@ static int oaprintf(struct options *opts, const char *format, va_list ap)
                         /* else use ovprintf() for non-string specifiers */
                         tmp = *(q + 1);
                         *(q + 1) = 0;
-                        nbytes += ovprintf(opts, p, ap_copy);
+                        nbytes += ovprintf(opts, p, aq);
                         *(q + 1) = tmp;
 
                         /* once ap is passed to another function that calls
@@ -345,7 +353,7 @@ static int oaprintf(struct options *opts, const char *format, va_list ap)
                             /* otherwise, no argument is required for m% */
                         }
                     }
-                    va_end(ap_copy);
+                    va_end(aq);
                     break;
                 }
                 else if (p_spec - spec < SPEC_BUF_SIZE - 2)

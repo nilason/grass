@@ -7,11 +7,8 @@
  * PURPOSE:      IO array management functions
  *               part of the gpde library
  *
- * COPYRIGHT:    (C) 2000 by the GRASS Development Team
- *
- *               This program is free software under the GNU General Public
- *               License (>=v2). Read the file COPYING that comes with GRASS
- *               for details.
+ * SPDX-FileCopyrightText: 2000 GRASS Development Team
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  *****************************************************************************/
 
@@ -150,6 +147,7 @@ N_array_2d *N_read_rast_to_array_2d(char *name, N_array_2d *array)
 
     /* Close file */
     Rast_close(map);
+    G_free(rast);
 
     return data;
 }
@@ -219,6 +217,9 @@ void N_write_array_2d_to_rast(N_array_2d *array, char *name)
 
     /* Close file */
     Rast_close(map);
+    G_free(rast);
+    G_free(frast);
+    G_free(drast);
 }
 
 /* ******************** 3D ARRAY FUNCTIONS *********************** */

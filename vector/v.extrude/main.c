@@ -14,11 +14,8 @@
  *             Inspired by d.vect and v.drape
  *             Coding help and code cleaning by Markus Neteler
  *
- * COPYRIGHT:  (C) 2005-2010,2013 by the GRASS Development Team
- *
- *             This program is free software under the GNU General
- *             Public License (>=v2). Read the file COPYING that comes
- *             with GRASS for details.
+ * SPDX-FileCopyrightText: 2005-2010,2013 GRASS Development Team
+ * SPDX-License-Identifier: GPL-2.0-or-later
  ****************************************************************/
 
 #include <stdio.h>
@@ -353,7 +350,7 @@ int main(int argc, char *argv[])
                     scale, opt.null->answer ? TRUE : FALSE, null_val, objheight,
                     voffset, &window, type, -1);
         } /* for each line */
-    }     /* else if area */
+    } /* else if area */
 
     if (driver) {
         db_close_database(driver);

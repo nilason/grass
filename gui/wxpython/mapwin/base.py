@@ -7,10 +7,8 @@ Classes:
  - mapwindow::MapWindowProperties
  - mapwindow::MapWindowBase
 
-(C) 2006-2012 by the GRASS Development Team
-
-This program is free software under the GNU General Public License
-(>=v2). Read the file COPYING that comes with GRASS for details.
+SPDX-FileCopyrightText: 2006-2012 GRASS Development Team
+SPDX-License-Identifier: GPL-2.0-or-later
 
 @author Martin Landa <landa.martin gmail.com>
 @author Michael Barton
@@ -220,7 +218,7 @@ class MapWindowBase:
         for handler in handlers:
             try:
                 handler(event)
-            except:
+            except Exception:
                 handlers.remove(handler)
                 GError(
                     parent=self,
@@ -255,8 +253,9 @@ class MapWindowBase:
                 # current map display's map window
                 # expects LayerManager to be the parent
                 self.mapwin = self.parent.GetLayerTree().GetMapDisplay().GetWindow()
-                if self.mapwin.RegisterEventHandler(wx.EVT_LEFT_DOWN, self.OnMouseAction,
-                                                    'cross'):
+                if self.mapwin.RegisterEventHandler(
+                    wx.EVT_LEFT_DOWN, self.OnMouseAction, "cross"
+                ):
                     self.parent.GetLayerTree().GetMapDisplay().Raise()
                 else:
                     # handle that you cannot get coordinates
@@ -264,10 +263,11 @@ class MapWindowBase:
             def OnMouseAction(self, event):
                 # get real world coordinates of mouse click
                 coor = self.mapwin.Pixel2Cell(event.GetPositionTuple()[:])
-                self.text.SetLabel('Coor: ' + str(coor))
-                self.mapwin.UnregisterMouseEventHandler(wx.EVT_LEFT_DOWN, self.OnMouseAction)
+                self.text.SetLabel("Coor: " + str(coor))
+                self.mapwin.UnregisterMouseEventHandler(
+                    wx.EVT_LEFT_DOWN, self.OnMouseAction
+                )
                 event.Skip()
-
 
         Emits mouseHandlerRegistered signal before handler is registered.
 
@@ -301,12 +301,12 @@ class MapWindowBase:
         Before each handler is unregistered it is called with string
         value "unregistered" of event parameter.
         """
-        for containerEv, handlers in self.handlersContainer.items():
+        for handlers in self.handlersContainer.values():
             for handler in handlers:
                 try:
                     handler("unregistered")
                     handlers.remove(handler)
-                except:
+                except Exception:
                     GError(
                         parent=self,
                         message=_(
@@ -345,7 +345,7 @@ class MapWindowBase:
                     grass.warning(
                         _("Handler: %s was not registered") % handler.__name__
                     )
-            except:
+            except Exception:
                 GError(
                     parent=self,
                     message=_(
@@ -367,10 +367,10 @@ class MapWindowBase:
         return True
 
     def Pixel2Cell(self, xyCoords):
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def Cell2Pixel(self, enCoords):
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def OnMotion(self, event):
         """Tracks mouse motion and update statusbar
@@ -390,7 +390,8 @@ class MapWindowBase:
     def GetLastEN(self):
         """Returns last coordinates of mouse cursor.
 
-        @deprecated This method is deprecated. Use Signal with coordinates as parameters.
+        @deprecated This method is deprecated. Use Signal with coordinates as
+        parameters.
 
         :func:`OnMotion`
         """
@@ -449,8 +450,8 @@ class MapWindowBase:
 
     def DisactivateWin(self):
         """Use when the class instance is hidden in MapFrame."""
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def ActivateWin(self):
         """Used when the class instance is activated in MapFrame."""
-        raise NotImplementedError()
+        raise NotImplementedError

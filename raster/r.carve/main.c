@@ -8,11 +8,8 @@
  * PURPOSE:      Takes vector stream data, converts it to 3D raster and
  *               subtracts a specified depth
  *
- * COPYRIGHT:    (C) 2006, 2010 by the GRASS Development Team
- *
- *               This program is free software under the GNU General Public
- *               License (>=v2). Read the file COPYING that comes with GRASS
- *               for details.
+ * SPDX-FileCopyrightText: 2006, 2010 GRASS Development Team
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  ****************************************************************************/
 
@@ -204,7 +201,7 @@ static int init_projection(struct Cell_head *window, int *wrap_ncols)
         *wrap_ncols =
             (360.0 - (window->east - window->west)) / window->ew_res + 1.1;
 #else
-        G_fatal_error(_("Lat/Long location is not supported by %s. Please "
+        G_fatal_error(_("Lat/Long project is not supported by %s. Please "
                         "reproject map first."),
                       G_program_name());
 #endif

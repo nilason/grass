@@ -6,17 +6,9 @@
 # AUTHOR(S):	Soeren Gebbert
 #
 # PURPOSE:	Registers raster, vector and raster3d maps in a space time dataset
-# COPYRIGHT:	(C) 2011-2017, Soeren Gebbert and the GRASS Development Team
-#
-#  This program is free software; you can redistribute it and/or modify
-#  it under the terms of the GNU General Public License as published by
-#  the Free Software Foundation; either version 2 of the License, or
-#  (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
+# SPDX-FileCopyrightText: 2011-2017 Soeren Gebbert
+# SPDX-FileCopyrightText: GRASS Development Team
+# SPDX-License-Identifier: GPL-2.0-or-later
 #
 #############################################################################
 
@@ -104,8 +96,7 @@
 # % guisection: Time & Date
 # %end
 
-import grass.script as grass
-
+import grass.script as gs
 
 ############################################################################
 
@@ -116,7 +107,7 @@ def main():
     maps = options["maps"]
     type = options["type"]
     file = options["file"]
-    separator = grass.separator(options["separator"])
+    separator = gs.separator(options["separator"])
     start = options["start"]
     end = options["end"]
     unit = options["unit"]
@@ -135,7 +126,6 @@ def main():
         end=end,
         unit=unit,
         increment=increment,
-        dbif=None,
         interval=interval,
         fs=separator,
     )
@@ -144,7 +134,7 @@ def main():
 ###############################################################################
 
 if __name__ == "__main__":
-    options, flags = grass.parser()
+    options, flags = gs.parser()
 
     # lazy imports
     import grass.temporal as tgis
@@ -152,4 +142,4 @@ if __name__ == "__main__":
     try:
         tgis.profile_function(main)
     except Exception as e:
-        grass.fatal(e)
+        gs.fatal(e)

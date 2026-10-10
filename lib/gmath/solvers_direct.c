@@ -7,11 +7,8 @@
  * PURPOSE:      linear equation system solvers
  *                 part of the gmath library
  *
- * COPYRIGHT:    (C) 2010 by the GRASS Development Team
- *
- *               This program is free software under the GNU General Public
- *               License (>=v2). Read the file COPYING that comes with GRASS
- *               for details.
+ * SPDX-FileCopyrightText: 2010 GRASS Development Team
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  *****************************************************************************/
 
@@ -183,7 +180,7 @@ void G_math_gauss_elimination(double **A, double *b, int rows)
  * system, otherwise set it to NULL \param rows int \return void
  *
  * */
-void G_math_lu_decomposition(double **A, double *b UNUSED, int rows)
+void G_math_lu_decomposition(double **A, double *b G_UNUSED, int rows)
 {
 
     int i, j, k;
@@ -231,7 +228,8 @@ int G_math_cholesky_decomposition(double **A, int rows, int bandwidth)
     colsize = bandwidth;
 
     for (k = 0; k < rows; k++) {
-#pragma omp parallel for schedule (static) private(i, j, sum_2) shared(A, k) reduction(+:sum_1)
+#pragma omp parallel for schedule(static) private(i, j, sum_2) shared(A, k) \
+    reduction(+ : sum_1)
         for (j = 0; j < k; j++) {
             sum_1 += A[k][j] * A[k][j];
         }

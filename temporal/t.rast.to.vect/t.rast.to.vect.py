@@ -7,17 +7,8 @@
 #
 # PURPOSE:      Converts a space time raster dataset into a space time vector dataset.
 #
-# COPYRIGHT:    (C) 2015-2017 by the GRASS Development Team
-#
-#  This program is free software; you can redistribute it and/or modify
-#  it under the terms of the GNU General Public License as published by
-#  the Free Software Foundation; either version 2 of the License, or
-#  (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
+# SPDX-FileCopyrightText: 2015-2017 GRASS Development Team
+# SPDX-License-Identifier: GPL-2.0-or-later
 #
 #############################################################################
 
@@ -57,13 +48,7 @@
 # % multiple: no
 # %end
 
-# %option
-# % key: suffix
-# % type: string
-# % description: Suffix to add at basename: set 'gran' for granularity, 'time' for the full time format, 'num' for numerical suffix with a specific number of digits (default %05)
-# % answer: gran
-# % required: no
-# % multiple: no
+# %option G_OPT_T_SUFFIX
 # %end
 
 # %option
@@ -116,18 +101,18 @@
 # % description: Use raster values as categories instead of unique sequence (CELL only)
 # %end
 
-import sys
 import copy
-import grass.script as gscript
+import sys
 
+import grass.script as gs
 
 ############################################################################
 
 
 def main(options, flags):
     # lazy imports
-    import grass.temporal as tgis
     import grass.pygrass.modules as pymod
+    import grass.temporal as tgis
 
     # Get the options
     input = options["input"]
@@ -152,18 +137,18 @@ def main(options, flags):
     dbif = tgis.SQLDatabaseInterfaceConnection()
     dbif.connect()
 
-    overwrite = gscript.overwrite()
+    overwrite = gs.overwrite()
 
     sp = tgis.open_old_stds(input, "strds", dbif)
     maps = sp.get_registered_maps_as_objects(where=where, dbif=dbif)
 
     if not maps:
         dbif.close()
-        gscript.warning(_("Space time raster dataset <%s> is empty") % sp.get_id())
+        gs.warning(_("Space time raster dataset <%s> is empty") % sp.get_id())
         return
 
     # Check the new stvds
-    new_sp = tgis.check_new_stds(output, "stvds", dbif=dbif, overwrite=overwrite)
+    tgis.check_new_stds(output, "stvds", dbif=dbif, overwrite=overwrite)
 
     # Setup the flags
     flags = ""
@@ -189,6 +174,7 @@ def main(options, flags):
         type=method,
         overwrite=overwrite,
         quiet=True,
+        column=column,
     )
 
     # The module queue for parallel execution, except if attribute tables should
@@ -196,9 +182,9 @@ def main(options, flags):
     if t_flag is False:
         if nprocs > 1:
             nprocs = 1
-            gscript.warning(
+            gs.warning(
                 _(
-                    "The number of parellel r.to.vect processes was "
+                    "The number of parallel r.to.vect processes was "
                     "reduced to 1 because of the table attribute "
                     "creation"
                 )
@@ -238,7 +224,7 @@ def main(options, flags):
         process_queue.put(mod)
 
         if count % 10 == 0:
-            gscript.percent(count, num_maps, 1)
+            gs.percent(count, num_maps, 1)
 
     # Wait for unfinished processes
     process_queue.wait()
@@ -258,7 +244,7 @@ def main(options, flags):
         count += 1
 
         if count % 10 == 0:
-            gscript.percent(count, num_maps, 1)
+            gs.percent(count, num_maps, 1)
 
         # Do not register empty maps
         map.load()
@@ -273,7 +259,7 @@ def main(options, flags):
 
     # Update the spatio-temporal extent and the metadata table entries
     new_sp.update_from_registered_maps(dbif)
-    gscript.percent(1, 1, 1)
+    gs.percent(1, 1, 1)
 
     # Remove empty maps
     if len(empty_maps) > 0:
@@ -286,9 +272,7 @@ def main(options, flags):
             else:
                 names += ",%s" % (map.get_name())
 
-        gscript.run_command(
-            "g.remove", flags="f", type="vector", name=names, quiet=True
-        )
+        gs.run_command("g.remove", flags="f", type="vector", name=names, quiet=True)
 
     dbif.close()
 
@@ -296,5 +280,5 @@ def main(options, flags):
 ############################################################################
 
 if __name__ == "__main__":
-    options, flags = gscript.parser()
+    options, flags = gs.parser()
     main(options, flags)

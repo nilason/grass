@@ -1,19 +1,7 @@
 /* LIBDGL -- a Directed Graph Library implementation
- * Copyright (C) 2002 Roberto Micarelli
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * SPDX-FileCopyrightText: 2002 Roberto Micarelli
+ * SPDX-FileCopyrightText: GRASS Development Team
+ * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
 /*
@@ -65,7 +53,7 @@
 #define DGL_EDGESET_EDGECOUNT_v1(p)     ((p)[DGL_ILA_TOCNT_v1])
 #define DGL_EDGESET_EDGEARRAY_PTR_v1(p) ((p) + DGL_ILA_TOARR_v1)
 #define DGL_EDGESET_EDGE_PTR_v1(p, i, C) \
-    (((p) + DGL_ILA_TOARR_v1) + (i)*DGL_EDGE_WSIZE_v1(C))
+    (((p) + DGL_ILA_TOARR_v1) + (i) * DGL_EDGE_WSIZE_v1(C))
 
 /*
  * Edge macros - addresses in a flat edge

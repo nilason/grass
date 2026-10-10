@@ -7,10 +7,8 @@ for various display management functions, one for manipulating GCPs.
 Classes:
 - mapdisplay::MapPanel
 
-(C) 2006-2011 by the GRASS Development Team
-
-This program is free software under the GNU General Public License
-(>=v2). Read the file COPYING that comes with GRASS for details.
+SPDX-FileCopyrightText: 2006-2011 GRASS Development Team
+SPDX-License-Identifier: GPL-2.0-or-later
 
 @author Markus Metz
 """
@@ -79,6 +77,7 @@ class MapPanel(SingleMapPanel):
         self._giface = giface
 
         self.mapWindowProperties.alignExtent = True
+        self.mapWindowProperties.autoRenderChanged.connect(self.OnAutoRenderChanged)
 
         #
         # Add toolbars
@@ -367,19 +366,29 @@ class MapPanel(SingleMapPanel):
 
     def OnDraw(self, event):
         """Re-display current map composition"""
-        self.MapWindow.UpdateMap(render=False)
+        kwargs = {}
+        # Handle display map event (mouse click on toolbar Display map
+        # tool)
+        if event and event.GetEventType() == wx.EVT_TOOL.typeId:
+            kwargs = {"reRenderTool": True}
+        self.MapWindow.UpdateMap(render=False, **kwargs)
 
     def OnRender(self, event):
         """Re-render map composition (each map layer)"""
+        kwargs = {}
+        # Handle re-render map event (mouse click on toolbar Render map
+        # tool, F5/Ctrl+R keyboard shortcut)
+        if event and event.GetEventType() == wx.EVT_TOOL.typeId:
+            kwargs = {"reRenderTool": True}
         # FIXME: remove qlayer code or use RemoveQueryLayer() now in mapdisp.frame
         # delete tmp map layers (queries)
         qlayer = self.Map.GetListOfLayers(name=globalvar.QUERYLAYER)
         for layer in qlayer:
             self.Map.DeleteLayer(layer)
 
-        self.SrcMapWindow.UpdateMap(render=True)
+        self.SrcMapWindow.UpdateMap(render=True, **kwargs)
         if self.show_target:
-            self.TgtMapWindow.UpdateMap(render=True)
+            self.TgtMapWindow.UpdateMap(render=True, **kwargs)
 
         # update statusbar
         self.StatusbarUpdate()
@@ -420,6 +429,9 @@ class MapPanel(SingleMapPanel):
 
         win.EraseMap()
 
+    def OnAutoRenderChanged(self, value):
+        self.OnRender(event=None)
+
     def SaveToFile(self, event):
         """Save map to image"""
         img = self.MapWindow.img
@@ -444,7 +456,7 @@ class MapPanel(SingleMapPanel):
         dlg = wx.FileDialog(
             parent=self,
             message=_(
-                "Choose a file name to save the image " "(no need to add extension)"
+                "Choose a file name to save the image (no need to add extension)"
             ),
             wildcard=filetype,
             style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT,
@@ -470,7 +482,6 @@ class MapPanel(SingleMapPanel):
         """
         Print options and output menu for map display
         """
-        point = wx.GetMousePosition()
         printmenu = Menu()
         # Add items to the menu
         setup = wx.MenuItem(printmenu, wx.ID_ANY, _("Page setup"))
@@ -514,7 +525,6 @@ class MapPanel(SingleMapPanel):
 
     def OnZoomMenu(self, event):
         """Popup Zoom menu"""
-        point = wx.GetMousePosition()
         zoommenu = Menu()
         # Add items to the menu
 
@@ -563,7 +573,7 @@ class MapPanel(SingleMapPanel):
         return self.toolbars["gcpdisp"]
 
     def _setActiveMapWindow(self, mapWindow):
-        if not self.MapWindow == mapWindow:
+        if self.MapWindow != mapWindow:
             self.MapWindow = mapWindow
             self.Map = mapWindow.Map
             self.UpdateActive(mapWindow)

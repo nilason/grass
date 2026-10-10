@@ -7,10 +7,8 @@ updates: - description (i.e. help) - keywords
 
 Prints warning for missing modules.
 
-(C) 2008-2010 by the GRASS Development Team
-This program is free software under the GNU General Public
-License (>=v2). Read the file COPYING that comes with GRASS
-for details.
+SPDX-FileCopyrightText: 2008-2010 GRASS Development Team
+SPDX-License-Identifier: GPL-2.0-or-later
 
 Usage: python support/update_menudata.py [-d]
 
@@ -22,8 +20,8 @@ Usage: python support/update_menudata.py [-d]
 import os
 import sys
 import tempfile
-
-import xml.etree.ElementTree as etree
+import xml.etree.ElementTree as ET
+from subprocess import DEVNULL
 
 from grass.script import core as grass
 from grass.script import task as gtask
@@ -34,7 +32,7 @@ from core.globalvar import grassCmd
 
 def parseModules():
     """Parse modules' interface"""
-    modules = dict()
+    modules = {}
 
     # list of modules to be ignored
     ignore = ["g.mapsets_picker.py", "v.type_wrapper.py", "g.parser", "vcolors"]
@@ -66,14 +64,12 @@ def updateData(data, modules):
     # list of modules to be ignored
     ignore = ["v.type_wrapper.py", "vcolors"]
 
-    menu_modules = list()
+    menu_modules = []
     for node in data.tree.iter():
         if node.tag != "menuitem":
             continue
 
-        item = dict()
-        for child in node:
-            item[child.tag] = child.text
+        item = {child.tag: child.text for child in node}
 
         if "command" not in item:
             continue
@@ -97,7 +93,7 @@ def updateData(data, modules):
             grass.warning("%s: keywords missing" % module)
         else:
             if node.find("keywords") is None:
-                node.insert(2, etree.Element("keywords"))
+                node.insert(2, ET.Element("keywords"))
                 grass.warning("Adding tag 'keywords' to '%s'" % module)
             node.find("keywords").text = ",".join(modules[module]["keywords"])
 
@@ -117,17 +113,14 @@ def writeData(data, file=None):
         data.tree.write(file)
     except OSError:
         print(
-            "'%s' not found." " Please run the script from 'gui/wxpython'." % file,
+            "'%s' not found. Please run the script from 'gui/wxpython'." % file,
             file=sys.stderr,
         )
         return
 
     try:
-        f = open(file, "a")
-        try:
+        with open(file, "a") as f:
             f.write("\n")
-        finally:
-            f.close()
     except OSError:
         print("ERROR: Unable to write to menudata file.", file=sys.stderr)
 
@@ -136,20 +129,16 @@ def main(argv=None):
     if argv is None:
         argv = sys.argv
 
-    if len(argv) > 1 and argv[1] == "-d":
-        printDiff = True
-    else:
-        printDiff = False
+    printDiff = bool(len(argv) > 1 and argv[1] == "-d")
 
     if len(argv) > 1 and argv[1] == "-h":
         print(sys.stderr, __doc__, file=sys.stderr)
         return 1
 
-    nuldev = open(os.devnull, "w+")
     grass.info("Step 1: running make...")
-    grass.call(["make"], stderr=nuldev)
+    grass.call(["make"], stderr=DEVNULL)
     grass.info("Step 2: parsing modules...")
-    modules = dict()
+    modules = {}
     modules = parseModules()
     grass.info("Step 3: reading menu data...")
     data = LayerManagerMenuData()
@@ -157,14 +146,13 @@ def main(argv=None):
     updateData(data, modules)
 
     if printDiff:
-        tempFile = tempfile.NamedTemporaryFile()
-        grass.info("Step 5: diff menu data...")
-        writeData(data, tempFile.name)
-
-        grass.call(
-            ["diff", "-u", os.path.join("xml", "menudata.xml"), tempFile.name],
-            stderr=nuldev,
-        )
+        with tempfile.NamedTemporaryFile() as tempFile:
+            grass.info("Step 5: diff menu data...")
+            writeData(data, tempFile.name)
+            grass.call(
+                ["diff", "-u", os.path.join("xml", "menudata.xml"), tempFile.name],
+                stderr=DEVNULL,
+            )
     else:
         grass.info("Step 5: writing menu data (menudata.xml)...")
         writeData(data)
@@ -174,6 +162,6 @@ def main(argv=None):
 
 if __name__ == "__main__":
     if os.getenv("GISBASE") is None:
-        sys.exit("You must be in GRASS GIS to run this program.")
+        sys.exit("You must be in GRASS to run this program.")
 
     sys.exit(main())

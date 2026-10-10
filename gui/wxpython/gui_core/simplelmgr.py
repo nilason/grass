@@ -7,10 +7,8 @@ Classes:
  - simplelmgr::SimpleLayerManager
  - simplelmgr::SimpleLmgrToolbar
 
-(C) 2013 by the GRASS Development Team
-
-This program is free software under the GNU General Public License
-(>=v2). Read the file COPYING that comes with GRASS for details.
+SPDX-FileCopyrightText: 2013 GRASS Development Team
+SPDX-License-Identifier: GPL-2.0-or-later
 
 @author Anna Petrasova (kratochanna gmail.com)
 """
@@ -82,7 +80,7 @@ class SimpleLayerManager(wx.Panel):
         self._checkList.Bind(wx.EVT_CHECKLISTBOX, self.OnLayerChecked)
         self._checkList.Bind(wx.EVT_CONTEXT_MENU, self.OnContextMenu)
 
-        # signal emitted when somethin in layer list changes
+        # signal emitted when something in layer list changes
         self.opacityChanged = Signal("SimpleLayerManager.opacityChanged")
         self.cmdChanged = Signal("SimpleLayerManager.cmdChanged")
         self.layerAdded = Signal("SimpleLayerManager.layerAdded")
@@ -157,9 +155,13 @@ class SimpleLayerManager(wx.Panel):
             _("Copy map names to clipboard (top to bottom)"),
             _("Copy map names to clipboard (bottom to top)"),
         ]
-        for label, text in zip(labels, texts):
+        for label, text in zip(labels, texts, strict=True):
             id = NewId()
-            self.Bind(wx.EVT_MENU, lambda evt, t=text, id=id: self._copyText(t), id=id)
+            self.Bind(
+                wx.EVT_MENU,
+                lambda evt, t=text, id=id: self._copyText(t),  # noqa: A006
+                id=id,
+            )
 
             menu.Append(id, label)
 
@@ -377,31 +379,27 @@ class SimpleLayerManager(wx.Panel):
 
     def AddRaster(self, name, cmd, hidden, dialog):
         """Ads new raster layer."""
-        layer = self._layerList.AddNewLayer(
+        return self._layerList.AddNewLayer(
             name=name, mapType="raster", active=True, cmd=cmd, hidden=hidden
         )
-        return layer
 
     def AddRast3d(self, name, cmd, hidden, dialog):
         """Ads new raster3d layer."""
-        layer = self._layerList.AddNewLayer(
+        return self._layerList.AddNewLayer(
             name=name, mapType="raster_3d", active=True, cmd=cmd, hidden=hidden
         )
-        return layer
 
     def AddVector(self, name, cmd, hidden, dialog):
         """Ads new vector layer."""
-        layer = self._layerList.AddNewLayer(
+        return self._layerList.AddNewLayer(
             name=name, mapType="vector", active=True, cmd=cmd, hidden=hidden
         )
-        return layer
 
     def AddRGB(self, name, cmd, hidden, dialog):
         """Ads new vector layer."""
-        layer = self._layerList.AddNewLayer(
+        return self._layerList.AddNewLayer(
             name=name, mapType="rgb", active=True, cmd=cmd, hidden=hidden
         )
-        return layer
 
     def GetLayerInfo(self, layer, key):
         """Just for compatibility, should be removed in the future"""

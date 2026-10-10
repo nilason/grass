@@ -7,17 +7,16 @@ Classes:
  - browser::HistoryInfoPanel
  - browser::HistoryBrowser
 
-(C) 2023-2024 by Linda Karlovska, and the GRASS Development Team
-
-This program is free software under the GNU General Public
-License (>=v2). Read the file COPYING that comes with GRASS
-for details.
+SPDX-FileCopyrightText: 2023-2024 Linda Karlovska
+SPDX-FileCopyrightText: GRASS Development Team
+SPDX-License-Identifier: GPL-2.0-or-later
 
 @author Linda Karlovska (Kladivova) linda.karlovska@seznam.cz
 @author Anna Petrasova (kratochanna gmail com)
 @author Tomas Zigo
 """
 
+import math
 from datetime import datetime
 
 import wx
@@ -25,6 +24,9 @@ import wx.lib.scrolledpanel as SP
 
 from gui_core.wrap import SearchCtrl, StaticText, StaticBox, Button
 from history.tree import HistoryBrowserTree
+from icons.icon import MetaIcon
+
+from grass.tools import Tools
 
 from grass.grassdb import history
 
@@ -39,10 +41,10 @@ TRANSLATION_KEYS = {
     "status": _("Status:"),
     "mask2d": _("Mask 2D:"),
     "mask3d": _("Mask 3D:"),
-    "n": _("North:"),
-    "s": _("South:"),
-    "w": _("West:"),
-    "e": _("East:"),
+    "north": _("North:"),
+    "south": _("South:"),
+    "west": _("West:"),
+    "east": _("East:"),
     "nsres": _("North-south resolution:"),
     "ewres": _("East-west resolution:"),
     "rows": _("Number of rows:"),
@@ -56,16 +58,28 @@ def get_translated_value(key, value):
     if key == "timestamp":
         exec_datetime = datetime.fromisoformat(value)
         return exec_datetime.strftime("%Y-%m-%d %H:%M:%S")
-    elif key == "runtime":
-        return _("{} sec".format(value))
-    elif key == "status":
+    if key == "runtime":
+        return _("{} sec").format(value)
+    if key == "status":
         return _(value.capitalize())
-    elif key in ("mask2d", "mask3d"):
+    if key in {"mask2d", "mask3d"}:
         return _(str(value))
 
 
 def make_label(key):
     return TRANSLATION_KEYS.get(key, "")
+
+
+# Region keys in the shell format of g.region, which are also the names of the g.region parameters
+REGION_KEYS = {"n": "north", "s": "south", "w": "west", "e": "east"}
+
+
+def normalize_region(region):
+    """Return region settings with the keys used by g.region format=json.
+
+    History entries recorded by older versions use the keys of the shell format.
+    """
+    return {REGION_KEYS.get(key, key): value for key, value in region.items()}
 
 
 class HistoryInfoPanel(SP.ScrolledPanel):
@@ -75,6 +89,11 @@ class HistoryInfoPanel(SP.ScrolledPanel):
         self.parent = parent
         self.giface = giface
         self.title = title
+        self.tools = Tools()
+
+        self.region_settings = None
+
+        self._initImages()
 
         self._createGeneralInfoBox()
         self._createRegionSettingsBox()
@@ -87,7 +106,7 @@ class HistoryInfoPanel(SP.ScrolledPanel):
             self.general_info_box_sizer, proportion=0, flag=wx.EXPAND | wx.ALL, border=5
         )
         mainSizer.Add(
-            self.region_settings_box_sizer,
+            self.sizer_region_settings,
             proportion=0,
             flag=wx.EXPAND | wx.ALL,
             border=5,
@@ -96,6 +115,13 @@ class HistoryInfoPanel(SP.ScrolledPanel):
         self.SetMinSize(self.GetBestSize())
 
         self.Layout()
+
+    def _initImages(self):
+        bmpsize = (16, 16)
+        self.icons = {
+            "check": MetaIcon(img="success").GetBitmap(bmpsize),
+            "cross": MetaIcon(img="cross").GetBitmap(bmpsize),
+        }
 
     def _createGeneralInfoBox(self):
         """Create static box for general info about the command"""
@@ -119,33 +145,48 @@ class HistoryInfoPanel(SP.ScrolledPanel):
     def _createRegionSettingsBox(self):
         """Create a static box for displaying region settings of the command"""
         self.region_settings_box = StaticBox(
-            parent=self, id=wx.ID_ANY, label=_("Region settings")
+            parent=self,
+            id=wx.ID_ANY,
+            label=_("Computational region during command execution"),
         )
-        self.region_settings_box_sizer = wx.StaticBoxSizer(
+        self.sizer_region_settings = wx.StaticBoxSizer(
             self.region_settings_box, wx.VERTICAL
         )
 
-        self.sizer_region_settings = wx.GridBagSizer(hgap=0, vgap=0)
-        self.sizer_region_settings.SetCols(2)
-        self.sizer_region_settings.SetRows(9)
-
-        self.region_settings_box_sizer.Add(
-            self.sizer_region_settings, proportion=1, flag=wx.ALL | wx.EXPAND, border=5
+        self.sizer_region_settings_match = wx.BoxSizer(wx.HORIZONTAL)
+        self.sizer_region_settings.Add(
+            self.sizer_region_settings_match,
+            proportion=0,
+            flag=wx.ALL | wx.EXPAND,
+            border=5,
         )
-        self.sizer_region_settings.AddGrowableCol(1)
+
+        self.sizer_region_settings_grid = wx.GridBagSizer(hgap=0, vgap=0)
+        self.sizer_region_settings_grid.SetCols(2)
+        self.sizer_region_settings_grid.SetRows(9)
+
+        self.sizer_region_settings.Add(
+            self.sizer_region_settings_grid,
+            proportion=1,
+            flag=wx.ALL | wx.EXPAND,
+            border=5,
+        )
+
+        self.sizer_region_settings_grid.AddGrowableCol(1)
         self.region_settings_box.Hide()
 
     def _general_info_filter(self, key, value):
         filter_keys = ["timestamp", "runtime", "status"]
-        return key in filter_keys or (
-            (key == "mask2d" or key == "mask3d") and value is True
-        )
+        return key in filter_keys or ((key in {"mask2d", "mask3d"}) and value is True)
 
     def _region_settings_filter(self, key):
-        return (key != "projection") and (key != "zone")
+        return key not in {"crs", "projection", "zone", "cells"}
 
     def _updateGeneralInfoBox(self, command_info):
-        """Update a static box for displaying general info about the command"""
+        """Update a static box for displaying general info about the command.
+
+        :param dict command_info: command info entry for update
+        """
         self.sizer_general_info.Clear(True)
 
         idx = 0
@@ -178,15 +219,19 @@ class HistoryInfoPanel(SP.ScrolledPanel):
         self.general_info_box.Layout()
         self.general_info_box.Show()
 
-    def _updateRegionSettingsBox(self, command_info):
-        """Update a static box for displaying region settings of the command"""
-        self.sizer_region_settings.Clear(True)
+    def _updateRegionSettingsGrid(self, command_info):
+        """Update a grid that displays numerical values
+        for the regional settings of the executed command.
 
-        region_settings = command_info["region"]
+        :param dict command_info: command info entry for update
+        """
+        self.sizer_region_settings_grid.Clear(True)
+
+        self.region_settings = normalize_region(command_info["region"])
         idx = 0
-        for key, value in region_settings.items():
+        for key, value in self.region_settings.items():
             if self._region_settings_filter(key):
-                self.sizer_region_settings.Add(
+                self.sizer_region_settings_grid.Add(
                     StaticText(
                         parent=self.region_settings_box,
                         id=wx.ID_ANY,
@@ -197,7 +242,7 @@ class HistoryInfoPanel(SP.ScrolledPanel):
                     border=5,
                     pos=(idx, 0),
                 )
-                self.sizer_region_settings.Add(
+                self.sizer_region_settings_grid.Add(
                     StaticText(
                         parent=self.region_settings_box,
                         id=wx.ID_ANY,
@@ -210,26 +255,108 @@ class HistoryInfoPanel(SP.ScrolledPanel):
                 )
                 idx += 1
 
-        self.region_settings_box.Layout()
+        self.region_settings_box.Show()
+
+    def _updateRegionSettingsMatch(self):
+        """Update text, icon and button dealing with region update"""
+        self.sizer_region_settings_match.Clear(True)
+
+        # Region condition
+        history_region = self._get_history_region()
+        current_region = self._get_current_region()
+        region_matches = all(
+            math.isclose(value, current_region[key], rel_tol=0, abs_tol=1e-8)
+            for key, value in history_region.items()
+        )
+
+        # Icon and button according to the condition
+        if region_matches:
+            icon = self.icons["check"]
+            button_label = None
+        else:
+            icon = self.icons["cross"]
+            button_label = _("Update current region")
+
+        # Static text
+        textRegionMatch = StaticText(
+            parent=self.region_settings_box,
+            id=wx.ID_ANY,
+            label=_("Region match"),
+        )
+        self.sizer_region_settings_match.Add(
+            textRegionMatch,
+            proportion=0,
+            flag=wx.ALIGN_CENTER_VERTICAL | wx.RIGHT,
+            border=10,
+        )
+
+        # Static bitmap for icon
+        iconRegionMatch = wx.StaticBitmap(self.region_settings_box, bitmap=icon)
+        self.sizer_region_settings_match.Add(
+            iconRegionMatch,
+            proportion=0,
+            flag=wx.ALIGN_CENTER_VERTICAL | wx.RIGHT,
+            border=10,
+        )
+
+        if button_label:
+            # Button for region update
+            buttonUpdateRegion = Button(self.region_settings_box, id=wx.ID_ANY)
+            buttonUpdateRegion.SetLabel(_("Update current region"))
+            buttonUpdateRegion.SetToolTip(
+                _("Set current computational region to the region of executed command")
+            )
+            buttonUpdateRegion.Bind(wx.EVT_BUTTON, self.OnUpdateRegion)
+            self.sizer_region_settings_match.Add(
+                buttonUpdateRegion,
+                proportion=1,
+                flag=wx.ALIGN_CENTER_VERTICAL,
+                border=10,
+            )
+
         self.region_settings_box.Show()
 
     def showCommandInfo(self, command_info):
-        """Show command info input."""
+        """Show command info input.
+
+        :param dict command_info: command info entry for update
+        """
         if command_info:
             self._updateGeneralInfoBox(command_info)
-            self._updateRegionSettingsBox(command_info)
+            self._updateRegionSettingsGrid(command_info)
+            self._updateRegionSettingsMatch()
         else:
-            self.clearCommandInfo()
+            self.hideCommandInfo()
         self.SetupScrolling(scroll_x=False, scroll_y=True)
         self.Layout()
 
-    def clearCommandInfo(self):
-        """Clear command info."""
-        self.sizer_general_info.Clear(True)
-        self.sizer_region_settings.Clear(True)
-        self._createGeneralInfoBox()
-        self._createRegionSettingsBox()
-        self._layout()
+    def hideCommandInfo(self):
+        """Hide command info input."""
+        self.general_info_box.Hide()
+        self.region_settings_box.Hide()
+
+    def _get_current_region(self):
+        """Get current computational region settings."""
+        return self.tools.g_region(flags="p", format="json").json
+
+    def _get_history_region(self):
+        """Get computational region settings of executed command."""
+        return {
+            key: value
+            for key, value in self.region_settings.items()
+            if self._region_settings_filter(key)
+        }
+
+    def OnUpdateRegion(self, event):
+        """Set current region to the region of executed command."""
+        parameters = {value: key for key, value in REGION_KEYS.items()}
+        history_region = self._get_history_region()
+        self.tools.g_region(
+            **{parameters.get(key, key): value for key, value in history_region.items()}
+        )
+        self.giface.updateMap.emit(render=False, renderVector=False)
+        self._updateRegionSettingsMatch()
+        self.Layout()
 
 
 class HistoryBrowser(wx.SplitterWindow):
@@ -371,7 +498,7 @@ class HistoryBrowser(wx.SplitterWindow):
             try:
                 history.copy(history_path, target_path)
                 self.showNotification.emit(
-                    message=_("Command history saved to '{}'".format(target_path))
+                    message=_("Command history saved to '{}'").format(target_path)
                 )
             except OSError as e:
                 GError(str(e))

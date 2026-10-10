@@ -6,10 +6,8 @@
 Classes:
  - preferences::NvizPreferencesDialog
 
-(C) 2008-2011 by the GRASS Development Team
-
-This program is free software under the GNU General Public License
-(>=v2). Read the file COPYING that comes with GRASS for details.
+SPDX-FileCopyrightText: 2008-2011 GRASS Development Team
+SPDX-License-Identifier: GPL-2.0-or-later
 
 @author Martin Landa <landa.martin gmail.com> (Google SoC 2008/2010)
 @author Enhancements by Michael Barton <michael.barton asu.edu>
@@ -38,9 +36,7 @@ class NvizPreferencesDialog(PreferencesBaseDialog):
             self, parent=parent, title=title, giface=giface, settings=settings
         )
         self.SetIcon(
-            wx.Icon(
-                os.path.join(globalvar.ICONDIR, "grass_nviz.ico"), wx.BITMAP_TYPE_ICO
-            )
+            wx.Icon(os.path.join(globalvar.ICONDIR, "grass.ico"), wx.BITMAP_TYPE_ICO)
         )
 
         self.toolWin = self.parent.nviz
@@ -258,7 +254,7 @@ class NvizPreferencesDialog(PreferencesBaseDialog):
 
         notebook.AddPage(page=panel, text=" %s " % _("Fly-through"))
         pageSizer = wx.BoxSizer(wx.VERTICAL)
-        # fly throuhg mode
+        # fly through mode
         box = StaticBox(
             parent=panel, id=wx.ID_ANY, label=" %s " % (_("Fly-through mode"))
         )
@@ -704,7 +700,7 @@ class NvizPreferencesDialog(PreferencesBaseDialog):
                 group, key, subkey, subkey1 = gks.split(":")
                 value = self.settings.Get(group, key, [subkey, subkey1])
             if subkey == "position":
-                if subkey1 in ("x", "y"):
+                if subkey1 in {"x", "y"}:
                     value = float(value) * 100
             win = self.FindWindowById(self.winId[gks])
             if win.GetName() == "GetSelection":
@@ -731,7 +727,7 @@ class NvizPreferencesDialog(PreferencesBaseDialog):
                 value = win.GetValue()
 
             if subkey == "position":
-                if subkey1 in ("x", "y"):
+                if subkey1 in {"x", "y"}:
                     value = float(value) / 100
             if subkey1:
                 self.settings.Set(group, value, key, [subkey, subkey1])

@@ -27,10 +27,8 @@
  * paper: "Computing Visibility on * Terrains in External Memory" by
  * Herman Haverkort, Laura Toma and Yi Zhuang.
  *
- * COPYRIGHT: (C) 2008 by the GRASS Development Team
- *
- * This program is free software under the GNU General Public License
- * (>=v2). Read the file COPYING that comes with GRASS for details.
+ * SPDX-FileCopyrightText: 2008 GRASS Development Team
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  *****************************************************************************/
 
@@ -94,7 +92,7 @@ GridHeader *read_header(char *rastName, Cell_head *region)
 
     nrows = Rast_window_rows();
     ncols = Rast_window_cols();
-    /*check for loss of prescion */
+    /*check for loss of precision */
     if (nrows <= maxDimension && ncols <= maxDimension) {
         hd->nrows = (dimensionType)nrows;
         hd->ncols = (dimensionType)ncols;
@@ -116,7 +114,7 @@ GridHeader *read_header(char *rastName, Cell_head *region)
         G_warning(
             _("East-west resolution does not equal north-south resolution. "
               "The viewshed computation assumes the cells are square, so in "
-              "this case this may result in innacuracies."));
+              "this case this may result in inaccuracies."));
         //    exit(EXIT_FAILURE);
     }
     hd->ew_res = region->ew_res;
@@ -450,6 +448,7 @@ AMI_STREAM<AEvent> *init_event_list(char *rastName, Viewpoint *vp,
     Rast_set_null_value(inrast[2], ncols, data_type);
 
     /*scan through the raster data */
+    // int isnull = 0;
     dimensionType i, j;
     double ax, ay;
     AEvent e;
@@ -483,7 +482,7 @@ AMI_STREAM<AEvent> *init_event_list(char *rastName, Viewpoint *vp,
             e.col = j;
 
             /*read the elevation value into the event */
-            Rast_is_null_value(&(inrast[1][j]), data_type);
+            // isnull = Rast_is_null_value(&(inrast[1][j]), data_type);
             e.elev[1] = inrast[1][j];
 
             /* adjust for curvature */
@@ -777,6 +776,8 @@ void save_vis_elev_to_GRASS(Grid *visgrid, char *elevfname, char *visfname,
 
     Rast_close(elevfd);
     Rast_close(visfd);
+    G_free(visrast);
+    G_free(elevrast);
     return;
 }
 
@@ -865,7 +866,7 @@ void save_io_visibilitygrid_to_GRASS(IOVisibilityGrid *visgrid, char *fname,
         for (j = 0; j < (dimensionType)ncols; j++) {
 
             if (curResult->row == i && curResult->col == j) {
-                /*cell is recodred in the visibility stream: it must be
+                /*cell is recorded in the visibility stream: it must be
                    either visible, or NODATA  */
                 if (is_visible(curResult->angle))
                     writeValue(visrast, j, fun(curResult->angle), type);
@@ -892,6 +893,7 @@ void save_io_visibilitygrid_to_GRASS(IOVisibilityGrid *visgrid, char *fname,
     } /* for i */
 
     Rast_close(visfd);
+    G_free(visrast);
 }
 
 /* ************************************************************ */
@@ -968,27 +970,28 @@ void save_io_vis_and_elev_to_GRASS(IOVisibilityGrid *visgrid, char *elevfname,
 
         Rast_get_row(elevfd, elevrast, i, elev_data_type);
 
-        for (j = 0; j < Rast_window_cols(); j++) {
+        for (j = 0; j < (dimensionType)ncols; j++) {
 
             /* read the current elevation value */
+            // int isNull = 0;
 
             switch (elev_data_type) {
             case CELL_TYPE:
-                Rast_is_c_null_value(&((CELL *)elevrast)[j]);
+                // isNull = Rast_is_c_null_value(&((CELL *)elevrast)[j]);
                 elev = (double)(((CELL *)elevrast)[j]);
                 break;
             case FCELL_TYPE:
-                Rast_is_f_null_value(&((FCELL *)elevrast)[j]);
+                // isNull = Rast_is_f_null_value(&((FCELL *)elevrast)[j]);
                 elev = (double)(((FCELL *)elevrast)[j]);
                 break;
             case DCELL_TYPE:
-                Rast_is_d_null_value(&((DCELL *)elevrast)[j]);
+                // isNull = Rast_is_d_null_value(&((DCELL *)elevrast)[j]);
                 elev = (double)(((DCELL *)elevrast)[j]);
                 break;
             }
 
             if (curResult->row == i && curResult->col == j) {
-                /*cell is recodred in the visibility stream: it must be
+                /*cell is recorded in the visibility stream: it must be
                    either visible, or NODATA  */
                 if (is_visible(curResult->angle))
                     writeValue(visrast, j, elev - vp_elev, elev_data_type);
@@ -1012,5 +1015,7 @@ void save_io_vis_and_elev_to_GRASS(IOVisibilityGrid *visgrid, char *elevfname,
 
     Rast_close(elevfd);
     Rast_close(visfd);
+    G_free(visrast);
+    G_free(elevrast);
     return;
 }

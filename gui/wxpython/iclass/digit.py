@@ -7,30 +7,41 @@ Classes:
  - digit::IClassVDigit
  - digit::IClassVDigitWindow
 
-(C) 2006-2012 by the GRASS Development Team
-This program is free software under the GNU General Public
-License (>=v2). Read the file COPYING that comes with GRASS
-for details.
+SPDX-FileCopyrightText: 2006-2012 GRASS Development Team
+SPDX-License-Identifier: GPL-2.0-or-later
 
 @author Vaclav Petras <wenzeslaus gmail.com>
 @author Anna Kratochvilova <kratochanna gmail.com>
 """
 
 import wx
-
+from core.gcmd import GWarning
 from vdigit.mapwindow import VDigitWindow
 from vdigit.wxdigit import IVDigit
-from vdigit.wxdisplay import DisplayDriver, TYPE_AREA
-from core.gcmd import GWarning
+from vdigit.wxdisplay import TYPE_AREA, DisplayDriver
 
 try:
-    from grass.lib.gis import G_verbose, G_set_verbose
-    from grass.lib.vector import *
-    from grass.lib.vedit import *
+    from ctypes import pointer
+
+    from grass.lib.gis import G_set_verbose, G_verbose
+    from grass.lib.vector import (
+        Map_info,
+        Vect_build,
+        Vect_close,
+        Vect_copy_map_lines,
+        Vect_get_area_cat,
+        Vect_get_num_lines,
+        Vect_is_3d,
+        Vect_open_new,
+        Vect_open_tmp_new,
+        Vect_open_tmp_update,
+        Vect_open_update,
+    )
+    from grass.lib.vedit import TYPE_CENTROIDIN, Vedit_delete_areas_cat
 except ImportError:
     pass
 
-import grass.script as grass
+import grass.script as gs
 
 
 class IClassVDigitWindow(VDigitWindow):
@@ -53,7 +64,7 @@ class IClassVDigitWindow(VDigitWindow):
         if not action:
             return
 
-        region = grass.region()
+        region = gs.region()
         e, n = self.Pixel2Cell(event.GetPosition())
         if not (
             (region["s"] <= n <= region["n"]) and (region["w"] <= e <= region["e"])
@@ -126,8 +137,7 @@ class IClassVDigit(IVDigit):
         return 1
 
     def _getNewFeaturesCat(self):
-        cat = self.mapWindow.GetCurrentCategory()
-        return cat
+        return self.mapWindow.GetCurrentCategory()
 
     def DeleteAreasByCat(self, cats):
         """Delete areas (centroid+boundaries) by categories
@@ -157,15 +167,9 @@ class IClassVDigit(IVDigit):
         poMapInfoNew = pointer(Map_info())
 
         if not tmp:
-            if update:
-                open_fn = Vect_open_update
-            else:
-                open_fn = Vect_open_new
+            open_fn = Vect_open_update if update else Vect_open_new
         else:
-            if update:
-                open_fn = Vect_open_tmp_update
-            else:
-                open_fn = Vect_open_tmp_new
+            open_fn = Vect_open_tmp_update if update else Vect_open_tmp_new
 
         if update:
             if open_fn(poMapInfoNew, name, "") == -1:

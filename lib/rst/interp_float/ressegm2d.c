@@ -2,8 +2,11 @@
  * Written by H. Mitasova, I. Kosinovsky, D. Gerdes Summer 1993
  * University of Illinois
  * US Army Construction Engineering Research Lab
- * Copyright 1993, H. Mitasova (University of Illinois),
- * I. Kosinovsky, (USA-CERL), and D.Gerdes (USA-CERL)
+ * SPDX-FileCopyrightText: 1993 H. Mitasova (University of Illinois)
+ * SPDX-FileCopyrightText: 1993 I. Kosinovsky (USA-CERL)
+ * SPDX-FileCopyrightText: 1993 D.Gerdes (USA-CERL)
+ * SPDX-FileCopyrightText: GRASS Development Team
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  * modified by McCauley in August 1995
  * modified by Mitasova in August 1995
@@ -190,7 +193,7 @@ int IL_resample_interp_segments_2d(
         b[0] = 0.;
         G_lubksb(matrix, m1 + 1, indx, b);
 
-        params->check_points(params, data, b, ertot, zmin, *dnorm, triple);
+        params->check_points(params, data, b, ertot, zmin, *dnorm, &triple);
 
         if (params->grid_calc(params, data, bitmask, zmin, zmax, zminac, zmaxac,
                               gmin, gmax, c1min, c1max, c2min, c2max, ertot, b,
@@ -381,7 +384,7 @@ int IL_resample_interp_segments_2d(
                     G_lubksb(new_matrix, data->n_points + 1, new_indx, b);
 
                     params->check_points(params, data, b, ertot, zmin, *dnorm,
-                                         triple);
+                                         &triple);
 
                     if (params->grid_calc(params, data, bitmask, zmin, zmax,
                                           zminac, zmaxac, gmin, gmax, c1min,
@@ -424,7 +427,7 @@ int IL_resample_interp_segments_2d(
                     G_lubksb(matrix, data->n_points + 1, indx, b);
 
                     params->check_points(params, data, b, ertot, zmin, *dnorm,
-                                         triple);
+                                         &triple);
 
                     if (params->grid_calc(params, data, bitmask, zmin, zmax,
                                           zminac, zmaxac, gmin, gmax, c1min,

@@ -7,17 +7,17 @@
 #      Earlier Bourne script version by Hamish Bowman,
 #      https://grasswiki.osgeo.org/wiki/Talk:Color_tables
 #
-#   (C) 2009-2017 by the GRASS Development Team
-#       This program is free software under the GNU General Public
-#       License (>=v2). Read the file COPYING that comes with GRASS
-#       for details.
+#   SPDX-FileCopyrightText: 2009-2017 GRASS Development Team
+#   SPDX-License-Identifier: GPL-2.0-or-later
 #
 
-import sys
-import os
-import atexit
 import array
-import grass.script as grass
+import atexit
+import os
+import sys
+from pathlib import Path
+
+import grass.script as gs
 
 tmp_img = None
 
@@ -27,7 +27,7 @@ width = None
 
 def cleanup():
     if tmp_img:
-        grass.try_remove(tmp_img)
+        gs.try_remove(tmp_img)
 
 
 # def rotate(src, dst):
@@ -36,10 +36,8 @@ def cleanup():
 
 def read_ppm(src):
     global width, height
+    text = Path(src).read_bytes()
 
-    fh = open(src, "rb")
-    text = fh.read()
-    fh.close()
     i = 0
     j = text.find("\n", i)
     if text[i:j] != "P6":
@@ -53,7 +51,8 @@ def read_ppm(src):
     j = text.find("\n", i)
     maxval = text[i:j]
     if int(maxval) != 255:
-        raise OSError("Max value in image != 255")
+        msg = "Max value in image != 255"
+        raise OSError(msg)
     i = j + 1
     return array.array("B", text[i:])
 
@@ -61,10 +60,9 @@ def read_ppm(src):
 def write_ppm(dst, data):
     w = height
     h = width
-    fh = open(dst, "wb")
-    fh.write("P6\n%d %d\n%d\n" % (w, h, 255))
-    data.tofile(fh)
-    fh.close()
+    with open(dst, "wb") as fh:
+        fh.write("P6\n%d %d\n%d\n" % (w, h, 255))
+        data.tofile(fh)
 
 
 def rotate_ppm(srcd):
@@ -88,16 +86,15 @@ def flip_ppm(srcd):
 
 
 def ppmtopng(dst, src):
-    if grass.find_program("g.ppmtopng", "--help"):
-        grass.run_command("g.ppmtopng", input=src, output=dst, quiet=True)
-    elif grass.find_program("pnmtopng"):
-        fh = open(dst, "wb")
-        grass.call(["pnmtopng", src], stdout=fh)
-        fh.close()
-    elif grass.find_program("convert"):
-        grass.call(["convert", src, dst])
+    if gs.find_program("g.ppmtopng", "--help"):
+        gs.run_command("g.ppmtopng", input=src, output=dst, quiet=True)
+    elif gs.find_program("pnmtopng"):
+        with open(dst, "wb") as fh:
+            gs.call(["pnmtopng", src], stdout=fh)
+    elif gs.find_program("convert"):
+        gs.call(["convert", src, dst])
     else:
-        grass.fatal(_("Cannot find g.ppmtopng, pnmtopng or convert"))
+        gs.fatal(_("Cannot find g.ppmtopng, pnmtopng or convert"))
 
 
 def convert_and_rotate(src, dst, flip=False):
@@ -110,11 +107,8 @@ def convert_and_rotate(src, dst, flip=False):
     to_png = False
     if dst.lower().endswith(".png"):
         to_png = True
-    if to_png:
-        tmp_img = grass.tempfile() + ".ppm"
-        # TODO: clean up the file
-    else:
-        tmp_img = dst
+    # TODO: clean up the file
+    tmp_img = gs.tempfile() + ".ppm" if to_png else dst
     write_ppm(tmp_img, ppm)
     if to_png:
         ppmtopng(dst, tmp_img)

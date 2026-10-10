@@ -6,22 +6,13 @@
 # AUTHOR(S):    Soeren Gebbert
 #
 # PURPOSE:      Export a space time vector dataset.as GRASS specific archive file
-# COPYRIGHT:    (C) 2011-2017 by the GRASS Development Team
-#
-#  This program is free software; you can redistribute it and/or modify
-#  it under the terms of the GNU General Public License as published by
-#  the Free Software Foundation; either version 2 of the License, or
-#  (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
+# SPDX-FileCopyrightText: 2011-2017 GRASS Development Team
+# SPDX-License-Identifier: GPL-2.0-or-later
 #
 #############################################################################
 
 # %module
-# % description: Exports a space time vector dataset as GRASS GIS specific archive file.
+# % description: Exports a space time vector dataset as GRASS specific archive file.
 # % keyword: temporal
 # % keyword: export
 # % keyword: vector
@@ -66,7 +57,7 @@
 # %option G_OPT_T_WHERE
 # %end
 
-import grass.script as grass
+import grass.script as gs
 
 
 ############################################################################
@@ -75,20 +66,20 @@ def main():
     import grass.temporal as tgis
 
     # Get the options
-    _input = options["input"]
+    input_ = options["input"]
     output = options["output"]
     compression = options["compression"]
     directory = options["directory"]
     where = options["where"]
-    _format = options["format"]
+    format_ = options["format"]
 
     # Make sure the temporal database exists
     tgis.init()
     # Export the space time vector dataset
-    tgis.export_stds(_input, output, compression, directory, where, _format, "stvds")
+    tgis.export_stds(input_, output, compression, directory, where, format_, "stvds")
 
 
 ############################################################################
 if __name__ == "__main__":
-    options, flags = grass.parser()
+    options, flags = gs.parser()
     main()

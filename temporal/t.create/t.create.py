@@ -6,17 +6,8 @@
 # AUTHOR(S):    Soeren Gebbert
 #
 # PURPOSE:      Create a space time dataset
-# COPYRIGHT:    (C) 2011-2017 by the GRASS Development Team
-#
-#  This program is free software; you can redistribute it and/or modify
-#  it under the terms of the GNU General Public License as published by
-#  the Free Software Foundation; either version 2 of the License, or
-#  (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
+# SPDX-FileCopyrightText: 2011-2017 GRASS Development Team
+# SPDX-License-Identifier: GPL-2.0-or-later
 #
 #############################################################################
 
@@ -64,7 +55,7 @@
 # % multiple: no
 # %end
 
-import grass.script as grass
+import grass.script as gs
 
 ############################################################################
 
@@ -85,10 +76,10 @@ def main():
     tgis.init()
 
     tgis.open_new_stds(
-        name, type, temporaltype, title, descr, semantic, None, grass.overwrite()
+        name, type, temporaltype, title, descr, semantic, None, gs.overwrite()
     )
 
 
 if __name__ == "__main__":
-    options, flags = grass.parser()
+    options, flags = gs.parser()
     main()

@@ -3,10 +3,8 @@
 
    \brief DBMI Library (base) - default settings
 
-   (C) 1999-2010 by the GRASS Development Team
-
-   This program is free software under the GNU General Public License
-   (>=v2). Read the file COPYING that comes with GRASS for details.
+   SPDX-FileCopyrightText: 1999-2010 GRASS Development Team
+   SPDX-License-Identifier: GPL-2.0-or-later
 
    \author Joel Jones (CERL/UIUC)
    \author Upgraded to GRASS 5.7 by Radim Blazek
@@ -110,7 +108,7 @@ int db_set_default_connection(void)
         connection.databaseName = "$GISDBASE/$LOCATION_NAME/$MAPSET/dbf/";
         db_set_connection(&connection);
 
-        sprintf(buf, "%s/%s/dbf", G_location_path(), G_mapset());
+        snprintf(buf, sizeof(buf), "%s/%s/dbf", G_location_path(), G_mapset());
         G_make_mapset_object_group("dbf");
     }
     else if (strcmp(DB_DEFAULT_DRIVER, "sqlite") == 0) {
@@ -123,7 +121,7 @@ int db_set_default_connection(void)
          * that here?) or $MAPSET/sqlite/mapname.sql as with dbf?
          */
 
-        /* http://www.sqlite.org/lockingv3.html
+        /* https://www.sqlite.org/lockingv3.html
          * When SQLite creates a journal file on Unix, it opens the
          * directory that contains that file and calls fsync() on the
          * directory, in an effort to push the directory information to disk.

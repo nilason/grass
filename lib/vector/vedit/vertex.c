@@ -3,10 +3,8 @@
 
    \brief Vedit library - vertex manipulation
 
-   (C) 2006-2008 by the GRASS Development Team
-
-   This program is free software under the GNU General Public License
-   (>=v2).  Read the file COPYING that comes with GRASS for details.
+   SPDX-FileCopyrightText: 2006-2008 GRASS Development Team
+   SPDX-License-Identifier: GPL-2.0-or-later
 
    \author Jachym Cepicky <jachym.cepicky gmail.com>
    \author Martin Landa <landa.martin gmail.com>
@@ -44,14 +42,13 @@ int Vedit_move_vertex(struct Map_info *Map, struct Map_info **BgMap,
     double *x, *y, *z;
     char *moved;
 
-    struct line_pnts *Points, *Points_snap;
+    struct line_pnts *Points;
     struct line_cats *Cats;
 
     nvertices_moved = nvertices_snapped = 0;
     moved = NULL;
 
     Points = Vect_new_line_struct();
-    Points_snap = Vect_new_line_struct();
     Cats = Vect_new_cats_struct();
 
     for (i = 0; i < List->n_values; i++) {
@@ -157,16 +154,17 @@ int Vedit_move_vertex(struct Map_info *Map, struct Map_info **BgMap,
 
         if (rewrite) {
             if (Vect_rewrite_line(Map, line, type, Points, Cats) < 0) {
-                return -1;
+                nvertices_moved = -1;
+                goto free_exit;
             }
         }
     } /* for each selected line */
 
+free_exit:
     /* destroy structures */
     Vect_destroy_line_struct(Points);
-    Vect_destroy_line_struct(Points_snap);
     Vect_destroy_cats_struct(Cats);
-    /*     G_free ((void *) moved); */
+    G_free(moved);
 
     return nvertices_moved;
 }
@@ -325,7 +323,7 @@ int Vedit_remove_vertex(struct Map_info *Map, struct ilist *List,
                     rewrite = 1;
                 }
             } /* for each point */
-        }     /* for each bounding box */
+        } /* for each bounding box */
 
         if (rewrite) {
             /* rewrite the line */

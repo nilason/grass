@@ -1,43 +1,24 @@
 # Development and Maintenance Documentation
 
-Here is development and maitanance documentation. The API documentation
-is at appropriate places, but here is the information relevant to
-contributing to GRASS GIS and its maintanance.
+Find below the development and maintenance documentation.
+The API documentation is available in the appropriate places,
+but here is the information relevant to contributing to and
+maintaining GRASS.
 
-## How to generate the 'Programmer's Manual'
+## Style and GitHub guide
 
-You can locally generate the [GRASS GIS Programmer's Manual](https://grass.osgeo.org/programming8/).
+- [GRASS Programming Style Guide](style_guide.md)
+- [Guide to contributing on GitHub](github_guide.md)
 
-This needs doxygen (<http://www.doxygen.org>) and optionally
-Graphviz dot (<http://www.research.att.com/sw/tools/graphviz/>).
+## Testing
 
-To build the GRASS programmer's documentation, run
+- [Testing GRASS](testing.md)
+- ["grass.gunittest" documentation](https://grass.osgeo.org/grass-devel/manuals/libpython/gunittest_testing.html)
 
-```sh
-make htmldocs
-```
+## Python API
 
-Or to generate documentation as a single html file
-(recommended for simple reading)
+- ["grass" Python package documentation](https://grass.osgeo.org/grass-devel/manuals/libpython/)
 
-```sh
-make htmldocs-single
-```
+## C API
 
-This takes quite some time. The result is in `lib/html/index.html`
-which refers to further document repositories in
-
-```text
-lib/vector/html/index.html
-lib/db/html/index.html
-lib/gis/html/index.html
-```
-
-The master file is: `./grasslib.dox` where all sub-documents have to
-be linked to.
-
-To generate the documents in PDF format, run
-
-```sh
-make pdfdocs
-```
+- [GRASS Programmer's manual](https://grass.osgeo.org/programming8/)

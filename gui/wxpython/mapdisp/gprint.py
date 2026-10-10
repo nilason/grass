@@ -8,10 +8,8 @@ Classes:
  - gprint::MapPrint
  - gprint::PrintOptions
 
-(C) 2007-2011 by the GRASS Development Team
-
-This program is free software under the GNU General Public License
-(>=v2). Read the file COPYING that comes with GRASS for details.
+SPDX-FileCopyrightText: 2007-2011 GRASS Development Team
+SPDX-License-Identifier: GPL-2.0-or-later
 
 @author Michael Barton (Arizona State University)
 """
@@ -26,26 +24,8 @@ class MapPrint(wx.Printout):
         wx.Printout.__init__(self)
         self.canvas = canvas
 
-    def OnBeginDocument(self, start, end):
-        return super().OnBeginDocument(start, end)
-
-    def OnEndDocument(self):
-        super().OnEndDocument()
-
-    def OnBeginPrinting(self):
-        super().OnBeginPrinting()
-
-    def OnEndPrinting(self):
-        super().OnEndPrinting()
-
-    def OnPreparePrinting(self):
-        super().OnPreparePrinting()
-
-    def HasPage(self, page):
-        if page <= 2:
-            return True
-        else:
-            return False
+    def HasPage(self, page) -> bool:
+        return page <= 2
 
     def GetPageInfo(self):
         return (1, 2, 1, 2)
@@ -62,8 +42,8 @@ class MapPrint(wx.Printout):
         marginY = 10
 
         # Add the margin to the graphic size
-        maxX = maxX + (2 * marginX)
-        maxY = maxY + (2 * marginY)
+        maxX += 2 * marginX
+        maxY += 2 * marginY
 
         # Get the size of the DC in pixels
         (w, h) = dc.GetSizeTuple()

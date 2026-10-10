@@ -7,10 +7,8 @@ for various display management functions, one for manipulating GCPs.
 Classes:
 - mapdisplay::MapPanel
 
-(C) 2006-2011 by the GRASS Development Team
-
-This program is free software under the GNU General Public License
-(>=v2). Read the file COPYING that comes with GRASS for details.
+SPDX-FileCopyrightText: 2006-2011 GRASS Development Team
+SPDX-License-Identifier: GPL-2.0-or-later
 
 @author Markus Metz
 """
@@ -47,7 +45,7 @@ class MapPanel(SingleMapPanel):
         self,
         parent,
         giface,
-        title=_("GRASS GIS Manage Ground Control Points"),
+        title=_("GRASS Manage Ground Control Points"),
         toolbars=["gcpdisp"],
         Map=None,
         auimgr=None,
@@ -448,7 +446,7 @@ class MapPanel(SingleMapPanel):
         dlg = wx.FileDialog(
             parent=self,
             message=_(
-                "Choose a file name to save the image " "(no need to add extension)"
+                "Choose a file name to save the image (no need to add extension)"
             ),
             wildcard=filetype,
             style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT,
@@ -474,7 +472,6 @@ class MapPanel(SingleMapPanel):
         """
         Print options and output menu for map display
         """
-        point = wx.GetMousePosition()
         printmenu = Menu()
         # Add items to the menu
         setup = wx.MenuItem(printmenu, wx.ID_ANY, _("Page setup"))
@@ -518,7 +515,6 @@ class MapPanel(SingleMapPanel):
 
     def OnZoomMenu(self, event):
         """Popup Zoom menu"""
-        point = wx.GetMousePosition()
         zoommenu = Menu()
         # Add items to the menu
 
@@ -567,7 +563,7 @@ class MapPanel(SingleMapPanel):
         return self.toolbars["gcpdisp"]
 
     def _setActiveMapWindow(self, mapWindow):
-        if not self.MapWindow == mapWindow:
+        if self.MapWindow != mapWindow:
             self.MapWindow = mapWindow
             self.Map = mapWindow.Map
             self.UpdateActive(mapWindow)

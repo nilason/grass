@@ -3,10 +3,9 @@ Name:        r.random test
 Purpose:    Tests r.random module and some of its options.
 
 Author:     Shubham Sharma, Google Code-in 2018
-Copyright:  (C) 2018 by Shubham Sharma and the GRASS Development Team
-Licence:    This program is free software under the GNU General Public
-            License (>=v2). Read the file COPYING that comes with GRASS
-            for details.
+SPDX-FileCopyrightText: 2018 Shubham Sharma
+SPDX-FileCopyrightText: GRASS Development Team
+SPDX-License-Identifier: GPL-2.0-or-later
 """
 
 from grass.gunittest.case import TestCase
@@ -28,30 +27,30 @@ class TestRasterTile(TestCase):
     def tearDownClass(cls):
         cls.del_temp_region()
 
-        cls.runModule("g.remove", type="raster", flags="f", name=cls.raster)
-        cls.runModule("g.remove", type="raster", flags="f", name=cls.raster + "_null")
-        cls.runModule(
-            "g.remove", type="raster", flags="f", name=cls.raster + "_without_topology"
-        )
-        cls.runModule("g.remove", type="raster", flags="f", name=cls.raster + "_3D")
         cls.runModule(
             "g.remove",
             type="raster",
             flags="f",
-            name=cls.raster + "_cover_landcover_1m",
+            name=(
+                cls.raster,
+                cls.raster + "_null",
+                cls.raster + "_without_topology",
+                cls.raster + "_3D",
+                cls.raster + "_cover_landcover_1m",
+            ),
         )
 
-        cls.runModule("g.remove", type="vector", flags="f", name=cls.vector)
-        cls.runModule("g.remove", type="vector", flags="f", name=cls.vector + "_null")
-        cls.runModule(
-            "g.remove", type="vector", flags="f", name=cls.vector + "_without_topology"
-        )
-        cls.runModule("g.remove", type="vector", flags="f", name=cls.vector + "_3D")
         cls.runModule(
             "g.remove",
             type="vector",
             flags="f",
-            name=cls.vector + "_cover_landcover_1m",
+            name=(
+                cls.vector,
+                cls.vector + "_null",
+                cls.vector + "_without_topology",
+                cls.vector + "_3D",
+                cls.vector + "_cover_landcover_1m",
+            ),
         )
 
     def test_random_raster(self):
@@ -81,14 +80,14 @@ class TestRasterTile(TestCase):
         self.assertVectorExists(
             self.vector, msg="landcover_1m_vector_random was not created"
         )
-        topology = dict(points=20, primitives=20)
+        topology = {"points": 20, "primitives": 20}
         self.assertVectorFitsTopoInfo(vector=self.vector, reference=topology)
 
-    def test_random_raster_flag_z(self):
+    def test_random_raster_flag_n(self):
         """Testing r.random  runs successfully"""
         self.assertModule(
             "r.random",
-            flags="z",
+            flags="n",
             input=self.input,
             npoints=self.npoints,
             raster=self.raster + "_null",
@@ -99,11 +98,11 @@ class TestRasterTile(TestCase):
             self.raster, msg="landcover_1m_raster_random_null was not created"
         )
 
-    def test_vector_random_flag_z(self):
+    def test_vector_random_flag_n(self):
         """Testing r.random  runs successfully"""
         self.assertModule(
             "r.random",
-            flags="z",
+            flags="n",
             input=self.input,
             npoints=self.npoints,
             vector=self.vector + "_null",
@@ -113,7 +112,7 @@ class TestRasterTile(TestCase):
         self.assertVectorExists(
             self.vector + "_null", msg="landcover_1m_vector_random_null was not created"
         )
-        topology = dict(points=20, primitives=20)
+        topology = {"points": 20, "primitives": 20}
         self.assertVectorFitsTopoInfo(vector=self.vector + "_null", reference=topology)
 
     def test_random_raster_flag_b(self):
@@ -147,7 +146,7 @@ class TestRasterTile(TestCase):
             self.vector + "_without_topology",
             msg="landcover_1m_vector_random_without_topology was not created",
         )
-        topology = dict(points=20, primitives=20)
+        topology = {"points": 20, "primitives": 20}
         self.assertVectorFitsTopoInfo(
             vector=self.vector + "_without_topology", reference=topology
         )
@@ -181,7 +180,7 @@ class TestRasterTile(TestCase):
         self.assertVectorExists(
             self.vector + "_3D", msg="landcover_1m_vector_random_3D was not created"
         )
-        topology = dict(points=20, primitives=20)
+        topology = {"points": 20, "primitives": 20}
         self.assertVectorFitsTopoInfo(vector=self.vector + "_3D", reference=topology)
 
     def test_random_raster_cover(self):
@@ -215,7 +214,7 @@ class TestRasterTile(TestCase):
             self.vector + "_cover_landcover_1m",
             msg="landcover_1m_vector_cover_landcover_1m was not created",
         )
-        topology = dict(points=20, primitives=20)
+        topology = {"points": 20, "primitives": 20}
         self.assertVectorFitsTopoInfo(
             vector=self.vector + "_cover_landcover_1m", reference=topology
         )

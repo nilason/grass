@@ -14,17 +14,16 @@
  * PURPOSE:      calculate a transformation matrix and then convert x,y cell
  *               coordinates to standard map coordinates for each pixel in the
  *               image (control points can come from g.gui.gcp)
- * COPYRIGHT:    (C) 2002-2020 by the GRASS Development Team
- *
- *               This program is free software under the GNU General Public
- *               License (>=v2). Read the file COPYING that comes with GRASS
- *               for details.
+ * SPDX-FileCopyrightText: 2002-2020 GRASS Development Team
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  *****************************************************************************/
 
 #include <stdlib.h>
 #include <string.h>
 #include "global.h"
+
+#include <grass/gis.h>
 
 int seg_mb_img;
 
@@ -151,8 +150,14 @@ int main(int argc, char *argv[])
     interpolate = menu[method].method;
 
     G_strip(grp->answer);
-    strcpy(group.name, grp->answer);
-    strcpy(extension, ext->answer);
+    if (G_strlcpy(group.name, grp->answer, sizeof(group.name)) >=
+        sizeof(group.name)) {
+        G_fatal_error(_("Group name <%s> is too long"), grp->answer);
+    }
+    if (G_strlcpy(extension, ext->answer, sizeof(extension)) >=
+        sizeof(extension)) {
+        G_fatal_error(_("Extension <%s> is too long"), ext->answer);
+    }
     order = atoi(val->answer);
 
     seg_mb = NULL;

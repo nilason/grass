@@ -10,10 +10,8 @@ Classes:
     Run pyshell and evaluate code in a separate instance of python &
     design the widget communicate back and forth with it
 
-(C) 2011 by the GRASS Development Team
-
-This program is free software under the GNU General Public License
-(>=v2). Read the file COPYING that comes with GRASS for details.
+SPDX-FileCopyrightText: 2011 GRASS Development Team
+SPDX-License-Identifier: GPL-2.0-or-later
 
 @author Martin Landa <landa.martin gmail.com>
 """
@@ -26,7 +24,7 @@ import wx
 from wx.py.shell import Shell as PyShell
 from wx.py.version import VERSION
 
-import grass.script as grass
+import grass.script as gs
 
 from gui_core.wrap import Button, ClearButton, IsDark
 from gui_core.pystc import SetDarkMode
@@ -54,12 +52,12 @@ class PyShellWindow(wx.Panel):
             + "\n\n"
         )
 
-        shellargs = dict(
-            parent=self,
-            id=wx.ID_ANY,
-            introText=self.intro,
-            locals={"gs": grass, "AddLayer": self.AddLayer, "help": self.Help},
-        )
+        shellargs = {
+            "parent": self,
+            "id": wx.ID_ANY,
+            "introText": self.intro,
+            "locals": {"gs": gs, "AddLayer": self.AddLayer, "help": self.Help},
+        }
         # useStockId (available since wxPython 4.0.2) should be False on macOS
         if sys.platform == "darwin" and CheckWxVersion([4, 0, 2]):
             shellargs["useStockId"] = False
@@ -119,14 +117,14 @@ class PyShellWindow(wx.Panel):
         fname = None
         if ltype == "raster" or ltype != "vector":
             # check for raster
-            fname = grass.find_file(name, element="cell")["fullname"]
+            fname = gs.find_file(name, element="cell")["fullname"]
             if fname:
                 ltype = "raster"
                 lcmd = "d.rast"
 
         if not fname and (ltype == "vector" or ltype != "raster"):
             # if not found check for vector
-            fname = grass.find_file(name, element="vector")["fullname"]
+            fname = gs.find_file(name, element="vector")["fullname"]
             if fname:
                 ltype = "vector"
                 lcmd = "d.vect"

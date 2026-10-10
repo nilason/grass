@@ -1,21 +1,21 @@
 """
-(C) 2014 by the GRASS Development Team
-This program is free software under the GNU General Public
-License (>=v2). Read the file COPYING that comes with GRASS
-for details.
+SPDX-FileCopyrightText: 2014 GRASS Development Team
+SPDX-License-Identifier: GPL-2.0-or-later
 
 :authors: Soeren Gebbert and Thomas Leppelt
 """
 
 import datetime
-import grass.temporal as tgis
+
 from grass.gunittest.case import TestCase
 from grass.gunittest.main import test
+
+import grass.temporal as tgis
 
 
 class TestTemporalRasterAlgebraConditionalComplements(TestCase):
     @classmethod
-    def setUpClass(cls):
+    def setUpClass(cls) -> None:
         """Initiate the temporal GIS and set the region"""
         tgis.init(True)  # Raise on error instead of exit(1)
         cls.use_temp_region()
@@ -66,16 +66,16 @@ class TestTemporalRasterAlgebraConditionalComplements(TestCase):
             interval=True,
         )
 
-    def tearDown(self):
+    def tearDown(self) -> None:
         self.runModule("t.remove", flags="rf", inputs="R", quiet=True)
 
     @classmethod
-    def tearDownClass(cls):
+    def tearDownClass(cls) -> None:
         """Remove the temporary region"""
         cls.runModule("t.remove", flags="rf", inputs="A,B", quiet=True)
         cls.del_temp_region()
 
-    def test_temporal_conditional_complement(self):
+    def test_temporal_conditional_complement(self) -> None:
         """Test the conditional expression that evaluate if then else statements
         so that the else statement is a complement operation
 
@@ -111,7 +111,7 @@ class TestTemporalRasterAlgebraConditionalComplements(TestCase):
         self.assertEqual(R.check_temporal_topology(), True)
         self.assertEqual(R.get_granularity(), "1 day")
 
-    def test_temporal_conditional_complement_right_side_timestamps(self):
+    def test_temporal_conditional_complement_right_side_timestamps(self) -> None:
         """Test the conditional expression that evaluate if then else statements
         so that the else statement is a complement operation
 

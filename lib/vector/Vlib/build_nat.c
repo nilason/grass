@@ -3,10 +3,8 @@
 
    \brief Vector library - Building topology for native format
 
-   (C) 2001-2013 by the GRASS Development Team
-
-   This program is free software under the GNU General Public License
-   (>=v2). Read the file COPYING that comes with GRASS for details.
+   SPDX-FileCopyrightText: 2001-2013 GRASS Development Team
+   SPDX-License-Identifier: GPL-2.0-or-later
 
    \author Original author CERL, probably Dave Gerdes or Mike Higgins.
    \author Update to GRASS 5.7 Radim Blazek and David D. Gray.
@@ -169,8 +167,10 @@ int Vect_build_nat(struct Map_info *Map, int build)
         plus->built = GV_BUILD_AREAS;
     }
 
-    if (build < GV_BUILD_ATTACH_ISLES)
+    if (build < GV_BUILD_ATTACH_ISLES) {
+        Vect_destroy_cats_struct(Cats);
         return 1;
+    }
 
     /* Attach isles to areas */
     if (plus->built < GV_BUILD_ATTACH_ISLES) {
@@ -186,8 +186,10 @@ int Vect_build_nat(struct Map_info *Map, int build)
         plus->built = GV_BUILD_ATTACH_ISLES;
     }
 
-    if (build < GV_BUILD_CENTROIDS)
+    if (build < GV_BUILD_CENTROIDS) {
+        Vect_destroy_cats_struct(Cats);
         return 1;
+    }
 
     /* Attach centroids to areas */
     if (plus->built < GV_BUILD_CENTROIDS) {

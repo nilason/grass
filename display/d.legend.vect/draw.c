@@ -4,10 +4,9 @@
  * background. With do_bg=0 compute position of all legend graphic item and draw
  * all.
  *
- * Copyright (C) 2016 by Adam Laza, GSoC 2016, and the GRASS Development Team
- *
- * This program is free software under the GPL (>=v2) Read the COPYING
- * file that comes with GRASS for details.
+ * SPDX-FileCopyrightText: 2016 Adam Laza, GSoC 2016
+ * SPDX-FileCopyrightText: GRASS Development Team
+ * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
 #include <string.h>
@@ -43,7 +42,7 @@ void draw(char *file_name, double LL, double LT, char *title, int cols,
     double symb_h, symb_w, def_symb_h, def_symb_w;
     int item_count, item;
     double it_per_col;
-    double margin, bg_h, bg_w;
+    double margin, bg_h;
     char **tokens;
 
     D_get_src(&dt, &db, &dl, &dr);
@@ -53,6 +52,7 @@ void draw(char *file_name, double LL, double LT, char *title, int cols,
     /* Draw title */
     title_h = 0;
     title_w = 0;
+    row_ind = 0.0;
     if (strlen(title) > 0) {
         D_font(tit_font);
         D_text_size(tit_size, tit_size);
@@ -86,7 +86,6 @@ void draw(char *file_name, double LL, double LT, char *title, int cols,
         if (strstr(buf, sub_delim) == NULL) {
             /* Get the maximum symbol size */
             tokens = G_tokenize(buf, sep);
-            symb_name = G_store(tokens[1]);
             size = atof(tokens[2]);
             type_str = G_store(tokens[7]);
             G_free_tokens(tokens);
@@ -137,7 +136,6 @@ void draw(char *file_name, double LL, double LT, char *title, int cols,
         }
         if (strstr(buf, sub_delim) != NULL) {
             /* Group subtitle */
-            label = G_malloc(GNAME_MAX);
             part = strtok(buf, sep);
             label = G_store(part);
 
@@ -266,7 +264,7 @@ void draw(char *file_name, double LL, double LT, char *title, int cols,
     /* Draw background */
     if (do_bg) {
         double x0bg, y0bg, x1bg, y1bg;
-
+        double bg_w;
         if (title_w > offs_x + maxlblw)
             bg_w = title_w;
         else

@@ -6,11 +6,9 @@
 # AUTHOR(S): Glynn Clements
 # PURPOSE:   Fast replacement for r.grow using r.grow.distance
 #
-# COPYRIGHT: (C) 2008 by Glynn Clements
-#
-#   This program is free software under the GNU General Public
-#   License (>=v2). Read the file COPYING that comes with GRASS
-#   for details.
+# SPDX-FileCopyrightText: 2008 Glynn Clements
+# SPDX-FileCopyrightText: GRASS Development Team
+# SPDX-License-Identifier: GPL-2.0-or-later
 #
 #############################################################################
 
@@ -59,12 +57,14 @@
 # % multiple: no
 # % description: Value to write for "grown" cells
 # %end
+# %option G_OPT_M_NPROCS
+# %end
 
 import os
 import atexit
 import math
 
-import grass.script as grass
+import grass.script as gs
 from grass.exceptions import CalledModuleError
 
 
@@ -72,7 +72,7 @@ from grass.exceptions import CalledModuleError
 def cleanup():
     for map in [temp_dist, temp_val]:
         if map:
-            grass.run_command("g.remove", flags="fb", quiet=True, type="rast", name=map)
+            gs.run_command("g.remove", flags="fb", quiet=True, type="rast", name=map)
 
 
 def main():
@@ -83,6 +83,7 @@ def main():
     metric = options["metric"]
     old = options["old"]
     new = options["new"]
+    nprocs = options["nprocs"]
     mapunits = flags["m"]
 
     tmp = str(os.getpid())
@@ -104,31 +105,35 @@ def main():
         old = '"%s"' % input
 
     if not mapunits:
-        kv = grass.region()
+        kv = gs.region()
         scale = math.sqrt(float(kv["nsres"]) * float(kv["ewres"]))
         radius *= scale
 
     if metric == "euclidean":
         metric = "squared"
-        radius = radius * radius
+        radius *= radius
+
+    radius_str = str(radius)
+    if "e" in radius_str.lower():
+        radius_str = f"{radius:.20f}".rstrip("0").rstrip(".")
 
     # check if input file exists
-    if not grass.find_file(input)["file"]:
-        grass.fatal(_("Raster map <%s> not found") % input)
+    if not gs.find_file(input)["file"]:
+        gs.fatal(_("Raster map <%s> not found") % input)
 
     # Workaround for r.mapcalc bug #3475
     # Mapcalc will fail if output is a fully qualified map name
     out_name = options["output"].split("@")
     if len(out_name) == 2:
-        if out_name[1] != grass.gisenv()["MAPSET"]:
-            grass.fatal(_("Output can be written only to the current mapset"))
+        if out_name[1] != gs.gisenv()["MAPSET"]:
+            gs.fatal(_("Output can be written only to the current mapset"))
         output = out_name[0]
     else:
         output = out_name[0]
 
     if not shrink:
         try:
-            grass.run_command(
+            gs.run_command(
                 "r.grow.distance",
                 input=input,
                 metric=metric,
@@ -136,21 +141,22 @@ def main():
                 value=temp_val,
             )
         except CalledModuleError:
-            grass.fatal(_("Growing failed. Removing temporary maps."))
+            gs.fatal(_("Growing failed. Removing temporary maps."))
 
-        grass.mapcalc(
+        gs.mapcalc(
             '$output = if(!isnull("$input"),$old,if($dist < $radius,$new,null()))',
             output=output,
             input=input,
-            radius=radius,
+            radius=radius_str,
             old=old,
             new=new,
             dist=temp_dist,
+            nprocs=nprocs,
         )
     else:
         # shrink
         try:
-            grass.run_command(
+            gs.run_command(
                 "r.grow.distance",
                 input=input,
                 metric=metric,
@@ -159,23 +165,24 @@ def main():
                 flags="n",
             )
         except CalledModuleError:
-            grass.fatal(_("Shrinking failed. Removing temporary maps."))
+            gs.fatal(_("Shrinking failed. Removing temporary maps."))
 
-        grass.mapcalc(
+        gs.mapcalc(
             "$output = if(isnull($dist), $old, if($dist < $radius,null(),$old))",
             output=output,
-            radius=radius,
+            radius=radius_str,
             old=old,
             dist=temp_dist,
+            nprocs=nprocs,
         )
 
-    grass.run_command("r.colors", map=output, raster=input)
+    gs.run_command("r.colors", map=output, raster=input)
 
     # write cmd history:
-    grass.raster_history(output)
+    gs.raster_history(output)
 
 
 if __name__ == "__main__":
-    options, flags = grass.parser()
+    options, flags = gs.parser()
     atexit.register(cleanup)
     main()

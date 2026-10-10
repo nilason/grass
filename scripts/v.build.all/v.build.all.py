@@ -4,11 +4,8 @@
 # MODULE:	v.build.all
 # AUTHOR(S):	Glynn Clements, Radim Blazek
 # PURPOSE:	Build all vectors in current mapset
-# COPYRIGHT:	(C) 2004, 2008-2009 by the GRASS Development Team
-#
-# 		This program is free software under the GNU General Public
-# 		License (>=v2). Read the file COPYING that comes with GRASS
-# 		for details.
+# SPDX-FileCopyrightText: 2004, 2008-2009 GRASS Development Team
+# SPDX-License-Identifier: GPL-2.0-or-later
 #
 #############################################################################
 
@@ -31,10 +28,7 @@ def main():
     vectors = grass.list_grouped("vect")[mapset]
     num_vectors = len(vectors)
 
-    if grass.verbosity() < 2:
-        quiet = True
-    else:
-        quiet = False
+    quiet = grass.verbosity() < 2
 
     i = 1
     for vect in vectors:

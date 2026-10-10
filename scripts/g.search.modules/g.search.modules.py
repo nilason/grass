@@ -4,11 +4,8 @@
 # MODULE:	g.search.modules
 # AUTHOR(S):	Jachym Cepicky <jachym.cepicky gmail.com>
 # PURPOSE:	g.search.modules in grass modules using keywords
-# COPYRIGHT:	(C) 2015-2019 by the GRASS Development Team
-#
-# 		This program is free software under the GNU General
-# 		Public License (>=v2). Read the file COPYING that
-# 		comes with GRASS for details.
+# SPDX-FileCopyrightText: 2015-2019 GRASS Development Team
+# SPDX-License-Identifier: GPL-2.0-or-later
 #
 #############################################################################
 
@@ -65,11 +62,12 @@
 
 import os
 import sys
+import xml.etree.ElementTree as ET
+from operator import itemgetter
+from pathlib import Path
 
-from grass.script import core as grass
 from grass.exceptions import CalledModuleError
-
-import xml.etree.ElementTree as etree
+from grass.script import core as grass
 
 COLORIZE = False
 
@@ -182,8 +180,7 @@ def colorize(text, attrs=None, pattern=None):
 
     if pattern:
         return text.replace(pattern, colored(pattern, attrs=attrs))
-    else:
-        return colored(text, attrs=attrs)
+    return colored(text, attrs=attrs)
 
 
 def _search_module(
@@ -199,29 +196,25 @@ def _search_module(
 
     WXGUIDIR = os.path.join(os.getenv("GISBASE"), "gui", "wxpython")
     filename = os.path.join(WXGUIDIR, "xml", "module_items.xml")
-    menudata_file = open(filename, "r")
-
-    menudata = etree.parse(menudata_file)
-    menudata_file.close()
+    with open(filename) as menudata_file:
+        menudata = ET.parse(menudata_file)
 
     items = menudata.findall("module-item")
 
     # add installed addons to modules list
     if os.getenv("GRASS_ADDON_BASE"):
         filename_addons = os.path.join(os.getenv("GRASS_ADDON_BASE"), "modules.xml")
-        if os.path.isfile(filename_addons):
-            addon_menudata_file = open(filename_addons, "r")
-            addon_menudata = etree.parse(addon_menudata_file)
-            addon_menudata_file.close()
+        if Path(filename_addons).is_file():
+            with open(filename_addons) as addon_menudata_file:
+                addon_menudata = ET.parse(addon_menudata_file)
             addon_items = addon_menudata.findall("task")
             items.extend(addon_items)
 
     # add system-wide installed addons to modules list
     filename_addons_s = os.path.join(os.getenv("GISBASE"), "modules.xml")
-    if os.path.isfile(filename_addons_s):
-        addon_menudata_file_s = open(filename_addons_s, "r")
-        addon_menudata_s = etree.parse(addon_menudata_file_s)
-        addon_menudata_file_s.close()
+    if Path(filename_addons_s).is_file():
+        with open(filename_addons_s) as addon_menudata_file_s:
+            addon_menudata_s = ET.parse(addon_menudata_file_s)
         addon_items_s = addon_menudata_s.findall("task")
         items.extend(addon_items_s)
 
@@ -283,26 +276,25 @@ def _search_module(
                 }
             )
 
-    return sorted(found_modules, key=lambda k: k["name"])
+    return sorted(found_modules, key=itemgetter("name"))
 
 
-def _basic_search(pattern, name, description, module_keywords):
+def _basic_search(pattern, name, description, module_keywords) -> bool:
     """Search for a string in all the provided strings.
 
     This lowercases the strings before searching in them, so the pattern
     string should be lowercased too.
     """
-    if name and description and module_keywords:
-        if (
+    return bool(
+        name
+        and description
+        and module_keywords
+        and (
             name.lower().find(pattern) > -1
             or description.lower().find(pattern) > -1
             or module_keywords.lower().find(pattern) > -1
-        ):
-            return True
-        else:
-            return False
-    else:
-        return False
+        )
+    )
 
 
 def _exact_search(keyword, module_keywords):
@@ -312,10 +304,7 @@ def _exact_search(keyword, module_keywords):
     :param module_keywords: comma separated list of keywords
     """
     module_keywords = module_keywords.split(",")
-    for current in module_keywords:
-        if keyword == current:
-            return True
-    return False
+    return keyword in module_keywords
 
 
 def _manpage_search(pattern, name):

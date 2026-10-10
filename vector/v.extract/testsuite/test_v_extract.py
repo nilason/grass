@@ -3,14 +3,13 @@ Name:       v.extract test
 Purpose:    Tests v.extract and its flags/options.
 
 Author:     Sunveer Singh, Google Code-in 2017
-Copyright:  (C) 2017 by Sunveer Singh and the GRASS Development Team
-Licence:    This program is free software under the GNU General Public
-	            License (>=v2). Read the file COPYING that comes with GRASS
-	            for details.
+SPDX-FileCopyrightText: 2017 Sunveer Singh
+SPDX-FileCopyrightText: GRASS Development Team
+SPDX-License-Identifier: GPL-2.0-or-later
 """
+
 import os
 from grass.gunittest.case import TestCase
-from grass.gunittest.gmodules import SimpleModule
 from grass.script.core import read_command
 
 TABLE_1 = """cat|MAJORRDS_|ROAD_NAME|MULTILANE|PROPYEAR|OBJECTID|SHAPE_LEN
@@ -53,8 +52,8 @@ class TestRasterreport(TestCase):
     def tearDownClass(cls):
         cls.del_temp_region()
 
-    def tearDown(cls):
-        cls.runModule("g.remove", flags="f", type="vector", name=cls.output)
+    def tearDown(self):
+        self.runModule("g.remove", flags="f", type="vector", name=self.output)
 
     def test_flagd(self):
         """Testing flag d"""

@@ -12,14 +12,13 @@ http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/426407
 List of classes:
  - manager::AttributeManager
 
-(C) 2007-2014 by the GRASS Development Team
-
-This program is free software under the GNU General Public License
-(>=v2). Read the file COPYING that comes with GRASS for details.
+SPDX-FileCopyrightText: 2007-2014 GRASS Development Team
+SPDX-License-Identifier: GPL-2.0-or-later
 
 @author Jachym Cepicky <jachym.cepicky gmail.com>
 @author Martin Landa <landa.martin gmail.com>
-@author Refactoring by Stepan Turek <stepan.turek seznam.cz> (GSoC 2012, mentor: Martin Landa)
+@author Refactoring by Stepan Turek <stepan.turek seznam.cz>
+        (GSoC 2012, mentor: Martin Landa)
 """
 
 import os
@@ -64,12 +63,12 @@ class AttributeManager(wx.Frame, DbMgrBase):
         :param item: item from Layer Tree
         :param log: log window
         :param selection: name of page to be selected
-        :param kwagrs: other wx.Frame's arguments
+        :param kwargs: other wx.Frame's arguments
         """
         self.parent = parent
         try:
             mapdisplay = self.parent.GetMapDisplay()
-        except:
+        except AttributeError:
             mapdisplay = None
 
         DbMgrBase.__init__(
@@ -99,9 +98,7 @@ class AttributeManager(wx.Frame, DbMgrBase):
 
         # icon
         self.SetIcon(
-            wx.Icon(
-                os.path.join(globalvar.ICONDIR, "grass_sql.ico"), wx.BITMAP_TYPE_ICO
-            )
+            wx.Icon(os.path.join(globalvar.ICONDIR, "grass.ico"), wx.BITMAP_TYPE_ICO)
         )
 
         self.panel = wx.Panel(parent=self, id=wx.ID_ANY)
@@ -203,6 +200,8 @@ class AttributeManager(wx.Frame, DbMgrBase):
         if self.parent and self.parent.GetName() == "LayerManager":
             # deregister ATM
             self.parent.dialogs["atm"].remove(self)
+            # set map window focus
+            self.parent.GetMapDisplay().GetMapWindow().SetFocus()
 
         if not isinstance(event, wx.CloseEvent):
             self.Destroy()

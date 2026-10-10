@@ -6,13 +6,12 @@
 Classes:
  - query::QueryDialog
 
-(C) 2013 by the GRASS Development Team
-
-This program is free software under the GNU General Public License
-(>=v2). Read the file COPYING that comes with GRASS for details.
+SPDX-FileCopyrightText: 2013 GRASS Development Team
+SPDX-License-Identifier: GPL-2.0-or-later
 
 @author Anna Kratochvilova <kratochanna gmail.com>
 """
+
 import wx
 
 from gui_core.treeview import TreeListView
@@ -118,24 +117,27 @@ class QueryDialog(wx.Dialog):
         menu = Menu()
         texts = []
         if len(nodes) > 1:
-            values = []
-            for node in nodes:
-                values.append(
-                    (node.label, node.data[self._colNames[1]] if node.data else "")
-                )
+            values = [
+                (node.label, node.data[self._colNames[1]] if node.data else "")
+                for node in nodes
+            ]
             col1 = "\n".join([val[1] for val in values if val[1]])
             col2 = "\n".join([val[0] for val in values if val[0]])
             table = "\n".join([val[0] + ": " + val[1] for val in values])
-            texts.append((_("Copy from '%s' column") % self._colNames[1], col1))
-            texts.append((_("Copy from '%s' column") % self._colNames[0], col2))
-            texts.append((_("Copy selected lines"), table))
+            texts.extend(
+                (
+                    (_("Copy from '%s' column") % self._colNames[1], col1),
+                    (_("Copy from '%s' column") % self._colNames[0], col2),
+                    (_("Copy selected lines"), table),
+                )
+            )
         else:
             label1 = nodes[0].label
-            texts.append((_("Copy '%s'" % self._cutLabel(label1)), label1))
+            texts.append((_("Copy '%s'") % self._cutLabel(label1), label1))
             col1 = self._colNames[1]
             if nodes[0].data and col1 in nodes[0].data and nodes[0].data[col1]:
                 label2 = nodes[0].data[col1]
-                texts.insert(0, (_("Copy '%s'" % self._cutLabel(label2)), label2))
+                texts.insert(0, (_("Copy '%s'") % self._cutLabel(label2), label2))
                 texts.append((_("Copy line"), label1 + ": " + label2))
 
         ids = []
@@ -143,7 +145,9 @@ class QueryDialog(wx.Dialog):
             id = NewId()
             ids.append(id)
             self.Bind(
-                wx.EVT_MENU, lambda evt, t=text[1], id=id: self._copyText(t), id=id
+                wx.EVT_MENU,
+                lambda evt, t=text[1], id=id: self._copyText(t),  # noqa: A006
+                id=id,
             )
 
             menu.Append(id, text[0])
@@ -246,8 +250,7 @@ def PrepareQueryResults(coordinates, result):
 
     Adds coordinates, improves vector results tree structure.
     """
-    data = []
-    data.append({_("east, north"): ", ".join(map(str, coordinates))})
+    data = [{_("east, north"): ", ".join(map(str, coordinates))}]
     for part in result:
         if "Map" in part:
             itemText = part["Map"]

@@ -3,12 +3,10 @@
  *
  * \brief GIS Library - Debug functions.
  *
- * (C) 2001-2012 by the GRASS Development Team
+ * SPDX-FileCopyrightText: 2001-2012 GRASS Development Team
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
- * This program is free software under the GNU General Public License
- * (>=v2). Read the file COPYING that comes with GRASS for details.
- *
- * \author GRASS GIS Development Team
+ * \author GRASS Development Team
  */
 
 #include <stdio.h>
@@ -72,8 +70,6 @@ int G_debug(int level, const char *msg, ...)
     G_init_debug();
 
     if (grass_debug_level >= level) {
-        va_start(ap, msg);
-
         filen = getenv("GRASS_DEBUG_FILE");
         if (filen != NULL) {
             fd = fopen(filen, "a");
@@ -87,14 +83,14 @@ int G_debug(int level, const char *msg, ...)
         }
 
         fprintf(fd, "D%d/%d: ", level, grass_debug_level);
+        va_start(ap, msg);
         vfprintf(fd, msg, ap);
+        va_end(ap);
         fprintf(fd, "\n");
         fflush(fd);
 
         if (filen != NULL)
             fclose(fd);
-
-        va_end(ap);
     }
 
     return 1;

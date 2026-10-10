@@ -3,11 +3,11 @@ Name:       r.mapcalc.simple test
 Purpose:    Tests r.mapcalc.simple and its flags/options.
 
 Author:     Markus Neteler
-Copyright:  (C) 2018 by Markus Neteler and the GRASS Development Team
-Licence:    This program is free software under the GNU General Public
-            License (>=v2). Read the file COPYING that comes with GRASS
-            for details.
+SPDX-FileCopyrightText: 2018 Markus Neteler
+SPDX-FileCopyrightText: GRASS Development Team
+SPDX-License-Identifier: GPL-2.0-or-later
 """
+
 from grass.gunittest.case import TestCase
 
 
@@ -23,8 +23,9 @@ class TestReport(TestCase):
     def tearDownClass(cls):
         map_output1 = "test1"
         map_output2 = "test2"
-        cls.runModule("g.remove", flags="f", type="raster", name=map_output1)
-        cls.runModule("g.remove", flags="f", type="raster", name=map_output2)
+        cls.runModule(
+            "g.remove", flags="f", type="raster", name=(map_output1, map_output2)
+        )
         cls.del_temp_region()
 
     def test_rmapcalcsimple(self):

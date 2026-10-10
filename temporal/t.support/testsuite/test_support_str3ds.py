@@ -1,17 +1,15 @@
 """Test t.support
 
-(C) 2015 by the GRASS Development Team
-This program is free software under the GNU General Public
-License (>=v2). Read the file COPYING that comes with GRASS
-for details.
+SPDX-FileCopyrightText: 2015 GRASS Development Team
+SPDX-License-Identifier: GPL-2.0-or-later
 
 :authors: Soeren Gebbert
 """
+
 import os
-import grass.pygrass.modules as pymod
+
 import grass.temporal as tgis
 from grass.gunittest.case import TestCase
-from grass.gunittest.gmodules import SimpleModule
 
 
 class TestSupportAbsoluteSTR3DS(TestCase):

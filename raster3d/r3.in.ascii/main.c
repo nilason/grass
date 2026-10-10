@@ -8,11 +8,8 @@
  * PURPOSE:      Convert a 3D ASCII raster text file into a (binary) 3D raster
  *               map layer
  *
- * COPYRIGHT:    (C) 2005 by the GRASS Development Team
- *
- *               This program is free software under the GNU General Public
- *               License (>=v2). Read the file COPYING that comes with GRASS
- *               for details.
+ * SPDX-FileCopyrightText: 2005 GRASS Development Team
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  *****************************************************************************/
 
@@ -142,7 +139,7 @@ void readHeaderString(FILE *fp, char *valueString, double *value)
     char line_buff[1024];
 
     /* to avoid buffer overflows we use G_snprintf */
-    G_snprintf(format, 100, "%s %%lf", valueString);
+    snprintf(format, 100, "%s %%lf", valueString);
     G_getl2(line_buff, 1024, fp);
     if (sscanf(line_buff, format, value) != 1) {
         /* this would be ideal to merge if Rast3d_close could be solved */

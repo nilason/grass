@@ -7,11 +7,8 @@
  * PURPOSE:      Prints terse list of category values found in a raster
  *               map layer.
  *
- * COPYRIGHT:    (C) 2006 by the GRASS Development Team
- *
- *               This program is free software under the GNU General Public
- *               License (>=v2). Read the file COPYING that comes with GRASS
- *               for details.
+ * SPDX-FileCopyrightText: 2006-2025 GRASS Development Team
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  ***************************************************************************/
 
@@ -19,8 +16,9 @@
 #include <string.h>
 #include <stdio.h>
 #include <grass/gis.h>
-#include "local_proto.h"
 #include <grass/glocale.h>
+
+#include "local_proto.h"
 
 int main(int argc, char *argv[])
 {
@@ -42,7 +40,9 @@ int main(int argc, char *argv[])
         struct Option *map;
         struct Option *nv;
         struct Option *nsteps;
+        struct Option *format;
     } option;
+    enum OutputFormat format;
 
     G_gisinit(argv[0]);
 
@@ -65,6 +65,9 @@ int main(int argc, char *argv[])
     option.nsteps->multiple = NO;
     option.nsteps->answer = "255";
     option.nsteps->description = _("Number of quantization steps");
+
+    option.format = G_define_standard_option(G_OPT_F_FORMAT);
+    option.format->guisection = _("Print");
 
     /*define the different flags */
 
@@ -97,12 +100,19 @@ int main(int argc, char *argv[])
     as_int = flag.i->answer;
     no_data_str = option.nv->answer;
 
+    if (strcmp(option.format->answer, "json") == 0) {
+        format = JSON;
+    }
+    else {
+        format = PLAIN;
+    }
+
     if (sscanf(option.nsteps->answer, "%d", &nsteps) != 1 || nsteps < 1)
         G_fatal_error(_("%s = %s -- must be greater than zero"),
                       option.nsteps->key, option.nsteps->answer);
 
     describe(option.map->answer, compact, no_data_str, range, windowed, nsteps,
-             as_int, flag.n->answer);
+             as_int, flag.n->answer, format);
 
     return EXIT_SUCCESS;
 }

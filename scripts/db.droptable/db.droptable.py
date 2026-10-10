@@ -6,11 +6,9 @@
 # AUTHOR(S):    Markus Neteler
 #               Converted to Python by Glynn Clements
 # PURPOSE:      Interface to db.execute to drop an attribute table
-# COPYRIGHT:    (C) 2007, 2012 by Markus Neteler and the GRASS Development Team
-#
-#               This program is free software under the GNU General
-#               Public License (>=v2). Read the file COPYING that
-#               comes with GRASS for details.
+# SPDX-FileCopyrightText: 2007, 2012 Markus Neteler
+# SPDX-FileCopyrightText: GRASS Development Team
+# SPDX-License-Identifier: GPL-2.0-or-later
 #
 #############################################################################
 
@@ -43,7 +41,7 @@
 # %end
 
 import sys
-import grass.script as grass
+import grass.script as gs
 from grass.script.utils import encode
 
 
@@ -53,50 +51,43 @@ def main():
 
     if not options["driver"] or not options["database"]:
         # check if DB parameters are set, and if not set them.
-        grass.run_command("db.connect", flags="c", quiet=True)
+        gs.run_command("db.connect", flags="c", quiet=True)
 
-    kv = grass.db_connection()
-    if options["database"]:
-        database = options["database"]
-    else:
-        database = kv["database"]
-    if options["driver"]:
-        driver = options["driver"]
-    else:
-        driver = kv["driver"]
+    kv = gs.db_connection()
+    database = options["database"] or kv["database"]
+    driver = options["driver"] or kv["driver"]
     # schema needed for PG?
 
     if force:
-        grass.message(_("Forcing ..."))
+        gs.message(_("Forcing ..."))
 
     # check if table exists
-    if not grass.db_table_exist(table):
-        grass.warning(_("Table <%s> not found in database <%s>") % (table, database))
+    if not gs.db_table_exist(table):
+        gs.warning(_("Table <%s> not found in database <%s>") % (table, database))
         sys.exit(0)
 
     # check if table is used somewhere (connected to vector map)
-    used = grass.db.db_table_in_vector(table)
+    used = gs.db.db_table_in_vector(table)
     if used:
-        grass.warning(
+        gs.warning(
             _("Deleting table <%s> which is attached to following map(s):") % table
         )
         for vect in used:
-            grass.warning("%s" % vect)
+            gs.warning("%s" % vect)
 
     if not force:
-        grass.message(_("The table <%s> would be deleted.") % table)
-        grass.message("")
-        grass.message(_("You must use the force flag to actually remove it. Exiting."))
+        gs.message(_("The table <%s> would be deleted.") % table)
+        gs.message(_("You must use the force flag to actually remove it. Exiting."))
         sys.exit(0)
 
-    p = grass.feed_command("db.execute", input="-", database=database, driver=driver)
+    p = gs.feed_command("db.execute", input="-", database=database, driver=driver)
     p.stdin.write(encode("DROP TABLE " + table))
     p.stdin.close()
     p.wait()
     if p.returncode != 0:
-        grass.fatal(_("Cannot continue (problem deleting table)."))
+        gs.fatal(_("Cannot continue (problem deleting table)."))
 
 
 if __name__ == "__main__":
-    options, flags = grass.parser()
+    options, flags = gs.parser()
     main()

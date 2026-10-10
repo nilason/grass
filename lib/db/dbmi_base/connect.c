@@ -3,10 +3,8 @@
 
    \brief DBMI Library (base) - connect to DB
 
-   (C) 1999-2009, 2011 by the GRASS Development Team
-
-   This program is free software under the GNU General Public License
-   (>=v2). Read the file COPYING that comes with GRASS for details.
+   SPDX-FileCopyrightText: 1999-2009, 2011 GRASS Development Team
+   SPDX-License-Identifier: GPL-2.0-or-later
 
    \author Joel Jones (CERL/UIUC), Radim Blazek
    \author Doxygenized by Martin Landa <landa.martin gmail.com> (2011)
@@ -87,11 +85,11 @@ int db_get_connection(dbConnection *connection)
     connection->group = (char *)G_getenv_nofatal2("DB_GROUP", G_VAR_MAPSET);
 
     /* try to get user/password */
-    db_get_login2(connection->driverName, connection->databaseName,
-                  (const char **)&(connection->user),
-                  (const char **)&(connection->password),
-                  (const char **)&(connection->hostName),
-                  (const char **)&(connection->port));
+    db_get_login(connection->driverName, connection->databaseName,
+                 (const char **)&(connection->user),
+                 (const char **)&(connection->password),
+                 (const char **)&(connection->hostName),
+                 (const char **)&(connection->port));
 
     return DB_OK;
 }

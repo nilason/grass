@@ -6,12 +6,8 @@
  *
  * PURPOSE:    Identifies clusters in a point cloud
  *
- * COPYRIGHT:  (C) 2015 by the GRASS Development Team
- *
- *             This program is free software under the
- *             GNU General Public License (>=v2).
- *             Read the file COPYING that comes with GRASS
- *             for details.
+ * SPDX-FileCopyrightText: 2015 GRASS Development Team
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  ****************************************************************/
 
@@ -30,8 +26,8 @@
 #define CL_OPTICS        4
 #define CL_OPTICS2       5
 
-#define GET_PARENT(p, c) ((p) = (int)(((c)-2) / 3 + 1))
-#define GET_CHILD(c, p)  ((c) = (int)(((p)*3) - 1))
+#define GET_PARENT(p, c) ((p) = (int)(((c) - 2) / 3 + 1))
+#define GET_CHILD(c, p)  ((c) = (int)(((p) * 3) - 1))
 
 struct cl_pnt {
     int uid;
@@ -286,7 +282,6 @@ int main(int argc, char *argv[])
 
             mean = sum / n;
             sd = sqrt(sumsq / n - mean * mean);
-            eps = mean + 1.644854 * sd; /* 90% CI */
             eps = mean + 2.575829 * sd; /* 99% CI */
 
             if (eps > max)
@@ -493,7 +488,6 @@ int main(int argc, char *argv[])
 
             mean = sum / n;
             sd = sqrt(sumsq / n - mean * mean);
-            eps = mean + 1.644854 * sd; /* 90% CI */
             eps = mean + 2.575829 * sd; /* 99% CI */
 
             if (eps > max)

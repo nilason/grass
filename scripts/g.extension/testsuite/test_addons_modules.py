@@ -5,20 +5,18 @@ AUTHOR(S): Vaclav Petras <wenzeslaus gmail com>
 
 PURPOSE:   Test for g.extension individual modules/extensions handling
 
-COPYRIGHT: (C) 2015 Vaclav Petras, and by the GRASS Development Team
-
-           This program is free software under the GNU General Public
-           License (>=v2). Read the file COPYING that comes with GRASS
-           for details.
+SPDX-FileCopyrightText: 2015 Vaclav Petras
+SPDX-FileCopyrightText: GRASS Development Team
+SPDX-License-Identifier: GPL-2.0-or-later
 """
 
 from grass.gunittest.case import TestCase
 from grass.gunittest.main import test
 from grass.gunittest.gmodules import SimpleModule
-from grass.gunittest.utils import silent_rmtree
+from grass.gunittest.utils import silent_rmtree, xfail_windows
 from grass.script.utils import decode
-
 import os
+from pathlib import Path
 
 
 MODULES_OUTPUT = """\
@@ -44,14 +42,13 @@ v.in.redwg
 v.neighborhoodmatrix
 v.transects
 wx.metadata
-""".replace(
-    "\n", os.linesep
-)
+""".replace("\n", os.linesep)
 
 
 class TestModulesMetadata(TestCase):
     url = "file://" + os.path.abspath("data")
 
+    @xfail_windows
     def test_listing(self):
         """List individual extensions/modules/addons"""
         module = SimpleModule("g.extension", flags="l", url=self.url)
@@ -68,6 +65,7 @@ class TestModulesFromDifferentSources(TestCase):
     files = [
         os.path.join(install_prefix, "scripts", "r.plus.example"),
         os.path.join(install_prefix, "docs", "html", "r.plus.example.html"),
+        os.path.join(install_prefix, "docs", "mkdocs", "source", "r.plus.example.md"),
     ]
     # to create archives from the source, the following was used:
     # zip r.plus.example.zip r.plus.example/*
@@ -77,19 +75,19 @@ class TestModulesFromDifferentSources(TestCase):
 
     def setUp(self):
         """Make sure we are not dealing with some old files"""
-        if os.path.exists(self.install_prefix):
-            files = os.listdir(self.install_prefix)
+        if Path(self.install_prefix).exists():
+            files = [p.name for p in Path(self.install_prefix).iterdir()]
             if files:
-                RuntimeError(
-                    "Install prefix path '{}' contains files {}".format(
-                        self.install_prefix, files
-                    )
+                msg = "Install prefix path '{}' contains files {}".format(
+                    self.install_prefix, files
                 )
+                raise RuntimeError(msg)
 
     def tearDown(self):
         """Remove created files"""
         silent_rmtree(self.install_prefix)
 
+    @xfail_windows
     def test_directory_install(self):
         """Test installing extension from directory"""
         self.assertModule(
@@ -102,6 +100,7 @@ class TestModulesFromDifferentSources(TestCase):
         for file in self.files:
             self.assertFileExists(file)
 
+    @xfail_windows
     def test_targz_install(self):
         """Test installing extension from local .tar.gz"""
         self.assertModule(
@@ -113,6 +112,7 @@ class TestModulesFromDifferentSources(TestCase):
         for file in self.files:
             self.assertFileExists(file)
 
+    @xfail_windows
     def test_remote_targz_without_dir_install(self):
         """Test installing extension from (remote) .tar.gz without main dir"""
         self.assertModule(
@@ -125,6 +125,7 @@ class TestModulesFromDifferentSources(TestCase):
         for file in self.files:
             self.assertFileExists(file)
 
+    @xfail_windows
     def test_remote_zip_install(self):
         """Test installing extension from .zip specified by URL (local)"""
         self.assertModule(

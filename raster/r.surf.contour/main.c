@@ -12,11 +12,8 @@
  *               Markus Metz
  * PURPOSE:      Interpolates a raster elevation map from a rasterized
  *               contour map
- * COPYRIGHT:    (C) 1999-2010 by the GRASS Development Team
- *
- *               This program is free software under the GNU General Public
- *               License (>=v2). Read the file COPYING that comes with GRASS
- *               for details.
+ * SPDX-FileCopyrightText: 1999-2010 GRASS Development Team
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  *****************************************************************************/
 
@@ -80,8 +77,10 @@ int main(int argc, char *argv[])
     alt_row = (DCELL *)G_malloc(ncols * sizeof(DCELL));
     seen = flag_create(nrows, ncols);
     mask = flag_create(nrows, ncols);
-    if (NULL != G_find_file("cell", "MASK", G_mapset())) {
-        file_fd = Rast_open_old("MASK", G_mapset());
+    char mask_name[GNAME_MAX];
+    char mask_mapset[GMAPSET_MAX];
+    if (Rast_mask_status(mask_name, mask_mapset, NULL, NULL, NULL)) {
+        file_fd = Rast_open_old(mask_name, mask_mapset);
         for (r = 0; r < nrows; r++) {
             Rast_get_d_row_nomask(file_fd, alt_row, r);
             for (c = 0; c < ncols; c++)

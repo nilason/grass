@@ -9,14 +9,12 @@
  * PURPOSE:      Allows creation and/or modification of the color table
  *               for a raster map layer.
  *
- * COPYRIGHT:    (C) 2006-2008, 2010-2011 by the GRASS Development Team
- *
- *               This program is free software under the GNU General Public
- *               License (>=v2). Read the file COPYING that comes with GRASS
- *               for details.
+ * SPDX-FileCopyrightText: 2006-2008, 2010-2011 GRASS Development Team
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  ***************************************************************************/
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
@@ -470,7 +468,7 @@ int edit_colors(int argc, char **argv, int type, const char *maptype,
             /* check if this style is a percentage style */
             /* don't bother with native dirsep as not needed for backwards
              * compatibility */
-            G_snprintf(path, GPATH_MAX, "%s/etc/colors/%s", G_gisbase(), style);
+            snprintf(path, GPATH_MAX, "%s/etc/colors/%s", G_gisbase(), style);
             rule_is_percent = check_percent_rule(path);
             do_scale = 1;
         }
@@ -490,7 +488,7 @@ int edit_colors(int argc, char **argv, int type, const char *maptype,
 
             /* don't bother with native dirsep as not needed for backwards
              * compatibility */
-            G_snprintf(path, GPATH_MAX, "%s/etc/colors/%s", G_gisbase(), rules);
+            snprintf(path, GPATH_MAX, "%s/etc/colors/%s", G_gisbase(), rules);
 
             if (!Rast_load_fp_colors(&colors, path, min, max))
                 G_fatal_error(_("Unable to load rules file <%s>"), rules);

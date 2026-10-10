@@ -10,11 +10,8 @@
  *
  *          The input formats are very limited.
  * --------------------------------------------------------------------
- * COPYRIGHT: (C) 2000 by the GRASS Development Team
- *
- *         This program is free software under the GNU General Public
- *         License (>=v2). Read the file COPYING that comes with GRASS
- *         for details.
+ * SPDX-FileCopyrightText: 2000 GRASS Development Team
+ * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
 #include <stdio.h>
@@ -24,8 +21,8 @@
 #include <grass/gis.h>
 #include <grass/glocale.h>
 
-#define DEG2RAD(a)      ((a)*M_PI / 180.0)
-#define RAD2DEG(a)      ((a)*180.0 / M_PI)
+#define DEG2RAD(a)      ((a) * M_PI / 180.0)
+#define RAD2DEG(a)      ((a) * 180.0 / M_PI)
 #define DMS2DD(d, m, s) ((d) + ((m) / 60.0) + ((s) / 3600.0))
 #define FORMAT_1        " %s %1[NS] %d%c%d%c%lf %1[EW] %lf "
 #define FORMAT_2        " %1[NS] %d%c%d%c%lf %1[EW] %lf "

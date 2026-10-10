@@ -5,17 +5,9 @@
 # AUTHOR(S): Anna Kratochvilova
 # PURPOSE:   Tool for animating a series of GRASS raster and vector maps
 #            or a space time raster dataset
-# COPYRIGHT: (C) 2012 by Anna Kratochvilova, and the GRASS Development Team
-#
-#  This program is free software; you can redistribute it and/or modify
-#  it under the terms of the GNU General Public License as published by
-#  the Free Software Foundation; either version 2 of the License, or
-#  (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
+# SPDX-FileCopyrightText: 2012 Anna Kratochvilova
+# SPDX-FileCopyrightText: GRASS Development Team
+# SPDX-License-Identifier: GPL-2.0-or-later
 #
 ############################################################################
 
@@ -51,12 +43,12 @@
 # % guisection: Input
 # %end
 
-import grass.script as gscript
+import grass.script as gs
 from grass.exceptions import FatalError
 
 
 def main():
-    options, flags = gscript.parser()
+    options, flags = gs.parser()
 
     # import wx only after running parser
     # to avoid issues when only interface is needed
@@ -89,7 +81,7 @@ def main():
         numInputs += 1
 
     if numInputs > 1:
-        gscript.fatal(
+        gs.fatal(
             _("%s=, %s=, %s= and %s= are mutually exclusive.")
             % ("raster", "vector", "strds", "stvds")
         )
@@ -134,7 +126,7 @@ def main():
     frame = AnimationFrame(
         parent=None,
         giface=StandaloneGrassInterface(),
-        title=_("Animation Tool - GRASS GIS"),
+        title=_("Animation Tool - GRASS"),
     )
     frame.CentreOnScreen()
     frame.Show()

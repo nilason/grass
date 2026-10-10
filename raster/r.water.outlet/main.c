@@ -12,11 +12,8 @@
  * PURPOSE:      this program makes a watershed basin raster map using the
  *               drainage pointer map, from an outlet point defined by an
  *               easting and a northing.
- * COPYRIGHT:    (C) 1999-2006, 2010, 2013 by the GRASS Development Team
- *
- *               This program is free software under the GNU General Public
- *               License (>=v2). Read the file COPYING that comes with GRASS
- *               for details.
+ * SPDX-FileCopyrightText: 1999-2006, 2010, 2013 GRASS Development Team
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  *****************************************************************************/
 
@@ -75,8 +72,14 @@ int main(int argc, char *argv[])
 
     G_get_window(&window);
 
-    strcpy(drain_name, opt.input->answer);
-    strcpy(basin_name, opt.output->answer);
+    if (G_strlcpy(drain_name, opt.input->answer, sizeof(drain_name)) >=
+        sizeof(drain_name)) {
+        G_fatal_error(_("Drain name <%s> is too long"), opt.input->answer);
+    }
+    if (G_strlcpy(basin_name, opt.output->answer, sizeof(basin_name)) >=
+        sizeof(basin_name)) {
+        G_fatal_error(_("Basin name <%s> is too long"), opt.output->answer);
+    }
 
     if (!G_scan_easting(opt.coords->answers[0], &E, G_projection()))
         G_fatal_error(_("Illegal east coordinate '%s'"),

@@ -4,17 +4,9 @@
 # MODULE:    g.gui.gmodeler
 # AUTHOR(S): Martin Landa <landa.martin gmail.com>
 # PURPOSE:   Graphical Modeler to create, edit, and manage models
-# COPYRIGHT: (C) 2010-2012 by Martin Landa, and the GRASS Development Team
-#
-#  This program is free software; you can 1redistribute it and/or
-#  modify it under the terms of the GNU General Public License as
-#  published by the Free Software Foundation; either version 2 of the
-#  License, or (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful, but
-#  WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-#  General Public License for more details.
+# SPDX-FileCopyrightText: 2010-2023 Martin Landa
+# SPDX-FileCopyrightText: GRASS Development Team
+# SPDX-License-Identifier: GPL-2.0-or-later
 #
 ############################################################################
 
@@ -34,11 +26,11 @@
 # % guisection: Model
 # %end
 
-import grass.script as gscript
+import grass.script as gs
 
 
 def main():
-    options, flags = gscript.parser()
+    options, flags = gs.parser()
 
     import wx
 
@@ -47,16 +39,16 @@ def main():
     set_gui_path()
 
     from core.giface import StandaloneGrassInterface
-    from gmodeler.frame import ModelFrame
+    from gmodeler.frame import ModelerFrame
 
     app = wx.App()
-    frame = ModelFrame(
+    frame = ModelerFrame(
         parent=None,
         giface=StandaloneGrassInterface(),
-        title=_("Graphical Modeler - GRASS GIS"),
+        title=_("Graphical Modeler - GRASS"),
     )
     if options["file"]:
-        frame.LoadModelFile(options["file"])
+        frame.panel.LoadModelFile(options["file"])
     frame.Show()
 
     app.MainLoop()

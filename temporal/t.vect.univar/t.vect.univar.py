@@ -6,17 +6,8 @@
 # AUTHOR(S):	Soeren Gebbert
 #
 # PURPOSE:	Calculates univariate statistics of attributes for each registered vector map of a space time vector dataset
-# COPYRIGHT:	(C) 2011-2017 by the GRASS Development Team
-#
-#  This program is free software; you can redistribute it and/or modify
-#  it under the terms of the GNU General Public License as published by
-#  the Free Software Foundation; either version 2 of the License, or
-#  (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
+# SPDX-FileCopyrightText: 2011-2017 GRASS Development Team
+# SPDX-License-Identifier: GPL-2.0-or-later
 #
 #############################################################################
 
@@ -73,8 +64,7 @@
 # % guisection: Formatting
 # %end
 
-import grass.script as grass
-
+import grass.script as gs
 
 ############################################################################
 
@@ -93,7 +83,7 @@ def main():
     where = options["where"]
     extended = flags["e"]
     header = flags["u"]
-    separator = grass.separator(options["separator"])
+    separator = gs.separator(options["separator"])
 
     # Make sure the temporal database exists
     tgis.init()
@@ -109,5 +99,5 @@ def main():
 
 
 if __name__ == "__main__":
-    options, flags = grass.parser()
+    options, flags = gs.parser()
     main()

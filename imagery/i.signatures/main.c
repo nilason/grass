@@ -4,11 +4,9 @@
  * AUTHOR(S):    Maris Nartiss - maris.gis gmail.com
  * PURPOSE:      Manages signature files of imagery classifiers
  *
- * COPYRIGHT:    (C) 2023 by Maris Nartiss and the GRASS Development Team
- *
- *               This program is free software under the GNU General Public
- *               License (>=v2). Read the file COPYING that comes with GRASS
- *               for details.
+ * SPDX-FileCopyrightText: 2023 Maris Nartiss
+ * SPDX-FileCopyrightText: GRASS Development Team
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  *****************************************************************************/
 #include <stdlib.h>
@@ -118,15 +116,7 @@ int main(int argc, char *argv[])
     parms.type->description = _("Type of signature file");
     parms.type->guisection = _("Main");
 
-    parms.format = G_define_option();
-    parms.format->key = "format";
-    parms.format->type = TYPE_STRING;
-    parms.format->required = NO;
-    parms.format->label = _("Output format");
-    parms.format->options = "plain,json";
-    parms.format->descriptions = "plain;Plain text output;"
-                                 "json;JSON (JavaScript Object Notation);";
-    parms.format->answer = "plain";
+    parms.format = G_define_standard_option(G_OPT_F_FORMAT);
     parms.format->guisection = _("Print");
 
     parms.mapset = G_define_standard_option(G_OPT_M_MAPSET);

@@ -16,12 +16,13 @@
  *               Regularized spline with tension is used for the
  *               interpolation.
  *
- * COPYRIGHT:    (C) 1989, 1993, 2000 L. Mitas,  H. Mitasova,
- *               I. Kosinovsky, D. Gerdes, J. Hofierka
- *
- *               This program is free software under the GNU General Public
- *               License (>=v2). Read the file COPYING that comes with GRASS
- *               for details.
+ * SPDX-FileCopyrightText: 1989, 1993, 2000 L. Mitas
+ * SPDX-FileCopyrightText: 1989, 1993, 2000 H. Mitasova
+ * SPDX-FileCopyrightText: 1989, 1993, 2000 I. Kosinovsky
+ * SPDX-FileCopyrightText: 1989, 1993, 2000 D. Gerdes
+ * SPDX-FileCopyrightText: 1989, 1993, 2000 J. Hofierka
+ * SPDX-FileCopyrightText: GRASS Development Team
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  *****************************************************************************/
 
@@ -92,6 +93,7 @@ int interp_call(struct octtree *root, struct octtree *tree)
     int skip_index, segtest;
     double xx, yy, zz /*, ww */;
 
+    skip_point.x = skip_point.y = skip_point.z = skip_point.w = 0.0;
     if (tree == NULL)
         return -1;
     if (tree->data == NULL)
@@ -294,6 +296,7 @@ int interp_call(struct octtree *root, struct octtree *tree)
         if (totsegm != 0) {
             G_percent(cursegm, totsegm, 1);
         }
+        G_free(point);
 
         return 1;
     }

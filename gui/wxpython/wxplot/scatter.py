@@ -7,10 +7,8 @@ Classes:
  - scatter::ScatterFrame
  - scatter::ScatterToolbar
 
-(C) 2011 by the GRASS Development Team
-
-This program is free software under the GNU General Public License
-(>=v2). Read the file COPYING that comes with GRASS for details.
+SPDX-FileCopyrightText: 2011 GRASS Development Team
+SPDX-License-Identifier: GPL-2.0-or-later
 
 @author Michael Barton, Arizona State University
 """
@@ -19,8 +17,8 @@ import sys
 
 import wx
 
-import grass.script as grass
-import wx.lib.plot as plot
+import grass.script as gs
+from wx.lib import plot
 from wxplot.base import BasePlotFrame, PlotIcons
 from gui_core.toolbars import BaseToolbar, BaseIcons
 from gui_core.wrap import StockCursor
@@ -29,7 +27,8 @@ from core.gcmd import RunCommand, GException, GError, GMessage
 
 
 class ScatterFrame(BasePlotFrame):
-    """Mainframe for displaying bivariate scatter plot of two raster maps. Uses wx.lib.plot."""
+    """Mainframe for displaying bivariate scatter plot of two raster maps. Uses
+    wx.lib.plot."""
 
     def __init__(
         self,
@@ -175,11 +174,7 @@ class ScatterFrame(BasePlotFrame):
         frequency can be in cell counts, percents, or area
         """
         datalist = []
-
-        if self.scattertype == "bubble":
-            freqflag = "cn"
-        else:
-            freqflag = "n"
+        freqflag = "cn" if self.scattertype == "bubble" else "n"
 
         try:
             ret = RunCommand(
@@ -274,13 +269,13 @@ class ScatterFrame(BasePlotFrame):
             rast1, rast2 = rpair
             rast1 = rast1.split("@")[0]
             rast2 = rast2.split("@")[0]
-            ret = grass.parse_command(
+            ret = gs.parse_command(
                 "r.regression.line",
                 mapx=rast1,
                 mapy=rast2,
                 flags="g",
                 quiet=True,
-                parse=(grass.parse_key_val, {"sep": "="}),
+                parse=(gs.parse_key_val, {"sep": "="}),
             )
             eqtitle = _(
                 "Regression equation for raster map <%(rast1)s> vs. <%(rast2)s>:\n\n"

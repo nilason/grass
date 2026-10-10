@@ -8,11 +8,8 @@
  *               Hamish Bowman <hamish_b yahoo.com>,
  *               Markus Neteler <neteler itc.it>
  * PURPOSE:      displays a paint label file in the active display frame
- * COPYRIGHT:    (C) 2003-2006 by the GRASS Development Team
- *
- *               This program is free software under the GNU General Public
- *               License (>=v2). Read the file COPYING that comes with GRASS
- *               for details.
+ * SPDX-FileCopyrightText: 2003-2006 GRASS Development Team
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  *****************************************************************************/
 
@@ -28,7 +25,7 @@ int main(int argc, char **argv)
     struct Cell_head window;
     char *label_name;
     const char *mapset;
-    double minreg, maxreg, reg, dx, dy;
+    double reg, dx, dy;
     FILE *infile;
     struct Option *opt1;
     struct Option *maxreg_opt, *minreg_opt;
@@ -91,7 +88,7 @@ int main(int argc, char **argv)
     dy = window.north - window.south;
     reg = sqrt(dx * dx + dy * dy);
     if (minreg_opt->answer) {
-        minreg = atof(minreg_opt->answer);
+        double minreg = atof(minreg_opt->answer);
         if (reg < minreg) {
             G_warning(
                 _("Region size is lower than minreg, nothing displayed."));
@@ -100,7 +97,7 @@ int main(int argc, char **argv)
         }
     }
     if (maxreg_opt->answer) {
-        maxreg = atof(maxreg_opt->answer);
+        double maxreg = atof(maxreg_opt->answer);
         if (reg > maxreg) {
             G_warning(
                 _("Region size is greater than maxreg, nothing displayed."));

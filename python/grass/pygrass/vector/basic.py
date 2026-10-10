@@ -3,10 +3,12 @@ Created on Tue Jul 31 13:06:20 2012
 
 @author: pietro
 """
+
 import ctypes
-import grass.lib.vector as libvect
 from collections.abc import Iterable
 
+import grass.lib.vector as libvect
+from grass.pygrass.errors import GrassError
 from grass.pygrass.shell.conversion import dict2html
 
 
@@ -125,20 +127,18 @@ class Bbox:
         :type point: a Point object or a tuple with the coordinates
 
         >>> from grass.pygrass.vector.geometry import Point
-        >>> poi = Point(5,5)
+        >>> poi = Point(5, 5)
         >>> bbox = Bbox(north=10, south=0, west=0, east=10)
         >>> bbox.contains(poi)
         True
 
         """
         return bool(
-            libvect.Vect_point_in_box(
-                point.x, point.y, point.z if point.z else 0, self.c_bbox
-            )
+            libvect.Vect_point_in_box(point.x, point.y, point.z or 0, self.c_bbox)
         )
 
     def items(self):
-        return [(k, self.__getattribute__(k)) for k in self.keys()]
+        return [(k, getattr(self, k)) for k in self.keys()]
 
     def nsewtb(self, tb=True):
         """Return a list of values from bounding box
@@ -150,8 +150,7 @@ class Bbox:
         """
         if tb:
             return (self.north, self.south, self.east, self.west, self.top, self.bottom)
-        else:
-            return (self.north, self.south, self.east, self.west)
+        return (self.north, self.south, self.east, self.west)
 
 
 class BoxList:
@@ -200,12 +199,12 @@ class BoxList:
         """Append a Bbox object to a Boxlist object, using the
         ``Vect_boxlist_append`` C function.
 
-        :param bbox: the bounding box to add to the list
-        :param bbox: a Bbox object
+        :param box: the bounding box to add to the list
+        :type box: a Bbox object
 
         >>> box0 = Bbox()
-        >>> box1 = Bbox(1,2,3,4)
-        >>> box2 = Bbox(5,6,7,8)
+        >>> box1 = Bbox(1, 2, 3, 4)
+        >>> box2 = Bbox(5, 6, 7, 8)
         >>> boxlist = BoxList([box0, box1])
         >>> boxlist
         Boxlist([Bbox(0.0, 0.0, 0.0, 0.0), Bbox(1.0, 2.0, 3.0, 4.0)])
@@ -216,7 +215,7 @@ class BoxList:
         3
 
         """
-        indx = self.__len__()
+        indx = len(self)
         libvect.Vect_boxlist_append(self.c_boxlist, indx, box.c_bbox)
 
     #    def extend(self, boxlist):
@@ -259,9 +258,7 @@ class BoxList:
         :param indx: the index value of the Bbox to remove
         :param indx: int
 
-        >>> boxlist = BoxList([Bbox(),
-        ...                    Bbox(1, 0, 0, 1),
-        ...                    Bbox(1, -1, -1, 1)])
+        >>> boxlist = BoxList([Bbox(), Bbox(1, 0, 0, 1), Bbox(1, -1, -1, 1)])
         >>> boxlist.remove(0)
         >>> boxlist
         Boxlist([Bbox(1.0, 0.0, 0.0, 1.0), Bbox(1.0, -1.0, -1.0, 1.0)])
@@ -279,9 +276,7 @@ class BoxList:
         """Reset the c_boxlist C struct, using the ``Vect_reset_boxlist`` C
         function.
 
-        >>> boxlist = BoxList([Bbox(),
-        ...                    Bbox(1, 0, 0, 1),
-        ...                    Bbox(1, -1, -1, 1)])
+        >>> boxlist = BoxList([Bbox(), Bbox(1, 0, 0, 1), Bbox(1, -1, -1, 1)])
         >>> len(boxlist)
         3
         >>> boxlist.reset()
@@ -309,18 +304,19 @@ class Ilist:
                 self.c_ilist.contents.value[indx]
                 for indx in range(*key.indices(len(self)))
             ]
-        elif isinstance(key, int):
+        if isinstance(key, int):
             if key < 0:  # Handle negative indices
                 key += self.c_ilist.contents.n_values
-            if key >= self.c_ilist.contents.n_values:
-                raise IndexError("Index out of range")
+            if key >= self.c_ilist.contents.n_values or key < 0:
+                msg = "Index out of range"
+                raise IndexError(msg)
             return self.c_ilist.contents.value[key]
-        else:
-            raise ValueError("Invalid argument type: %r." % key)
+        raise ValueError("Invalid argument type: %r." % key)
 
     def __setitem__(self, key, value):
         if self.contains(value):
-            raise ValueError("Integer already in the list")
+            msg = "Integer already in the list"
+            raise ValueError(msg)
         self.c_ilist.contents.value[key] = int(value)
 
     def __len__(self):
@@ -330,15 +326,16 @@ class Ilist:
         return (self.c_ilist.contents.value[i] for i in range(self.__len__()))
 
     def __repr__(self):
-        return "Ilist(%r)" % [i for i in self.__iter__()]
+        return "Ilist(%r)" % list(self.__iter__())
 
     def __contains__(self, item):
-        return item in self.__iter__()
+        return self.contains(item)
 
     def append(self, value):
         """Append an integer to the list"""
-        if libvect.Vect_list_append(self.c_ilist, value):
-            raise  # TODO
+        if libvect.Vect_list_append(self.c_ilist, int(value)):
+            msg = "Cannot append value to list"
+            raise GrassError(msg)
 
     def reset(self):
         """Reset the list"""
@@ -352,7 +349,7 @@ class Ilist:
         :type ilist: a Ilist object
         """
         if isinstance(ilist, Ilist):
-            libvect.Vect_list_append_list(self.c_ilist, ilist.ilist)
+            libvect.Vect_list_append_list(self.c_ilist, ilist.c_ilist)
         else:
             for i in ilist:
                 self.append(i)
@@ -362,7 +359,7 @@ class Ilist:
         if isinstance(value, int):
             libvect.Vect_list_delete(self.c_ilist, value)
         elif isinstance(value, Ilist):
-            libvect.Vect_list_delete_list(self.c_ilist, value.ilist)
+            libvect.Vect_list_delete_list(self.c_ilist, value.c_ilist)
         elif isinstance(value, Iterable):
             for i in value:
                 libvect.Vect_list_delete(self.c_ilist, int(i))
@@ -379,7 +376,8 @@ class Cats:
     to the C line_cats struct.
 
     >>> cats = Cats()
-    >>> for cat in range(100, 110): cats.set(cat, layer=cat-50)
+    >>> for cat in range(100, 110):
+    ...     cats.set(cat, layer=cat - 50)
     >>> cats.n_cats
     10
     >>> cats.cat
@@ -423,7 +421,7 @@ class Cats:
         return self.c_cats.contents.n_cats
 
     def __init__(self, c_cats=None):
-        self.c_cats = c_cats if c_cats else ctypes.pointer(libvect.line_cats())
+        self.c_cats = c_cats or ctypes.pointer(libvect.line_cats())
 
     def reset(self):
         """Reset the C cats struct from previous values."""
@@ -462,8 +460,7 @@ class Cats:
         """
         if cat:
             self.n_del = libvect.Vect_field_cat_del(self.c_cats, layer, cat)
-            err_msg = "Layer(%d)/category(%d) number does not exist"
-            err_msg = err_msg % (layer, cat)
+            err_msg = "Layer(%d)/category(%d) number does not exist" % (layer, cat)
         else:
             self.n_del = libvect.Vect_cat_del(self.c_cats, layer)
             err_msg = "Layer: %r does not exist" % layer
@@ -540,9 +537,7 @@ class CatsList:
         return [max_values[i] for i in range(self.n_ranges)]
 
     def __init__(self, c_cat_list=None):
-        self.c_cat_list = (
-            c_cat_list if c_cat_list else ctypes.pointer(libvect.cat_list())
-        )
+        self.c_cat_list = c_cat_list or ctypes.pointer(libvect.cat_list())
 
     def from_string(self, string):
         """Converts string of categories and cat ranges separated by commas
@@ -553,15 +548,13 @@ class CatsList:
         """
         num_errors = libvect.Vect_str_to_cat_list(string, self.c_cat_list)
         if num_errors:
-            from grass.pygrass.errors import GrassError
-
             raise GrassError("%d number of errors in ranges" % num_errors)
 
     def from_array(self, array):
         """Convert ordered array of integers to cat_list structure.
 
         :param array: the input array containing the cats
-        :type array: array
+        :type array: ~grass.script.array.array
         """
         # Vect_array_to_cat_list(const int *vals, int nvals, ***)
         # TODO: it's not working

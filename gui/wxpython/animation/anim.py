@@ -6,10 +6,8 @@
 Classes:
  - anim::Animation
 
-(C) 2013 by the GRASS Development Team
-
-This program is free software under the GNU General Public License
-(>=v2). Read the file COPYING that comes with GRASS for details.
+SPDX-FileCopyrightText: 2013 GRASS Development Team
+SPDX-License-Identifier: GPL-2.0-or-later
 
 @author Anna Petrasova <kratochanna gmail.com>
 """
@@ -93,11 +91,11 @@ class Animation(wx.EvtHandler):
 
     def Start(self):
         if not self.IsActive():
-            return
+            pass
 
     def Pause(self, paused):
         if not self.IsActive():
-            return
+            pass
 
     def Stop(self):
         if not self.IsActive():
@@ -119,7 +117,7 @@ class Animation(wx.EvtHandler):
                 self.orientation = Orientation.BACKWARD
                 self.currentIndex = self.count - 2  # -1
                 self.callbackOrientationChanged(Orientation.BACKWARD)
-        else:
+        else:  # noqa: PLR5501
             if self.replayMode == ReplayMode.REPEAT:
                 self.currentIndex = self.count - 1
             elif self.replayMode == ReplayMode.REVERSE:

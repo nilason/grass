@@ -6,12 +6,8 @@
  *
  * PURPOSE:    Computes spanning tree in the network
  *
- * COPYRIGHT:  (C) 2002-2005 by the GRASS Development Team
- *
- *             This program is free software under the
- *             GNU General Public License (>=v2).
- *             Read the file COPYING that comes with GRASS
- *             for details.
+ * SPDX-FileCopyrightText: 2002-2005 GRASS Development Team
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  ****************************************************************/
 
@@ -80,7 +76,7 @@ int main(int argc, char *argv[])
     geo_f = G_define_flag();
     geo_f->key = 'g';
     geo_f->description =
-        _("Use geodesic calculation for longitude-latitude locations");
+        _("Use geodesic calculation for longitude-latitude projects");
 
     /* options and flags parser */
     if (G_parser(argc, argv))

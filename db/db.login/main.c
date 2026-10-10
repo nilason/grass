@@ -5,11 +5,8 @@
  *               Glynn Clements <glynn gclements.plus.com>
  *               Markus Neteler <neteler itc.it>
  * PURPOSE:      Store db login settings
- * COPYRIGHT:    (C) 2004-2015 by the GRASS Development Team
- *
- *               This program is free software under the GNU General
- *               Public License (>=v2). Read the file COPYING that
- *               comes with GRASS for details.
+ * SPDX-FileCopyrightText: 2004-2015 GRASS Development Team
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  *****************************************************************************/
 #include <stdio.h>
@@ -98,9 +95,9 @@ int main(int argc, char *argv[])
         exit(EXIT_SUCCESS);
     }
 
-    if (db_set_login2(driver->answer, database->answer, user->answer,
-                      password->answer, host->answer, port->answer,
-                      G_get_overwrite()) == DB_FAILED) {
+    if (db_set_login(driver->answer, database->answer, user->answer,
+                     password->answer, host->answer, port->answer,
+                     G_get_overwrite()) == DB_FAILED) {
         G_fatal_error(_("Unable to set user/password"));
     }
 

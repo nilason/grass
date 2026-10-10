@@ -8,11 +8,8 @@
  *
  * PURPOSE:      Multidimensional index
  *
- * COPYRIGHT:    (C) 2001 by the GRASS Development Team
- *
- *               This program is free software under the GNU General
- *                 Public License (>=v2). Read the file COPYING that comes
- *                 with GRASS for details.
+ * SPDX-FileCopyrightText: 2001 GRASS Development Team
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  ***********************************************************************/
 
@@ -583,9 +580,9 @@ static void RTreeMethodOne(struct RTree_PartitionVars *p, int minfill,
                         best_side[i] = s;
                     }
                 }
-            }          /* end of distribution check */
+            } /* end of distribution check */
         } while (s--); /* end of side check */
-    }                  /* end of axis check */
+    } /* end of axis check */
 
     /* Use best distribution to classify branches */
     if (best_axis != axis || best_side[best_axis] != side)

@@ -6,14 +6,11 @@
 Classes:
  - dialogs::CatalogReprojectionDialog
 
-(C) 2017 by the GRASS Development Team
-
-This program is free software under the GNU General Public License
-(>=v2). Read the file COPYING that comes with GRASS for details.
+SPDX-FileCopyrightText: 2017 GRASS Development Team
+SPDX-License-Identifier: GPL-2.0-or-later
 
 @author Anna Petrasova <kratochanna gmail.com>
 """
-
 
 import wx
 from gui_core.widgets import FloatValidator, IntegerValidator
@@ -144,8 +141,7 @@ class CatalogReprojectionDialog(wx.Dialog):
         dialogSizer.Add(optionsSizer, proportion=1, flag=wx.ALL | wx.EXPAND, border=10)
         helptext = StaticText(
             self.panel,
-            label="For more reprojection options,"
-            " please see {module}".format(
+            label="For more reprojection options, please see {module}".format(
                 module="r.proj" if self.etype == "raster" else "v.proj"
             ),
         )
@@ -173,7 +169,7 @@ class CatalogReprojectionDialog(wx.Dialog):
             read=True,
             input=self.iLayer,
             dbase=self.iGisdbase,
-            location=self.iLocation,
+            project=self.iLocation,
             mapset=self.iMapset,
             env=self.oEnv,
         ).strip()
@@ -211,13 +207,17 @@ class CatalogReprojectionDialog(wx.Dialog):
     def OnReproject(self, event):
         cmd = []
         if self.etype == "raster":
-            cmd.append("r.proj")
-            cmd.append("dbase=" + self.iGisdbase)
-            cmd.append("location=" + self.iLocation)
-            cmd.append("mapset=" + self.iMapset)
-            cmd.append("input=" + self.iLayer)
-            cmd.append("output=" + self.oLayer)
-            cmd.append("method=" + self.resampling.GetStringSelection())
+            cmd.extend(
+                (
+                    "r.proj",
+                    "dbase=" + self.iGisdbase,
+                    "project=" + self.iLocation,
+                    "mapset=" + self.iMapset,
+                    "input=" + self.iLayer,
+                    "output=" + self.oLayer,
+                    "method=" + self.resampling.GetStringSelection(),
+                )
+            )
 
             self.oEnv["GRASS_REGION"] = region_env(
                 n=self.params["n"],
@@ -229,13 +229,17 @@ class CatalogReprojectionDialog(wx.Dialog):
                 env=self.oEnv,
             )
         else:
-            cmd.append("v.proj")
-            cmd.append("dbase=" + self.iGisdbase)
-            cmd.append("location=" + self.iLocation)
-            cmd.append("mapset=" + self.iMapset)
-            cmd.append("input=" + self.iLayer)
-            cmd.append("output=" + self.oLayer)
-            cmd.append("smax=" + self.vsplit.GetValue())
+            cmd.extend(
+                (
+                    "v.proj",
+                    "dbase=" + self.iGisdbase,
+                    "project=" + self.iLocation,
+                    "mapset=" + self.iMapset,
+                    "input=" + self.iLayer,
+                    "output=" + self.oLayer,
+                    "smax=" + self.vsplit.GetValue(),
+                )
+            )
 
         self._giface.RunCmd(
             cmd,
