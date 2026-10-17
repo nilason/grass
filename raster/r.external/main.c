@@ -8,14 +8,13 @@
  *
  * PURPOSE:      Link raster map into GRASS utilizing the GDAL library.
  *
- * COPYRIGHT:    (C) 2008-2015 by Glynn Clements and the GRASS Development Team
- *
- *               This program is free software under the GNU General Public
- *               License (>=v2). Read the file COPYING that comes with GRASS
- *               for details.
+ * SPDX-FileCopyrightText: 2008-2015 Glynn Clements
+ * SPDX-FileCopyrightText: GRASS Development Team
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  *****************************************************************************/
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <math.h>
@@ -98,10 +97,9 @@ int main(int argc, char *argv[])
 
     flag.o = G_define_flag();
     flag.o->key = 'o';
-    flag.o->label =
-        _("Override projection check (use current location's projection)");
-    flag.o->description = _(
-        "Assume that the dataset has same projection as the current location");
+    flag.o->label = _("Override projection check (use current project's CRS)");
+    flag.o->description = _("Assume that the dataset has the same coordinate "
+                            "reference system as the current project");
 
     flag.j = G_define_flag();
     flag.j->key = 'j';
@@ -190,7 +188,7 @@ int main(int argc, char *argv[])
         if (!cwd)
             G_fatal_error(_("Unable to get current working directory"));
 
-        G_snprintf(path, GPATH_MAX, "%s%c%s", cwd, HOST_DIRSEP, input);
+        snprintf(path, GPATH_MAX, "%s%c%s", cwd, HOST_DIRSEP, input);
         input = G_store(path);
         CPLFree(cwd);
     }

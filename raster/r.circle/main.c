@@ -8,11 +8,8 @@
  * PURPOSE:      Creates a raster map containing concentric rings
  *                 around a given point.
  *
- * COPYRIGHT:    (C) 2006-2008 by the GRASS Development Team
- *
- *               This program is free software under the GNU General Public
- *               License (>=v2). Read the file COPYING that comes with GRASS
- *               for details.
+ * SPDX-FileCopyrightText: 2006-2008 GRASS Development Team
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  ***************************************************************************/
 
@@ -79,7 +76,9 @@ int main(int argc, char *argv[])
 
     flag = G_define_flag();
     flag->key = 'b';
-    flag->description = _("Generate binary raster map");
+    flag->label = _("Generate binary raster map");
+    flag->description =
+        _("Generate binary pattern only (useful for creating mask)");
 
     if (G_parser(argc, argv))
         exit(EXIT_FAILURE);
@@ -114,7 +113,7 @@ int main(int argc, char *argv[])
                         "using the binary flag"));
 
     if (flag->answer)
-        binary = 1; /* generate binary pattern only, useful for MASK */
+        binary = 1;
     else
         binary = 0;
 

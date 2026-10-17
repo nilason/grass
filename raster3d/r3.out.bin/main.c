@@ -7,11 +7,8 @@
  *
  * PURPOSE:      Exports a GRASS 3D raster map to a binary array.
  *
- * COPYRIGHT:    (C) 2012 by the GRASS Development Team
- *
- *               This program is free software under the GNU General Public
- *               License (>=v2). Read the file COPYING that comes with GRASS
- *               for details.
+ * SPDX-FileCopyrightText: 2012 GRASS Development Team
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  *****************************************************************************/
 
@@ -200,7 +197,7 @@ int main(int argc, char *argv[])
         struct Flag *row, *depth, *integer;
     } flag;
     char *name;
-    char *outfile;
+    char outfile[GNAME_MAX];
     double null_val;
     int do_stdout;
     int order = 0;
@@ -287,11 +284,10 @@ int main(int argc, char *argv[])
             _("Integer output doesn't support bytes=8 in this build"));
 #endif
 
-    if (parm.output->answer)
-        outfile = parm.output->answer;
-    else {
-        outfile = G_malloc(strlen(name) + 4 + 1);
-        G_snprintf(outfile, sizeof(outfile), "%s.bin", name);
+    if (snprintf(outfile, sizeof(outfile), "%s%s",
+                 (parm.output->answer ? parm.output->answer : name),
+                 (parm.output->answer ? "" : ".bin")) >= (int)sizeof(outfile)) {
+        G_fatal_error(_("Output map name too long."));
     }
 
     if (G_strcasecmp(parm.order->answer, "big") == 0)

@@ -7,11 +7,8 @@
  * PURPOSE:      Calculates 16 vegetation and related indices
  *               based on biophysical parameters.
  *
- * COPYRIGHT:    (C) 2002-2019 by the GRASS Development Team
- *
- *               This program is free software under the GNU General Public
- *               License (>=v2). Read the file COPYING that comes with GRASS
- *               for details.
+ * SPDX-FileCopyrightText: 2002-2019 GRASS Development Team
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  * Remarks:
  *           These are generic indices that use red and nir for most of them.
@@ -588,6 +585,16 @@ int main(int argc, char *argv[])
         const char *style = "ndvi";
 
         if (G_find_color_rule("ndvi")) {
+            Rast_make_fp_colors(&colors, style, -1.0, 1.0);
+        }
+        else
+            G_fatal_error(_("Unknown color request '%s'"), style);
+    }
+    else if (!strcasecmp(viflag, "ndwi")) {
+        /* apply predefined NDWI color table */
+        const char *style = "ndwi";
+
+        if (G_find_color_rule("ndwi")) {
             Rast_make_fp_colors(&colors, style, -1.0, 1.0);
         }
         else

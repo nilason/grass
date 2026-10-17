@@ -86,8 +86,8 @@ detectPlateaus::~detectPlateaus()
    structs. */
 plateauType *detectPlateaus::getPlateauForward(dimension_type i,
                                                dimension_type j,
-                                               dimension_type nr UNUSED,
-                                               dimension_type nc UNUSED)
+                                               dimension_type nr G_UNUSED,
+                                               dimension_type nc G_UNUSED)
 {
     bool ok;
     static plateauType ptarr[3]; /* return value */
@@ -311,7 +311,7 @@ class duplicateFixer {
     ccforest<cclabel_type> *colTree;
 
 public:
-    duplicateFixer(ccforest<cclabel_type> *p) : colTree(p){};
+    duplicateFixer(ccforest<cclabel_type> *p) : colTree(p) {};
     int compare(const plateauType &a, const plateauType &b)
     {
         int c = ijCmpPlateauType::compare(a, b);

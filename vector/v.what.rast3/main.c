@@ -8,11 +8,8 @@
  *  PURPOSE:     Uploads 3d raster values at positions of vector points to the
  *               table
  *
- *  COPYRIGHT:   (C) 2001, 2011 by the GRASS Development Team
- *
- *               This program is free software under the GNU General
- *               Public License (>=v2).  Read the file COPYING that
- *               comes with GRASS for details.
+ *  SPDX-FileCopyrightText: 2001, 2011 GRASS Development Team
+ *  SPDX-License-Identifier: GPL-2.0-or-later
  *
  ***************************************************************/
 #include <stdio.h>
@@ -280,8 +277,7 @@ int main(int argc, char *argv[])
             continue;
         }
 
-        G_snprintf(buf, 2048, "update %s set %s = ", Fi->table,
-                   opt.col->answer);
+        snprintf(buf, 2048, "update %s set %s = ", Fi->table, opt.col->answer);
 
         db_set_string(&stmt, buf);
 
@@ -297,23 +293,23 @@ int main(int argc, char *argv[])
                 Rast3d_is_null_value_num(&cache[point].dvalue, DCELL_TYPE);
 
         if (is_empty) {
-            G_snprintf(buf, 2048, "NULL");
+            snprintf(buf, 2048, "NULL");
         }
         else {
             if (typeIntern == FCELL_TYPE)
-                G_snprintf(buf, 2048, "%.10f", cache[point].fvalue);
+                snprintf(buf, 2048, "%.10f", cache[point].fvalue);
             if (typeIntern == DCELL_TYPE)
-                G_snprintf(buf, 2048, "%.15f", cache[point].dvalue);
+                snprintf(buf, 2048, "%.15f", cache[point].dvalue);
         }
 
         db_append_string(&stmt, buf);
 
-        G_snprintf(buf, 2048, " where %s = %d", Fi->key, cache[point].cat);
+        snprintf(buf, 2048, " where %s = %d", Fi->key, cache[point].cat);
 
         db_append_string(&stmt, buf);
         /* user provides where condition: */
         if (opt.where->answer) {
-            G_snprintf(buf, 2048, " AND %s", opt.where->answer);
+            snprintf(buf, 2048, " AND %s", opt.where->answer);
             db_append_string(&stmt, buf);
         }
         G_debug(3, "%s", db_get_string(&stmt));

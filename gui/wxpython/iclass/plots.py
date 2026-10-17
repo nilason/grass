@@ -6,10 +6,8 @@
 Classes:
  - plots::PlotPanel
 
-(C) 2006-2011,2013 by the GRASS Development Team
-This program is free software under the GNU General Public
-License (>=v2). Read the file COPYING that comes with GRASS
-for details.
+SPDX-FileCopyrightText: 2006-2011,2013 GRASS Development Team
+SPDX-License-Identifier: GPL-2.0-or-later
 
 @author Vaclav Petras <wenzeslaus gmail.com>
 @author Anna Kratochvilova <kratochanna gmail.com>
@@ -17,7 +15,7 @@ for details.
 
 import wx
 
-import wx.lib.plot as plot
+from wx.lib import plot
 import wx.lib.scrolledpanel as scrolled
 from core.gcmd import GError
 
@@ -88,9 +86,12 @@ class PlotPanel(scrolled.ScrolledPanel):
             )
             self.iscatt_panel.Hide()
         except ImportError as e:
-            self.scatt_error = _(
-                "Scatter plot functionality is disabled.\n\nReason: "
-                "Unable to import packages needed for scatter plot.\n%s" % e
+            self.scatt_error = (
+                _(
+                    "Scatter plot functionality is disabled.\n\nReason: "
+                    "Unable to import packages needed for scatter plot.\n%s"
+                )
+                % e
             )
             wx.CallAfter(GError, self.scatt_error, showTraceback=False, parent=self)
             self.iscatt_panel = None
@@ -98,7 +99,7 @@ class PlotPanel(scrolled.ScrolledPanel):
     def OnPlotTypeSelected(self, event):
         """Plot type selected"""
 
-        if self.plotSwitch.GetSelection() in [0, 1]:
+        if self.plotSwitch.GetSelection() in {0, 1}:
             self.SetupScrolling(scroll_x=False, scroll_y=True)
             if self.iscatt_panel:
                 self.iscatt_panel.Hide()

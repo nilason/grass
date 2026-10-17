@@ -6,17 +6,8 @@
 # AUTHOR(S):    Soeren Gebbert
 #
 # PURPOSE:      List temporal topology of a space time dataset
-# COPYRIGHT:    (C) 2011-2017 by the GRASS Development Team
-#
-#  This program is free software; you can redistribute it and/or modify
-#  it under the terms of the GNU General Public License as published by
-#  the Free Software Foundation; either version 2 of the License, or
-#  (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
+# SPDX-FileCopyrightText: 2011-2017 GRASS Development Team
+# SPDX-License-Identifier: GPL-2.0-or-later
 #
 #############################################################################
 
@@ -47,8 +38,7 @@
 # % key: s
 # % description: Print spatio-temporal topological relationships and exit
 # %end
-import grass.script as grass
-
+import grass.script as gs
 
 ############################################################################
 
@@ -75,10 +65,7 @@ def main():
     spatial = None
 
     if spatio_temporal_relations:
-        if sp.get_type() == "strds":
-            spatial = "2D"
-        else:
-            spatial = "3D"
+        spatial = "2D" if sp.get_type() == "strds" else "3D"
 
     if temporal_relations or spatio_temporal_relations:
         sp.print_spatio_temporal_relationships(maps=maps, spatial=spatial)
@@ -88,7 +75,7 @@ def main():
 
     #      0123456789012345678901234567890
     print(
-        " +-------------------- Temporal topology -------------------------------------+"
+        " +-------------------- Temporal topology -------------------------------------+"  # noqa: E501
     )
     if where:
         print(" | Is subset of dataset: ...... True")
@@ -124,7 +111,7 @@ def main():
     print(" | Granularity: ............... %s" % str(gran))
 
     print(
-        " +-------------------- Topological relations ---------------------------------+"
+        " +-------------------- Topological relations ---------------------------------+"  # noqa: E501
     )
     dict_ = sp.count_temporal_relations(maps)
 
@@ -158,10 +145,10 @@ def main():
             if key == "precedes":
                 print(" | Precedes: .................. %s" % (dict_[key]))
     print(
-        " +----------------------------------------------------------------------------+"
+        "+----------------------------------------------------------------------------+"  # noqa: E501
     )
 
 
 if __name__ == "__main__":
-    options, flags = grass.parser()
+    options, flags = gs.parser()
     main()

@@ -7,10 +7,8 @@ Classes:
  - mapwindow::BufferedWindow
  - mapwindow::AnimationWindow
 
-(C) 2013 by the GRASS Development Team
-
-This program is free software under the GNU General Public License
-(>=v2). Read the file COPYING that comes with GRASS for details.
+SPDX-FileCopyrightText: 2013 GRASS Development Team
+SPDX-License-Identifier: GPL-2.0-or-later
 
 @author Anna Petrasova <kratochanna gmail.com>
 """
@@ -61,7 +59,7 @@ class BufferedWindow(wx.Window):
     def OnPaint(self, event):
         Debug.msg(5, "BufferedWindow.OnPaint()")
         # All that is needed here is to draw the buffer to screen
-        dc = wx.BufferedPaintDC(self, self._Buffer)
+        wx.BufferedPaintDC(self, self._Buffer)
 
     def OnSize(self, event):
         Debug.msg(5, "BufferedWindow.OnSize()")

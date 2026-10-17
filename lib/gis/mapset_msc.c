@@ -3,15 +3,14 @@
 
    \brief GIS library - Mapset user permission routines.
 
-   (C) 1999-2014 The GRASS development team
-
-   This program is free software under the GNU General Public License
-   (>=v2). Read the file COPYING that comes with GRASS for details.
+   SPDX-FileCopyrightText: 1999-2014 GRASS Development Team
+   SPDX-License-Identifier: GPL-2.0-or-later
  */
 
 #include <grass/config.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <sys/types.h>
@@ -183,14 +182,15 @@ int G_make_mapset_object_group_basedir(const char *type, const char *basedir)
 int make_mapset_element_impl(const char *p_path, const char *p_element,
                              bool race_ok)
 {
-    char path[GPATH_MAX], *p;
+    char path[GPATH_MAX] = {'\0'};
+    char *p;
     const char *element;
 
     element = p_element;
     if (*element == 0)
         return 0;
 
-    strncpy(path, p_path, GPATH_MAX);
+    strncpy(path, p_path, GPATH_MAX - 1);
     p = path;
     while (*p)
         p++;
@@ -263,7 +263,7 @@ int G__make_mapset_element_misc(const char *dir, const char *name)
 
 static int check_owner(const struct stat *info)
 {
-#if defined(__MINGW32__) || defined(SKIP_MAPSET_OWN_CHK)
+#if defined(_WIN32) || defined(SKIP_MAPSET_OWN_CHK)
     return 1;
 #else
     const char *check = getenv("GRASS_SKIP_MAPSET_OWNER_CHECK");
@@ -322,7 +322,7 @@ int G_mapset_permissions2(const char *gisdbase, const char *location,
     char path[GPATH_MAX];
     struct stat info;
 
-    sprintf(path, "%s/%s/%s", gisdbase, location, mapset);
+    snprintf(path, sizeof(path), "%s/%s/%s", gisdbase, location, mapset);
 
     if (G_stat(path, &info) != 0)
         return -1;

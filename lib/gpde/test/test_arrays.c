@@ -6,11 +6,8 @@
  *
  * PURPOSE:      Unit tests for arrays
  *
- * COPYRIGHT:    (C) 2000 by the GRASS Development Team
- *
- *               This program is free software under the GNU General Public
- *               License (>=v2). Read the file COPYING that comes with GRASS
- *               for details.
+ * SPDX-FileCopyrightText: 2000 GRASS Development Team
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  *****************************************************************************/
 
@@ -70,7 +67,8 @@ int fill_array_2d(N_array_2d *a)
     cols = a->cols;
     type = N_get_array_2d_type(a);
 
-#pragma omp parallel for private (i, j) shared (cols, rows, type, a) reduction(+:res)
+#pragma omp parallel for private(i, j) shared(cols, rows, type, a) \
+    reduction(+ : res)
     for (j = 0; j < rows; j++) {
         for (i = 0; i < cols; i++) {
             if (type == CELL_TYPE) {
@@ -129,7 +127,8 @@ int compare_array_2d(N_array_2d *a, N_array_2d *b)
     rows = a->rows;
     type = N_get_array_2d_type(a);
 
-#pragma omp parallel for private (i, j) shared (cols, rows, type, a, b) reduction(+:res)
+#pragma omp parallel for private(i, j) shared(cols, rows, type, a, b) \
+    reduction(+ : res)
     for (j = 0; j < rows; j++) {
         for (i = 0; i < cols; i++) {
             if (type == CELL_TYPE) {
@@ -166,7 +165,8 @@ int fill_array_3d(N_array_3d *a)
     depths = a->depths;
     type = N_get_array_3d_type(a);
 
-#pragma omp parallel for private (i, j, k) shared (depths, rows, cols, type, a) reduction(+:res)
+#pragma omp parallel for private(i, j, k) shared(depths, rows, cols, type, a) \
+    reduction(+ : res)
     for (k = 0; k < depths; k++) {
         for (j = 0; j < rows; j++) {
             for (i = 0; i < cols; i++) {
@@ -204,7 +204,8 @@ int fill_array_3d_null(N_array_3d *a)
     depths = a->depths;
     type = N_get_array_3d_type(a);
 
-#pragma omp parallel for private (i, j, k) shared (cols, rows, depths, type, a) reduction(+:res)
+#pragma omp parallel for private(i, j, k) shared(cols, rows, depths, type, a) \
+    reduction(+ : res)
     for (k = 0; k < depths; k++) {
         for (j = 0; j < rows; j++) {
             for (i = 0; i < cols; i++) {
@@ -231,7 +232,8 @@ int compare_array_3d(N_array_3d *a, N_array_3d *b)
     depths = a->depths;
     type = N_get_array_3d_type(a);
 
-#pragma omp parallel for private (i, j, k) shared (depths, rows, cols, type, a, b) reduction(+:res)
+#pragma omp parallel for private(i, j, k) \
+    shared(depths, rows, cols, type, a, b) reduction(+ : res)
     for (k = 0; k < depths; k++) {
         for (i = 0; i < rows; i++) {
             for (j = 0; j < cols; j++) {
@@ -290,9 +292,10 @@ int io_bench_2d(void)
     N_read_rast_to_array_2d("gpde_lib_test_raster_3", tmp);
     N_free_array_2d(tmp);
 
-    sprintf(buff, "g.remove -f type=raster "
-                  "name=gpde_lib_test_raster_1,gpde_lib_test_raster_2,gpde_lib_"
-                  "test_raster_3");
+    snprintf(buff, sizeof(buff),
+             "g.remove -f type=raster "
+             "name=gpde_lib_test_raster_1,gpde_lib_test_raster_2,gpde_lib_"
+             "test_raster_3");
     system(buff);
 
     N_free_array_2d(data1);
@@ -579,9 +582,10 @@ int test_array_2d(void)
     N_read_rast_to_array_2d("gpde_lib_test_raster_3", tmp);
     N_free_array_2d(tmp);
 
-    sprintf(buff, "g.remove -f type=raster "
-                  "name=gpde_lib_test_raster_1,gpde_lib_test_raster_2,gpde_lib_"
-                  "test_raster_3");
+    snprintf(buff, sizeof(buff),
+             "g.remove -f type=raster "
+             "name=gpde_lib_test_raster_1,gpde_lib_test_raster_2,gpde_lib_"
+             "test_raster_3");
     system(buff);
 
     N_free_array_2d(data1);
@@ -835,8 +839,9 @@ int test_array_3d(void)
     N_read_rast3d_to_array_3d("gpde_lib_test_volume_2", tmp, 1);
     N_free_array_3d(tmp);
 
-    sprintf(buff, "g.remove -f type=raster_3d "
-                  "name=gpde_lib_test_volume_1,gpde_lib_test_volume_2");
+    snprintf(buff, sizeof(buff),
+             "g.remove -f type=raster_3d "
+             "name=gpde_lib_test_volume_1,gpde_lib_test_volume_2");
     system(buff);
 
     N_free_array_3d(data1);

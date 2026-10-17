@@ -8,11 +8,8 @@
  *               Markus Neteler <neteler itc.it>
  *               Martin Landa <landa.martin gmail.com>
  * PURPOSE:
- * COPYRIGHT:    (C) 2003-2015 by the GRASS Development Team
- *
- *               This program is free software under the GNU General Public
- *               License (>=v2). Read the file COPYING that comes with GRASS
- *               for details.
+ * SPDX-FileCopyrightText: 2003-2015 GRASS Development Team
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  *****************************************************************************/
 
@@ -198,6 +195,7 @@ char *parse_variable(const char *v_name, char **value)
 {
     char *u_name; /* uppercase variable name */
     char *name, *ptr;
+    name = NULL;
 
     name = G_store(v_name);
     if (value)
@@ -207,12 +205,14 @@ char *parse_variable(const char *v_name, char **value)
     if (ptr != NULL) {
         *ptr = '\0';
         if (value)
-            *value = ptr + 1;
+            *value = G_store(ptr + 1);
     }
     /* Allow unset without '=' sign */
     if (value) {
-        if (*value != NULL && **value == '\0')
+        if (*value != NULL && **value == '\0') {
+            G_free(*value);
             *value = NULL;
+        }
     }
     if (strlen(name) < 1)
         G_fatal_error(_("GRASS variable not defined"));
@@ -224,6 +224,7 @@ char *parse_variable(const char *v_name, char **value)
         G_verbose_message(_("GRASS variable must be uppercase. Using '%s'."),
                           u_name);
     }
+    G_free(name);
 
     return u_name;
 }

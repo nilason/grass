@@ -21,11 +21,8 @@
  * <25 Jun 1995> - new site API (jdm)
  * <13 Sep 2000> - released under GPL
  *
- * COPYRIGHT:    (C) 2003-2023 by the GRASS Development Team
- *
- *               This program is free software under the GNU General
- *               Public License (>=v2).  Read the file COPYING that
- *               comes with GRASS for details.
+ * SPDX-FileCopyrightText: 2003-2023 GRASS Development Team
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  **************************************************************/
 
@@ -147,12 +144,7 @@ int main(int argc, char *argv[])
     parm.zmax->answer = "0.0";
     parm.zmax->guisection = _("3D output");
 
-    parm.seed = G_define_option();
-    parm.seed->key = "seed";
-    parm.seed->type = TYPE_INTEGER;
-    parm.seed->required = NO;
-    parm.seed->description = _("The seed to initialize the random generator. "
-                               "If not set the process ID is used");
+    parm.seed = G_define_standard_option(G_OPT_M_SEED);
 
     parm.zcol = G_define_standard_option(G_OPT_DB_COLUMN);
     parm.zcol->label = _("Name of column for z values");

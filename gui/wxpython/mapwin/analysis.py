@@ -8,10 +8,8 @@ Classes:
  - analysis::ProfileController
  - analysis::MeasureDistanceController
 
-(C) 2013 by the GRASS Development Team
-
-This program is free software under the GNU General Public License
-(>=v2). Read the file COPYING that comes with GRASS for details.
+SPDX-FileCopyrightText: 2013 GRASS Development Team
+SPDX-License-Identifier: GPL-2.0-or-later
 
 @author Anna Petrasova <kratochanna gmail.com>
 """
@@ -20,7 +18,7 @@ import os
 import math
 import wx
 
-import core.units as units
+from core import units
 from core.gcmd import RunCommand
 from core.giface import Notification
 
@@ -93,20 +91,20 @@ class AnalysisControllerBase:
 
         :param coords: EN coordinates
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def _disconnectAll(self):
         """Disconnect all mouse signals
         to stop drawing."""
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def _connectAll(self):
         """Connect all mouse signals to draw."""
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def _getPen(self):
         """Returns wx.Pen instance."""
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def Stop(self, restore=True):
         """Analysis mode is stopped.
@@ -262,11 +260,7 @@ class MeasureDistanceController(AnalysisControllerBase):
                 self._useCtypes = True
             except ImportError as e:
                 self._giface.WriteWarning(
-                    _(
-                        "Geodesic distance calculation "
-                        "is not available.\n"
-                        "Reason: %s" % e
-                    )
+                    _("Geodesic distance calculation is not available.\nReason: %s") % e
                 )
 
     def MeasureDist(self, beginpt, endpt):
@@ -297,7 +291,7 @@ class MeasureDistanceController(AnalysisControllerBase):
             #   the mathematical theta convention (CCW from +x axis)
             # angle = 90 - angle
             if angle < 0:
-                angle = 360 + angle
+                angle += 360
 
             mstring = "%s = %s %s\n%s = %s %s\n%s = %d %s\n%s" % (
                 _("segment"),

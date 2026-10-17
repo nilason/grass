@@ -18,11 +18,8 @@
  *         map cell, NOT the time that cell is EXHAUSTED.
  *      3) If a cell is spread barrier, a no-data value is assigned
  *         to it.
- * COPYRIGHT:    (C) 2000-2006 by the GRASS Development Team
- *
- *               This program is free software under the GNU General Public
- *               License (>=v2). Read the file COPYING that comes with GRASS
- *               for details.
+ * SPDX-FileCopyrightText: 2000-2006 GRASS Development Team
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  *****************************************************************************/
 
@@ -39,7 +36,7 @@
 #include "cell_ptrHa.h"
 #include "local_proto.h"
 
-#define DATA(map, r, c) (map)[(r)*ncols + (c)]
+#define DATA(map, r, c) (map)[(r) * ncols + (c)]
 
 CELL *cell;
 CELL *x_cell;
@@ -426,7 +423,7 @@ int main(int argc, char *argv[])
     ncols = Rast_window_cols();
 
     /*transfor measurement unit from meters to centimeters due to ROS unit
-     *if the input ROSs are in m/min units, cancell the following*/
+     *if the input ROSs are in m/min units, cancel the following*/
     window.ns_res = 100 * window.ns_res;
     window.ew_res = 100 * window.ew_res;
 

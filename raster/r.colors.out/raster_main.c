@@ -6,12 +6,9 @@
  *
  * PURPOSE:      Allows export of the color table for a raster map.
  *
- * COPYRIGHT:    (C) 2008, 2010-2011 Glynn Clements and the GRASS Development
- *               Team
- *
- *               This program is free software under the GNU General
- *               Public License (>=v2). Read the file COPYING that
- *               comes with GRASS for details.
+ * SPDX-FileCopyrightText: 2008, 2010-2011 Glynn Clements
+ * SPDX-FileCopyrightText: GRASS Development Team
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  ***************************************************************************/
 
@@ -26,7 +23,7 @@ int main(int argc, char **argv)
 {
     struct GModule *module;
     struct {
-        struct Option *map, *file;
+        struct Option *map, *file, *format, *color_format;
     } opt;
     struct {
         struct Flag *p;
@@ -36,6 +33,8 @@ int main(int argc, char **argv)
     FILE *fp;
     struct Colors colors;
     struct FPRange range;
+
+    ColorFormat clr_frmt;
 
     G_gisinit(argv[0]);
 
@@ -53,6 +52,12 @@ int main(int argc, char **argv)
     opt.file->label = _("Path to output rules file");
     opt.file->description = _("If not given write to standard output");
     opt.file->required = NO;
+
+    opt.format = G_define_standard_option(G_OPT_F_FORMAT);
+    opt.format->guisection = _("Print");
+
+    opt.color_format = G_define_standard_option(G_OPT_C_FORMAT);
+    opt.color_format->guisection = _("Color");
 
     flag.p = G_define_flag();
     flag.p->key = 'p';
@@ -77,8 +82,15 @@ int main(int argc, char **argv)
             G_fatal_error(_("Unable to open output file <%s>"), file);
     }
 
-    Rast_print_colors(&colors, range.min, range.max, fp,
-                      flag.p->answer ? 1 : 0);
+    if (strcmp(opt.format->answer, "json") == 0) {
+        clr_frmt = G_option_to_color_format(opt.color_format);
+        Rast_print_json_colors(&colors, range.min, range.max, fp,
+                               flag.p->answer ? 1 : 0, clr_frmt);
+    }
+    else {
+        Rast_print_colors(&colors, range.min, range.max, fp,
+                          flag.p->answer ? 1 : 0);
+    }
 
     exit(EXIT_SUCCESS);
 }

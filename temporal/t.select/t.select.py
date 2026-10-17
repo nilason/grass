@@ -7,17 +7,8 @@
 #
 # PURPOSE:      Select maps from space time datasets by topological relationships to
 #               other space time datasets using temporal algebra.
-# COPYRIGHT:    (C) 2011-2017 by the GRASS Development Team
-#
-#  This program is free software; you can redistribute it and/or modify
-#  it under the terms of the GNU General Public License as published by
-#  the Free Software Foundation; either version 2 of the License, or
-#  (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
+# SPDX-FileCopyrightText: 2011-2017 GRASS Development Team
+# SPDX-License-Identifier: GPL-2.0-or-later
 #
 #############################################################################
 
@@ -52,8 +43,9 @@
 # %end
 
 
-import grass.script as grass
 import sys
+
+import grass.script as gs
 
 ############################################################################
 
@@ -67,23 +59,11 @@ def main():
     dry_run = flags["d"]
     stdstype = options["type"]
 
-    # Check for PLY istallation
-    try:
-        # Intentionally unused imports
-        import ply.lex as lex  # noqa: F401
-        import ply.yacc as yacc  # noqa: F401
-    except ImportError:
-        grass.fatal(
-            _(
-                "Please install PLY (Lex and Yacc Python implementation) to use the temporal algebra modules."
-            )
-        )
-
     tgis.init(True)
     p = tgis.TemporalAlgebraParser(
         run=True, debug=False, spatial=spatial, dry_run=dry_run
     )
-    pc = p.parse(expression, stdstype, overwrite=grass.overwrite())
+    pc = p.parse(expression, stdstype, overwrite=gs.overwrite())
 
     if dry_run is True:
         import pprint
@@ -92,5 +72,5 @@ def main():
 
 
 if __name__ == "__main__":
-    options, flags = grass.parser()
+    options, flags = gs.parser()
     sys.exit(main())

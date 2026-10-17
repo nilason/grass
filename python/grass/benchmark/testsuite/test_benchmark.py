@@ -2,13 +2,11 @@
 #
 # AUTHOR(S): Vaclav Petras <wenzeslaus gmail com>
 #
-# PURPOSE:   Benchmarking for GRASS GIS modules
+# PURPOSE:   Benchmarking for GRASS modules
 #
-# COPYRIGHT: (C) 2021 Vaclav Petras, and by the GRASS Development Team
-#
-#            This program is free software under the GNU General Public
-#            License (>=v2). Read the file COPYING that comes with GRASS
-#            for details.
+# SPDX-FileCopyrightText: 2021 Vaclav Petras
+# SPDX-FileCopyrightText: GRASS Development Team
+# SPDX-License-Identifier: GPL-2.0-or-later
 
 """Basic tests of grass.benchmark"""
 
@@ -18,6 +16,7 @@ from types import SimpleNamespace
 
 from grass.benchmark import (
     benchmark_resolutions,
+    benchmark_nprocs,
     benchmark_single,
     join_results,
     load_results,
@@ -37,26 +36,24 @@ class TestBenchmarksRun(TestCase):
     def test_resolutions(self):
         """Test that resolution tests runs without nprocs and plots to file"""
         benchmarks = [
-            dict(
-                module=Module("r.univar", map="elevation", stdout_=DEVNULL, run_=False),
-                label="Standard output",
-            ),
-            dict(
-                module=Module(
+            {
+                "module": Module(
+                    "r.univar", map="elevation", stdout_=DEVNULL, run_=False
+                ),
+                "label": "Standard output",
+            },
+            {
+                "module": Module(
                     "r.univar", map="elevation", flags="g", stdout_=DEVNULL, run_=False
                 ),
-                label="Standard output",
-            ),
+                "label": "Standard output",
+            },
         ]
         resolutions = [300, 200, 100]
-        results = []
-        for benchmark in benchmarks:
-            results.append(
-                benchmark_resolutions(
-                    **benchmark,
-                    resolutions=resolutions,
-                )
-            )
+        results = [
+            benchmark_resolutions(**benchmark, resolutions=resolutions)
+            for benchmark in benchmarks
+        ]
         plot_file = "test_res_plot.png"
         num_cells_plot(results, filename=plot_file)
         self.assertTrue(Path(plot_file).is_file())
@@ -66,18 +63,47 @@ class TestBenchmarksRun(TestCase):
         label = "Standard output"
         repeat = 4
         benchmarks = [
-            dict(
-                module=Module("r.univar", map="elevation", stdout_=DEVNULL, run_=False),
-                label=label,
-            )
+            {
+                "module": Module(
+                    "r.univar", map="elevation", stdout_=DEVNULL, run_=False
+                ),
+                "label": label,
+            }
         ]
-        results = []
-        for benchmark in benchmarks:
-            results.append(benchmark_single(**benchmark, repeat=repeat))
+        results = [
+            benchmark_single(**benchmark, repeat=repeat) for benchmark in benchmarks
+        ]
         self.assertEqual(len(results), len(benchmarks))
         for result in results:
             self.assertTrue(hasattr(result, "all_times"))
             self.assertTrue(hasattr(result, "time"))
+            self.assertTrue(hasattr(result, "label"))
+            self.assertEqual(len(result.all_times), repeat)
+        self.assertEqual(results[0].label, label)
+
+    def test_nprocs(self):
+        """Test that benchmark function runs for nprocs"""
+        label = "Standard output"
+        repeat = 4
+        benchmarks = [
+            {
+                "module": Module(
+                    "r.univar", map="elevation", stdout_=DEVNULL, run_=False
+                ),
+                "label": label,
+                "max_nprocs": 4,
+            }
+        ]
+        results = [
+            benchmark_nprocs(**benchmark, repeat=repeat, shuffle=True)
+            for benchmark in benchmarks
+        ]
+        self.assertEqual(len(results), len(benchmarks))
+        for result in results:
+            self.assertTrue(hasattr(result, "times"))
+            self.assertTrue(hasattr(result, "all_times"))
+            self.assertTrue(hasattr(result, "speedup"))
+            self.assertTrue(hasattr(result, "efficiency"))
             self.assertTrue(hasattr(result, "label"))
             self.assertEqual(len(result.all_times), repeat)
         self.assertEqual(results[0].label, label)

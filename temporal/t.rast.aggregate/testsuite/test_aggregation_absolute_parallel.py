@@ -1,18 +1,17 @@
 """Test t.rast.aggregation
 
-(C) 2014 by the GRASS Development Team
-This program is free software under the GNU General Public
-License (>=v2). Read the file COPYING that comes with GRASS
-for details.
+SPDX-FileCopyrightText: 2014 GRASS Development Team
+SPDX-License-Identifier: GPL-2.0-or-later
 
 :authors: Soeren Gebbert
 """
+
 import os
-import grass.pygrass.modules as pymod
+from datetime import datetime
+
 import grass.temporal as tgis
 from grass.gunittest.case import TestCase
 from grass.gunittest.gmodules import SimpleModule
-from datetime import datetime
 
 
 class TestAggregationAbsoluteParallel(TestCase):

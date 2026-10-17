@@ -10,11 +10,8 @@
  *               Markus Metz
  *
  * PURPOSE:      Select the elevation model
- * COPYRIGHT:    (C) 1999-2012 by the GRASS Development Team
- *
- *               This program is free software under the GNU General Public
- *               License (>=v2). Read the file COPYING that comes with GRASS
- *               for details.
+ * SPDX-FileCopyrightText: 1999-2012 GRASS Development Team
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  *****************************************************************************/
 
@@ -68,7 +65,7 @@ int main(int argc, char *argv[])
 
     loc_opt = G_define_standard_option(G_OPT_M_LOCATION);
     loc_opt->required = NO;
-    loc_opt->description = _("Name of the target location");
+    loc_opt->description = _("Name of the target project (location)");
 
     mapset_opt = G_define_standard_option(G_OPT_M_MAPSET);
     mapset_opt->required = NO;
@@ -136,9 +133,10 @@ int main(int argc, char *argv[])
         G_fatal_error(_("Please select a target for group [%s] first"), group);
     }
 
-    sprintf(buf, "%s/%s", G_gisdbase(), location);
+    snprintf(buf, sizeof(buf), "%s/%s", G_gisdbase(), location);
     if (access(buf, 0) != 0) {
-        G_fatal_error(_("Target location [%s] not found\n"), location);
+        G_fatal_error(_("Target project (location) [%s] not found\n"),
+                      location);
     }
 
     /*Report the contents of the ELEVATION file as in the GROUP */
@@ -224,13 +222,14 @@ int main(int argc, char *argv[])
         I_put_group_elev(group, elev_opt->answer, mapset_elev, location_elev,
                          math_exp, units, nd);
 
-        G_message(_("Group [%s] in location [%s] mapset [%s] now uses "
-                    "elevation map [%s]"),
-                  group, G_location(), G_mapset(), elev_opt->answer);
+        G_message(
+            _("Group [%s] in project (location) [%s] mapset [%s] now uses "
+              "elevation map [%s]"),
+            group, G_location(), G_mapset(), elev_opt->answer);
     }
     else {
-        G_fatal_error(_("Mapset [%s] in target location [%s] - %s "), mapset,
-                      location,
+        G_fatal_error(_("Mapset [%s] in target project (location) [%s] - %s "),
+                      mapset, location,
                       stat == 0 ? _("permission denied\n") : _("not found\n"));
     }
 

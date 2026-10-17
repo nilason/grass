@@ -10,11 +10,8 @@
 #               Customised by Luca Delucchi Vienna Code Sprint 2014
 # PURPOSE:      calculates the Optimum Index factor of all band combinations
 #               for LANDSAT TM 1,2,3,4,5,7
-# COPYRIGHT:    (C) 1999,2008 by the GRASS Development Team
-#
-#               This program is free software under the GNU General Public
-#               License (>=v2). Read the file COPYING that comes with GRASS
-#               for details.
+# SPDX-FileCopyrightText: 1999,2008 GRASS Development Team
+# SPDX-License-Identifier: GPL-2.0-or-later
 #
 # Ref.: Jensen: Introductory digital image processing 1996, p.98
 #############################################################################
@@ -47,7 +44,7 @@ from grass.script import core as grass
 
 
 def oifcalc(sdev, corr, k1, k2, k3):
-    grass.debug(_("Calculating OIF for combination: %s, %s, %s" % (k1, k2, k3)), 1)
+    grass.debug(_("Calculating OIF for combination: %s, %s, %s") % (k1, k2, k3), 1)
     # calculate SUM of Stddeviations:
     ssdev = [sdev[k1], sdev[k2], sdev[k3]]
     numer = sum(ssdev)
@@ -63,7 +60,7 @@ def oifcalc(sdev, corr, k1, k2, k3):
 
 def perms(bands):
     n = len(bands)
-    for i in range(0, n - 2):
+    for i in range(n - 2):
         for j in range(i + 1, n - 1):
             for k in range(j + 1, n):
                 yield (bands[i], bands[j], bands[k])
@@ -84,16 +81,13 @@ def main():
 
     if serial:
         for band in bands:
-            grass.verbose("band %d" % band)
+            grass.verbose("band %s" % band)
             s = grass.read_command("r.univar", flags="g", map=band)
             kv = parse_key_val(s)
             stddev[band] = float(kv["stddev"])
     else:
         # run all bands in parallel
-        if "WORKERS" in os.environ:
-            workers = int(os.environ["WORKERS"])
-        else:
-            workers = len(bands)
+        workers = int(os.environ["WORKERS"]) if "WORKERS" in os.environ else len(bands)
         proc = {}
         pout = {}
 
@@ -107,7 +101,7 @@ def main():
                     if not proc[bandp].stdout.closed:
                         pout[bandp] = proc[bandp].communicate()[0]
                     proc[bandp].wait()
-            n = n + 1
+            n += 1
 
         # wait for jobs to finish, collect the output
         for band in bands:
@@ -122,14 +116,12 @@ def main():
 
     grass.message(_("Calculating Correlation Matrix..."))
     correlation = {}
-    s = grass.read_command(
-        "r.covar", flags="r", map=[band for band in bands], quiet=True
-    )
+    s = grass.read_command("r.covar", flags="r", map=list(bands), quiet=True)
 
     # We need to skip the first line, since r.covar prints the number of values
     lines = s.splitlines()
-    for i, row in zip(bands, lines[1:]):
-        for j, cell in zip(bands, row.split(" ")):
+    for i, row in zip(bands, lines[1:], strict=False):
+        for j, cell in zip(bands, row.split(" "), strict=False):
             correlation[i, j] = float(cell)
 
     # Calculate all combinations
@@ -141,21 +133,17 @@ def main():
     oif.sort(reverse=True)
 
     grass.verbose(
-        _("The Optimum Index Factor analysis result " "(best combination shown first):")
+        _("The Optimum Index Factor analysis result (best combination shown first):")
     )
 
-    if shell:
-        fmt = "%s,%s,%s:%.4f\n"
-    else:
-        fmt = "%s, %s, %s:  %.4f\n"
+    fmt = "%s,%s,%s:%.4f\n" if shell else "%s, %s, %s:  %.4f\n"
 
     if not output or output == "-":
         for v, p in oif:
             sys.stdout.write(fmt % (p + (v,)))
     else:
         outf = open(output, "w")
-        for v, p in oif:
-            outf.write(fmt % (p + (v,)))
+        outf.writelines(fmt % (p + (v,)) for v, p in oif)
         outf.close()
 
 

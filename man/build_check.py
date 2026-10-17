@@ -1,21 +1,24 @@
 #!/usr/bin/env python3
 
 # checks for HTML files missing DESCRIPTION section
-# (C) 2003-2009 Markus Neteler and the GRASS Development Team
+# SPDX-FileCopyrightText: 2003-2009 Markus Neteler
+# SPDX-FileCopyrightText: GRASS Development Team
+# SPDX-License-Identifier: GPL-2.0-or-later
 # Authors:
 #   Markus Neteler
 #   Glynn Clements
 
-import sys
 import os
+import sys
 
-from build_html import *
+from build import get_files, message_tmpl, read_file
+from build_html import man_dir
 
-os.chdir(html_dir)
+os.chdir(man_dir)
 
-sys.stdout.write(message_tmpl.substitute(html_dir=html_dir))
+sys.stdout.write(message_tmpl.substitute(man_dir=man_dir))
 
-for cmd in html_files("*"):
+for cmd in get_files(man_dir, "*"):
     if "DESCRIPTION" not in read_file(cmd):
         sys.stdout.write("%s\n" % cmd[:-5])
 

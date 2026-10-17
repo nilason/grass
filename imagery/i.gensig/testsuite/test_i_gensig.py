@@ -3,16 +3,16 @@ Name:      i.gensig general functionality
 Purpose:   Test ability to generate signature files
 
 Author:    Maris Nartiss
-Copyright: (C) 2022 by Maris Nartiss and the GRASS Development Team
-Licence:   This program is free software under the GNU General Public
-           License (>=v2). Read the file COPYING that comes with GRASS
-           for details.
+SPDX-FileCopyrightText: 2022 Maris Nartiss
+SPDX-FileCopyrightText: GRASS Development Team
+SPDX-License-Identifier: GPL-2.0-or-later
 """
 
 import os
 import stat
 import ctypes
 import shutil
+from pathlib import Path
 
 from grass.pygrass import utils
 from grass.pygrass.gis import Mapset
@@ -91,9 +91,13 @@ class SuccessTest(TestCase):
         """Remove the temporary region and generated data"""
         cls.del_temp_region()
         shutil.rmtree(cls.sig_dir1, ignore_errors=True)
-        cls.runModule("g.remove", flags="f", type="raster", name=cls.b1, quiet=True)
-        cls.runModule("g.remove", flags="f", type="raster", name=cls.b2, quiet=True)
-        cls.runModule("g.remove", flags="f", type="raster", name=cls.train, quiet=True)
+        cls.runModule(
+            "g.remove",
+            flags="f",
+            type="raster",
+            name=(cls.b1, cls.b2, cls.train),
+            quiet=True,
+        )
 
     def test_creation(self):
         """Test creating a signature"""
@@ -107,7 +111,7 @@ class SuccessTest(TestCase):
         )
 
         # File must be present
-        sig_stat = os.stat(f"{self.sig_dir1}/sig")
+        sig_stat = Path(self.sig_dir1, "sig").stat()
         self.assertTrue(stat.S_ISREG(sig_stat.st_mode))
 
         # Compare values within sig file
@@ -131,28 +135,28 @@ class SuccessTest(TestCase):
         self.assertEqual(Sn.sig[0].have_color, 0)
         self.assertEqual(Sn.sig[0].npoints, 4)
         self.assertEqual(Sn.sig[0].oclass, 1)
-        self.assertTrue(abs(Sn.sig[0].mean[0] - 2.9) < 0.1)
-        self.assertTrue(abs(Sn.sig[0].mean[1] - 7.0) < 0.1)
-        self.assertTrue(abs(Sn.sig[0].var[0][0] - 0.03) < 0.01)
-        self.assertTrue(abs(Sn.sig[0].var[1][1] - 0.6) < 0.1)
+        self.assertLess(abs(Sn.sig[0].mean[0] - 2.9), 0.1)
+        self.assertLess(abs(Sn.sig[0].mean[1] - 7.0), 0.1)
+        self.assertLess(abs(Sn.sig[0].var[0][0] - 0.03), 0.01)
+        self.assertLess(abs(Sn.sig[0].var[1][1] - 0.6), 0.1)
         # 6
         self.assertEqual(Sn.sig[1].status, 1)
         self.assertEqual(Sn.sig[1].have_color, 0)
         self.assertEqual(Sn.sig[1].npoints, 4)
         self.assertEqual(Sn.sig[1].oclass, 6)
-        self.assertTrue(abs(Sn.sig[1].mean[0] - 8.9) < 0.1)
-        self.assertTrue(abs(Sn.sig[1].mean[1] - 1.5) < 0.1)
-        self.assertTrue(abs(Sn.sig[1].var[0][0] - 0.003) < 0.001)
-        self.assertTrue(abs(Sn.sig[1].var[1][1] - 0.3) < 0.1)
+        self.assertLess(abs(Sn.sig[1].mean[0] - 8.9), 0.1)
+        self.assertLess(abs(Sn.sig[1].mean[1] - 1.5), 0.1)
+        self.assertLess(abs(Sn.sig[1].var[0][0] - 0.003), 0.001)
+        self.assertLess(abs(Sn.sig[1].var[1][1] - 0.3), 0.1)
         # 9
         self.assertEqual(Sn.sig[2].status, 1)
         self.assertEqual(Sn.sig[2].have_color, 0)
         self.assertEqual(Sn.sig[2].npoints, 3)
         self.assertEqual(Sn.sig[2].oclass, 9)
-        self.assertTrue(abs(Sn.sig[2].mean[0] - 6.7) < 0.1)
-        self.assertTrue(abs(Sn.sig[2].mean[1] - 8.3) < 0.1)
-        self.assertTrue(abs(Sn.sig[2].var[0][0] - 0.043) < 0.01)
-        self.assertTrue(abs(Sn.sig[2].var[1][1] - 0.3) < 0.1)
+        self.assertLess(abs(Sn.sig[2].mean[0] - 6.7), 0.1)
+        self.assertLess(abs(Sn.sig[2].mean[1] - 8.3), 0.1)
+        self.assertLess(abs(Sn.sig[2].var[0][0] - 0.043), 0.01)
+        self.assertLess(abs(Sn.sig[2].var[1][1] - 0.3), 0.1)
 
 
 if __name__ == "__main__":

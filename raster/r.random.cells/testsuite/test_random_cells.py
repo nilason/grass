@@ -5,13 +5,10 @@ AUTHOR(S): Vaclav Petras
 
 PURPOSE:   Test r.random.cells
 
-COPYRIGHT: (C) 2015 Vaclav Petras, and by the GRASS Development Team
-
-           This program is free software under the GNU General Public
-           License (>=v2). Read the file COPYING that comes with GRASS
-           for details.
+SPDX-FileCopyrightText: 2015 Vaclav Petras
+SPDX-FileCopyrightText: GRASS Development Team
+SPDX-License-Identifier: GPL-2.0-or-later
 """
-
 
 from grass.gunittest.case import TestCase
 from grass.gunittest.main import test
@@ -50,13 +47,13 @@ class TestCounts(TestCase):
         self.to_remove.append(self.all_rast)
         self.assertRasterFitsUnivar(
             self.all_rast,
-            reference=dict(
-                cells=self.n_cells,
-                n=self.n_cells,
-                null_cells=0,
-                min=1,
-                max=self.n_cells,
-            ),
+            reference={
+                "cells": self.n_cells,
+                "n": self.n_cells,
+                "null_cells": 0,
+                "min": 1,
+                "max": self.n_cells,
+            },
         )
 
     def test_fill_some(self):
@@ -65,7 +62,7 @@ class TestCounts(TestCase):
         )
         self.to_remove.append(self.some_rast)
         self.assertRasterFitsUnivar(
-            self.some_rast, reference=dict(cells=self.n_cells, min=1)
+            self.some_rast, reference={"cells": self.n_cells, "min": 1}
         )
         # it is hard to say how much but it will be less than half
         self.assertRasterMinMax(self.some_rast, 1, self.n_cells / 2)
@@ -78,13 +75,13 @@ class TestCounts(TestCase):
         self.to_remove.append(self.count_rast)
         self.assertRasterFitsUnivar(
             self.count_rast,
-            reference=dict(
-                cells=self.n_cells,
-                n=count,
-                null_cells=self.n_cells - count,
-                min=1,
-                max=count,
-            ),
+            reference={
+                "cells": self.n_cells,
+                "n": count,
+                "null_cells": self.n_cells - count,
+                "min": 1,
+                "max": count,
+            },
         )
         # it is hard to say how much but it will be less than half
         self.assertRasterMinMax(self.count_rast, 1, count)

@@ -1,27 +1,47 @@
 #!/usr/bin/env python3
 
 # generates docs/html/index.html
-# (C) 2003-2009 Markus Neteler and the GRASS Development Team
+# SPDX-FileCopyrightText: 2003-2009 Markus Neteler
+# SPDX-FileCopyrightText: GRASS Development Team
+# SPDX-License-Identifier: GPL-2.0-or-later
 # Authors:
 #   Markus Neteler
 #   Glynn Clements
 
-import sys
 import os
+import sys
 
-from build_html import *
-
-os.chdir(html_dir)
-
-filename = "index.html"
-f = open(filename + ".tmp", "w")
+from build import (
+    grass_version,
+    replace_file,
+    write_cmd_overview,
+    write_footer,
+    write_header,
+)
 
 year = None
 if len(sys.argv) > 1:
     year = sys.argv[1]
 
-write_html_header(f, "GRASS GIS %s Reference Manual" % grass_version, True)
-write_html_cmd_overview(f)
-write_html_footer(f, "index.html", year)
-f.close()
-replace_file(filename)
+
+def build_index(ext):
+    if ext == "html":
+        from build_html import (
+            man_dir,
+        )
+    else:
+        from build_md import (
+            man_dir,
+        )
+
+    filename = f"index.{ext}"
+    os.chdir(man_dir)
+    with open(filename + ".tmp", "w") as f:
+        write_header(f, f"GRASS {grass_version} Reference Manual", True, template=ext)
+        write_cmd_overview(f)
+        write_footer(f, f"index.{ext}", year, template=ext)
+    replace_file(filename)
+
+
+if __name__ == "__main__":
+    build_index("html")
