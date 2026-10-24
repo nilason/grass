@@ -8,10 +8,8 @@ Classes:
  - toolbars::SwipeMainToolbar
  - toolbars::SwipeMiscToolbar
 
-(C) 2012 by the GRASS Development Team
-
-This program is free software under the GNU General Public License
-(>=v2). Read the file COPYING that comes with GRASS for details.
+SPDX-FileCopyrightText: 2012 GRASS Development Team
+SPDX-License-Identifier: GPL-2.0-or-later
 
 @author Anna Kratochvilova <kratochanna gmail.com>
 """
@@ -55,7 +53,7 @@ class SwipeMapToolbar(BaseToolbar):
     def _toolbarData(self):
         """Returns toolbar data (name, icon, handler)"""
         # BaseIcons are a set of often used icons. It is possible
-        # to reuse icons in ./trunk/gui/icons/grass or add new ones there.
+        # to reuse icons in gui/icons/grass or add new ones there.
         icons = BaseIcons
         return self._getToolbarData(
             (
@@ -123,7 +121,6 @@ class SwipeMapToolbar(BaseToolbar):
         """Set currently selected map.
         Unused, needed because of DoubleMapPanel API.
         """
-        pass
 
 
 class SwipeMainToolbar(BaseToolbar):
@@ -138,7 +135,7 @@ class SwipeMainToolbar(BaseToolbar):
         # add tool to toggle active map window
         self.toggleMode = wx.Choice(parent=self)
         for label, cdata in zip(
-            [_("Swipe mode"), _("Mirror mode")], ["swipe", "mirror"]
+            [_("Swipe mode"), _("Mirror mode")], ["swipe", "mirror"], strict=True
         ):
             self.toggleMode.Append(label, cdata)
         self.toggleMode.SetSelection(0)

@@ -5,10 +5,9 @@
 
    Computes network articulation points.
 
-   (C) 2009-2010 by Daniel Bundala, and the GRASS Development Team
-
-   This program is free software under the GNU General Public License
-   (>=v2). Read the file COPYING that comes with GRASS for details.
+   SPDX-FileCopyrightText: 2009-2010 Daniel Bundala
+   SPDX-FileCopyrightText: GRASS Development Team
+   SPDX-License-Identifier: GPL-2.0-or-later
 
    \author Daniel Bundala (Google Summer of Code 2009)
  */
@@ -153,5 +152,6 @@ int NetA_articulation_points(dglGraph_s *graph, struct ilist *articulation_list)
     G_free(parent);
     G_free(stack);
     G_free(current_edge);
+    G_free(mark);
     return points;
 }

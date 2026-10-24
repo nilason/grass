@@ -1,7 +1,9 @@
 /*
  **  Written by David Gerdes  US Army Construction Engineering Research Lab
  **     April 1992
- **  Copyright 1992 USA-CERL   All rights reserved.
+ **  SPDX-FileCopyrightText: 1992 USA-CERL
+ **  SPDX-FileCopyrightText: GRASS Development Team
+ **  SPDX-License-Identifier: GPL-2.0-or-later
  **
  */
 
@@ -61,7 +63,7 @@ int main(int argc, char *argv[])
     exit(0);
 }
 
-int add_link_rev(struct link *List, struct link *link)
+void add_link_rev(struct link *List, struct link *link)
 {
     struct link *p;
 
@@ -70,7 +72,7 @@ int add_link_rev(struct link *List, struct link *link)
     link->next = p;
 }
 
-int add_link(struct link *List, struct link *link)
+void add_link(struct link *List, struct link *link)
 {
     struct link *p;
 
@@ -81,7 +83,7 @@ int add_link(struct link *List, struct link *link)
     link->next = NULL;
 }
 
-int dumplist(struct link *List)
+void dumplist(struct link *List)
 {
     struct link *p;
 

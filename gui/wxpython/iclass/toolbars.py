@@ -9,10 +9,8 @@ Classes:
  - toolbars::IClassMapManagerToolbar
  - toolbars::IClassMiscToolbar
 
-(C) 2006-2011 by the GRASS Development Team
-This program is free software under the GNU General Public
-License (>=v2). Read the file COPYING that comes with GRASS
-for details.
+SPDX-FileCopyrightText: 2006-2011 GRASS Development Team
+SPDX-License-Identifier: GPL-2.0-or-later
 
 @author Vaclav Petras <wenzeslaus gmail.com>
 @author Anna Kratochvilova <kratochanna gmail.com>
@@ -26,7 +24,7 @@ from iclass.dialogs import IClassMapDialog, ContrastColor
 from gui_core.forms import GUI
 from gui_core.wrap import StaticText
 
-import grass.script as grass
+import grass.script as gs
 
 iClassIcons = {
     "opacity": MetaIcon(img="layer-opacity", label=_("Set opacity level")),
@@ -264,7 +262,7 @@ class IClassToolbar(BaseToolbar):
 
     def SetCategories(self, catNames, catIdx):
         self.choice.Clear()
-        for name, idx in zip(catNames, catIdx):
+        for name, idx in zip(catNames, catIdx, strict=False):
             self.choice.Append(name, idx)
 
     def GetSelectedCategoryName(self):
@@ -398,7 +396,7 @@ class IClassMapManagerToolbar(BaseToolbar):
     def OnAddRast(self, event):
         dlg = IClassMapDialog(self, title=_("Add raster map"), element="raster")
         if dlg.ShowModal() == wx.ID_OK:
-            raster = grass.find_file(name=dlg.GetMap(), element="cell")
+            raster = gs.find_file(name=dlg.GetMap(), element="cell")
             if raster["fullname"]:
                 self.mapManager.AddLayer(name=raster["fullname"])
 

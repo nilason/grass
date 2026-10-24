@@ -10,10 +10,8 @@ Classes:
  - dialogs::ManageBusyCursorMixin
  - dialogs::RenameClassDialog
 
-(C) 2013 by the GRASS Development Team
-
-This program is free software under the GNU General Public License
-(>=v2). Read the file COPYING that comes with GRASS for details.
+SPDX-FileCopyrightText: 2013 GRASS Development Team
+SPDX-License-Identifier: GPL-2.0-or-later
 
 @author Stepan Turek <stepan.turek seznam.cz> (mentor: Martin Landa)
 """
@@ -22,7 +20,7 @@ import wx
 from gui_core.gselect import Select
 import wx.lib.colourselect as csel
 
-import grass.script as grass
+import grass.script as gs
 
 from core import globalvar
 from core.gcmd import GMessage
@@ -89,8 +87,6 @@ class AddScattPlotDialog(wx.Dialog):
     def _layout(self):
         border = wx.BoxSizer(wx.VERTICAL)
         dialogSizer = wx.BoxSizer(wx.VERTICAL)
-
-        regionSizer = wx.BoxSizer(wx.HORIZONTAL)
 
         dialogSizer.Add(
             self._addSelectSizer(title=self.band_1_label, sel=self.band_1_ch)
@@ -236,7 +232,7 @@ class ExportCategoryRaster(wx.Dialog):
         """Dialog for export of category raster.
 
         :param parent: window
-        :param str rasterName name of vector layer for export
+        :param str rasterName: name of vector layer for export
         :param title: window title
         """
         wx.Dialog.__init__(self, parent, id, title, style=style, **kwargs)
@@ -286,7 +282,7 @@ class ExportCategoryRaster(wx.Dialog):
         self.vectorNameCtrl = Select(
             parent=self.panel,
             type="raster",
-            mapsets=[grass.gisenv()["MAPSET"]],
+            mapsets=[gs.gisenv()["MAPSET"]],
             size=globalvar.DIALOG_GSELECT_SIZE,
         )
         if self.rasterName:
@@ -322,15 +318,15 @@ class ExportCategoryRaster(wx.Dialog):
         """Checks if map exists and can be overwritten."""
         overwrite = UserSettings.Get(group="cmd", key="overwrite", subkey="enabled")
         rast_name = self.GetRasterName()
-        res = grass.find_file(rast_name, element="cell")
+        res = gs.find_file(rast_name, element="cell")
         if res["fullname"] and overwrite is False:
             qdlg = wx.MessageDialog(
                 parent=self,
                 message=_(
-                    "Raster map <%s> already exists."
-                    " Do you want to overwrite it?" % rast_name
-                ),
-                caption=_("Raster <%s> exists" % rast_name),
+                    "Raster map <%s> already exists. Do you want to overwrite it?"
+                )
+                % rast_name,
+                caption=_("Raster <%s> exists") % rast_name,
                 style=wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION | wx.CENTRE,
             )
             if qdlg.ShowModal() == wx.ID_YES:
@@ -356,7 +352,6 @@ class SettingsDialog(wx.Dialog):
 
         self.scatt_mgr = scatt_mgr
 
-        maxValue = 1e8
         self.parent = parent
         self.settings = {}
 
@@ -406,7 +401,8 @@ class SettingsDialog(wx.Dialog):
         self.btnSave.Bind(wx.EVT_BUTTON, self.OnSave)
         self.btnSave.SetToolTip(
             _(
-                "Apply and save changes to user settings file (default for next sessions)"
+                "Apply and save changes to user settings file (default for next "
+                "sessions)"
             )
         )
         self.btnClose.Bind(wx.EVT_BUTTON, self.OnClose)
@@ -427,9 +423,7 @@ class SettingsDialog(wx.Dialog):
         gridSizer = wx.GridBagSizer(vgap=1, hgap=1)
 
         row = 0
-        setts = dict()
-        setts.update(self.colorsSetts)
-        setts.update(self.sizeSetts)
+        setts = {**self.colorsSetts, **self.sizeSetts}
 
         settsOrder = [
             "sel_pol",

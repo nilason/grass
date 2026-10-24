@@ -9,11 +9,8 @@
  *               Jan-Oliver Wagner <jan intevation.de>,
  *               Aaron Saw Min Sern
  * PURPOSE:      Performs raster map matrix filter
- * COPYRIGHT:    (C) 1999-2022 by the GRASS Development Team
- *
- *               This program is free software under the GNU General Public
- *               License (>=v2). Read the file COPYING that comes with GRASS
- *               for details.
+ * SPDX-FileCopyrightText: 1999-2022 GRASS Development Team
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  *****************************************************************************/
 
@@ -120,18 +117,11 @@ int main(int argc, char **argv)
     null_only = flag2->answer;
 
     sscanf(opt4->answer, "%d", &repeat);
-    sscanf(opt6->answer, "%d", &nprocs);
-    if (nprocs < 1) {
-        G_fatal_error(_("<%d> is not valid number of threads."), nprocs);
-    }
-#if defined(_OPENMP)
-    omp_set_num_threads(nprocs);
-#else
-    if (nprocs != 1)
-        G_warning(_("GRASS is compiled without OpenMP support. Ignoring "
-                    "threads setting."));
-    nprocs = 1;
-#endif
+
+    nprocs = G_set_omp_num_threads(opt6);
+    nprocs = Rast_disable_omp_on_mask(nprocs);
+    if (nprocs < 1)
+        G_fatal_error(_("<%d> is not valid number of nprocs."), nprocs);
 
     out_name = opt2->answer;
     filt_name = opt3->answer;
@@ -157,7 +147,7 @@ int main(int argc, char **argv)
     else {
         if (*temp == 0)
             strcpy(temp, "unknown filter");
-        sprintf(title, "%s filtered using %s", in_name, temp);
+        snprintf(title, sizeof(title), "%s filtered using %s", in_name, temp);
     }
 
     perform_filter(in_name, out_name, filter, nfilters, repeat);

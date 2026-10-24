@@ -3,14 +3,9 @@
  *
  * \author H. Mitasova, I. Kosinovsky, D. Gerdes
  *
- * \copyright
- * (C) 1993 by Helena Mitasova and the GRASS Development Team
- *
- * \copyright
- * This program is free software under the
- * GNU General Public License (>=v2).
- * Read the file COPYING that comes with GRASS
- * for details.
+ * SPDX-FileCopyrightText: 1993 Helena Mitasova
+ * SPDX-FileCopyrightText: GRASS Development Team
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  */
 
@@ -70,7 +65,7 @@ int IL_interp_segments_2d(
     static double smseg;
     int MINPTS;
     double pr;
-    struct triple *point;
+    struct triple *point = NULL;
     struct triple skip_point;
     int m_skip, skip_index, j, k, segtest;
     double xx, yy /*, zz */;
@@ -283,8 +278,11 @@ int IL_interp_segments_2d(
             }
             else if (segtest == 1) {
                 if (params->matrix_create(params, data->points,
-                                          data->n_points - 1, matrix, indx) < 0)
+                                          data->n_points - 1, matrix,
+                                          indx) < 0) {
+                    G_free(point);
                     return -1;
+                }
             }
             if (!params->cv) {
                 for (i = 0; i < data->n_points; i++)
@@ -293,7 +291,7 @@ int IL_interp_segments_2d(
                 G_lubksb(matrix, data->n_points + 1, indx, b);
                 /* put here condition to skip error if not needed */
                 params->check_points(params, data, b, ertot, zmin, dnorm,
-                                     skip_point);
+                                     &skip_point);
             }
             else if (segtest == 1) {
                 for (i = 0; i < data->n_points - 1; i++)
@@ -301,7 +299,7 @@ int IL_interp_segments_2d(
                 b[0] = 0.;
                 G_lubksb(matrix, data->n_points, indx, b);
                 params->check_points(params, data, b, ertot, zmin, dnorm,
-                                     skip_point);
+                                     &skip_point);
             }
         } /*end of cv loop */
 
@@ -332,6 +330,7 @@ int IL_interp_segments_2d(
         G_free(data->points);
         G_free(data);
     }
+    G_free(point);
     return 1;
 }
 

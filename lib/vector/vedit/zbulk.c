@@ -4,10 +4,8 @@
    \brief Vedit library - Bulk labeling (automated labeling of vector
    features)
 
-   (C) 2007-2008 by the GRASS Development Team
-
-   This program is free software under the GNU General Public License
-   (>=v2).  Read the file COPYING that comes with GRASS for details.
+   SPDX-FileCopyrightText: 2007-2008 GRASS Development Team
+   SPDX-License-Identifier: GPL-2.0-or-later
 
    \author Martin Landa <landa.martin gmail.com>
  */
@@ -22,7 +20,7 @@
 
    \param Map pointer to Map_info
    \param List list of selected lines
-   \param point_start_end staring and ending point
+   \param x1,y1,x2,y2 staring and ending point
    \param start starting value
    \param step step value
 
@@ -66,7 +64,8 @@ int Vedit_bulk_labeling(struct Map_info *Map, struct ilist *List, double x1,
     /* write temporary line */
     temp_line = Vect_write_line(Map, GV_LINE, Points_se, Cats);
     if (temp_line < 0) {
-        return -1;
+        nlines_modified = -1;
+        goto free_exit;
     }
 
     Vect_line_box(Points_se, &box_se);
@@ -118,7 +117,8 @@ int Vedit_bulk_labeling(struct Map_info *Map, struct ilist *List, double x1,
         }
 
         if (Vect_rewrite_line(Map, line, type, Points, Cats) < 0) {
-            return -1;
+            nlines_modified = -1;
+            goto free_exit;
         }
         nlines_modified++;
 
@@ -126,9 +126,10 @@ int Vedit_bulk_labeling(struct Map_info *Map, struct ilist *List, double x1,
     }
 
     if (Vect_delete_line(Map, temp_line) < 0) {
-        return -1;
+        nlines_modified = -1;
     }
 
+free_exit:
     db_CatValArray_free(&cv);
     Vect_destroy_line_struct(Points);
     Vect_destroy_line_struct(Points_se);

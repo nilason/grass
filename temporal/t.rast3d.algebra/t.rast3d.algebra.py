@@ -8,17 +8,8 @@
 # PURPOSE:      Provide temporal 3D raster algebra to perform spatial an temporal operations
 #               for space time datasets by topological relationships to other space time
 #               datasets.
-# COPYRIGHT:    (C) 2017 by the GRASS Development Team
-#
-#  This program is free software; you can redistribute it and/or modify
-#  it under the terms of the GNU General Public License as published by
-#  the Free Software Foundation; either version 2 of the License, or
-#  (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
+# SPDX-FileCopyrightText: 2017 GRASS Development Team
+# SPDX-License-Identifier: GPL-2.0-or-later
 #
 #############################################################################
 
@@ -71,8 +62,9 @@
 # %end
 
 
-import grass.script
 import sys
+
+import grass.script as gs
 
 
 def main():
@@ -85,20 +77,6 @@ def main():
     spatial = flags["s"]
     register_null = flags["n"]
     granularity = flags["g"]
-
-    # Check for PLY istallation
-    try:
-        # Intentionally unused imports
-        import ply.lex as lex  # noqa: F401
-        import ply.yacc as yacc  # noqa: F401
-    except ImportError:
-        grass.script.fatal(
-            _(
-                "Please install PLY (Lex and Yacc Python implementation) to use the temporal algebra modules. "
-                "You can use t.rast3d.mapcalc that provides a limited but useful alternative to "
-                "t.rast3d.mapcalc2 without PLY requirement."
-            )
-        )
 
     tgis.init(True)
     p = tgis.TemporalRaster3DAlgebraParser(
@@ -115,13 +93,11 @@ def main():
             stdstype="str3ds",
             lexer=tgis.TemporalRasterAlgebraLexer(),
         ):
-            grass.script.fatal(
-                _("Unable to process the expression in granularity algebra mode")
-            )
+            gs.fatal(_("Unable to process the expression in granularity algebra mode"))
 
-    p.parse(expression, basename, grass.script.overwrite())
+    p.parse(expression, basename, gs.overwrite())
 
 
 if __name__ == "__main__":
-    options, flags = grass.script.parser()
+    options, flags = gs.parser()
     sys.exit(main())

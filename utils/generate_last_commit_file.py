@@ -24,10 +24,9 @@ python utils/generate_last_commit_file.py .
 
 import json
 import os
-import subprocess
 import shutil
+import subprocess
 import sys
-
 
 # Strict ISO 8601 format
 COMMIT_DATE_FORMAT = "%aI"
@@ -57,7 +56,7 @@ def get_last_commit(src_dir):
         if ".html{}".format(join_sep) not in join_sep.join(files) + join_sep:
             continue
         rel_path = os.path.relpath(root)
-        process_result = subprocess.run(
+        process_result = subprocess.run(  # nosec B607: fixed external tool "git" with no portable absolute path
             [
                 "git",
                 "log",
@@ -65,8 +64,7 @@ def get_last_commit(src_dir):
                 f"--format=%H,{COMMIT_DATE_FORMAT}",
                 rel_path,
             ],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            capture_output=True,
         )  # --format=%H,COMMIT_DATE_FORMAT commit hash,author date
         if process_result.returncode == 0:
             try:

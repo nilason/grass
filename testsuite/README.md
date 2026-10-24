@@ -1,29 +1,15 @@
 # Test suite
 
-This directory contains scripts to check some functionality of GRASS GIS.
+Tests are in directories `tests` and `testsuite` under each directory which has
+tests. This directory contains additional scripts and information to test
+functionality without a focus on a specific part of the code. Currently, that
+is `raster_md5test.sh`, a shell test which runs in a GRASS session and is
+collected by _grass.gunittest_ like any other test in a `testsuite` directory.
 
-GRASS GIS testsuite documentation: <https://grass.osgeo.org/grass-devel/manuals/libpython/gunittest_testing.html>
+See the [testing documentation](../doc/development/testing.md) for how GRASS
+tests are written and run.
 
-## Simple test data
+## CI
 
-Some tests may be launched in the location `../demolocation/`:
-
-```bash
-# create new mapset for test
-grass ../demolocation/user1 -c
-# run the test
-make
-```
-
-## Extended test data
-
-Most tests require the North Carolina Sample dataset, available from
-<https://grass.osgeo.org/sampledata/north_carolina/>
-
-## Notes
-
-Since 2020: For a more advanced test suite, see
-<https://github.com/OSGeo/grass/actions>
-
-Until 2019: For a more advanced test suite, see
-<http://fatra.cnr.ncsu.edu/grassgistests/summary_report/>
+Most tests run in the CI. See the `.github` directory for details and
+use it as a reference if needed.

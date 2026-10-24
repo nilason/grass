@@ -6,11 +6,8 @@
  *
  * PURPOSE:      Lower level functions for reading/writing/manipulating vectors.
  *
- * COPYRIGHT:    (C) 2001, 2012 by the GRASS Development Team
- *
- *               This program is free software under the GNU General
- *               Public License (>=v2). Read the file COPYING that
- *               comes with GRASS for details.
+ * SPDX-FileCopyrightText: 2001, 2012 GRASS Development Team
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  *****************************************************************************/
 
@@ -19,6 +16,7 @@
 
 #include <grass/vector.h>
 #include <grass/glocale.h>
+#include <grass/gis.h>
 
 /*!
    \brief Read external vector format file
@@ -34,6 +32,7 @@ int dig_read_frmt_ascii(FILE *dascii, struct Format_info *finfo)
     char buff[2001], buf1[2001];
     char *ptr;
     int frmt = -1;
+    size_t len;
 
     G_debug(3, "dig_read_frmt_ascii()");
 
@@ -46,7 +45,11 @@ int dig_read_frmt_ascii(FILE *dascii, struct Format_info *finfo)
             return -1;
         }
 
-        strcpy(buf1, buff);
+        len = G_strlcpy(buf1, buff, sizeof(buf1));
+        if (len >= sizeof(buf1)) {
+            G_warning(_("Line <%s> is too long"), buff);
+            return -1;
+        }
         buf1[ptr - buff] = '\0';
 
         ptr++; /* Search for the start of text */
@@ -54,11 +57,9 @@ int dig_read_frmt_ascii(FILE *dascii, struct Format_info *finfo)
             ptr++;
 
         if (G_strcasecmp(buf1, "FORMAT") == 0) {
-#ifdef HAVE_OGR
             if (G_strcasecmp(ptr, "ogr") == 0) {
                 frmt = GV_FORMAT_OGR;
             }
-#endif
 #ifdef HAVE_POSTGRES
             if (G_strcasecmp(ptr, "postgis") == 0) {
                 frmt = GV_FORMAT_POSTGIS;
@@ -72,14 +73,7 @@ int dig_read_frmt_ascii(FILE *dascii, struct Format_info *finfo)
     }
 
     /* init format info values */
-#ifdef HAVE_OGR
     G_zero(&(finfo->ogr), sizeof(struct Format_info_ogr));
-#else
-    if (frmt == GV_FORMAT_OGR) {
-        G_warning(_("Vector format '%s' not supported"), ptr);
-        return -1;
-    }
-#endif
 
 #ifdef HAVE_POSTGRES
     G_zero(&(finfo->pg), sizeof(struct Format_info_pg));
@@ -98,14 +92,17 @@ int dig_read_frmt_ascii(FILE *dascii, struct Format_info *finfo)
             continue;
         }
 
-        strcpy(buf1, buff);
+        len = G_strlcpy(buf1, buff, sizeof(buf1));
+        if (len >= sizeof(buf1)) {
+            G_warning(_("Line <%s> is too long"), buff);
+            return -1;
+        }
         buf1[ptr - buff] = '\0';
 
         ptr++; /* Search for the start of text */
         while (*ptr == ' ')
             ptr++;
 
-#ifdef HAVE_OGR
         if (frmt == GV_FORMAT_OGR) {
             if (G_strcasecmp(buf1, "DSN") == 0)
                 finfo->ogr.dsn = G_store(ptr);
@@ -114,7 +111,6 @@ int dig_read_frmt_ascii(FILE *dascii, struct Format_info *finfo)
             if (G_strcasecmp(buf1, "WHERE") == 0)
                 finfo->ogr.where = G_store(ptr);
         }
-#endif
 #ifdef HAVE_POSTGRES
         if (frmt == GV_FORMAT_POSTGIS) {
             if (G_strcasecmp(buf1, "CONNINFO") == 0)
@@ -152,8 +148,9 @@ int dig_read_frmt_ascii(FILE *dascii, struct Format_info *finfo)
  *  Returns: 0 OK
  *           -1 on error
  */
-int dig_write_frmt_ascii(FILE *dascii UNUSED, struct Format_info *finfo UNUSED,
-                         int format UNUSED)
+int dig_write_frmt_ascii(FILE *dascii G_UNUSED,
+                         struct Format_info *finfo G_UNUSED,
+                         int format G_UNUSED)
 {
     G_debug(3, "dig_write_frmt_ascii()");
 

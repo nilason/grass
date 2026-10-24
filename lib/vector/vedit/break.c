@@ -3,10 +3,8 @@
 
    \brief Vedit library - split, break, connect lines
 
-   (C) 2007-2008 by the GRASS Development Team
-
-   This program is free software under the GNU General Public License
-   (>=v2).  Read the file COPYING that comes with GRASS for details.
+   SPDX-FileCopyrightText: 2007-2008 GRASS Development Team
+   SPDX-License-Identifier: GPL-2.0-or-later
 
    \author Martin Landa <landa.martin gmail.com>
  */
@@ -41,14 +39,12 @@ int Vedit_split_lines(struct Map_info *Map, struct ilist *List,
 
     struct line_pnts *Points, *Points2;
     struct line_cats *Cats;
-    struct ilist *List_in_box;
 
     nlines_modified = 0;
 
     Points = Vect_new_line_struct();
     Points2 = Vect_new_line_struct();
     Cats = Vect_new_cats_struct();
-    List_in_box = Vect_new_list();
 
     for (i = 0; i < List->n_values; i++) {
         line = List->value[i];
@@ -101,7 +97,8 @@ int Vedit_split_lines(struct Map_info *Map, struct ilist *List,
             else
                 newline = Vect_write_line(Map, type, Points2, Cats);
             if (newline < 0) {
-                return -1;
+                nlines_modified = -1;
+                goto free_exit;
             }
             if (List_updated)
                 Vect_list_append(List_updated, newline);
@@ -118,19 +115,20 @@ int Vedit_split_lines(struct Map_info *Map, struct ilist *List,
             /* rewrite the line */
             newline = Vect_write_line(Map, type, Points2, Cats);
             if (newline < 0) {
-                return -1;
+                nlines_modified = -1;
+                goto free_exit;
             }
             if (List_updated)
                 Vect_list_append(List_updated, newline);
 
             nlines_modified++;
         } /* for each bounding box */
-    }     /* for each selected line */
+    } /* for each selected line */
 
+free_exit:
     Vect_destroy_line_struct(Points);
     Vect_destroy_line_struct(Points2);
     Vect_destroy_cats_struct(Cats);
-    Vect_destroy_list(List_in_box);
 
     return nlines_modified;
 }
@@ -225,7 +223,7 @@ int Vedit_connect_lines(struct Map_info *Map, struct ilist *List, double thresh)
 }
 
 int connect_lines(struct Map_info *Map, int first, int line_from, int line_to,
-                  double thresh, struct ilist *List UNUSED)
+                  double thresh, struct ilist *List G_UNUSED)
 {
     int line_new;
     int type_from, type_to;

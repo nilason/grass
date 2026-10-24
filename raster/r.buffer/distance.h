@@ -10,11 +10,8 @@
  *               have square cells. Works both for planimetric
  *               (UTM, State Plane) and lat-long.
  *
- * COPYRIGHT:    (C) 2005 by the GRASS Development Team
- *
- *               This program is free software under the GNU General Public
- *               License (>=v2). Read the file COPYING that comes with GRASS
- *               for details.
+ * SPDX-FileCopyrightText: 2005 GRASS Development Team
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  ****************************************************************************/
 
@@ -48,7 +45,7 @@ extern double meters_to_grid;
 extern double ns_to_ew_squared;
 extern int count_rows_with_data;
 
-#define MAPINDEX(r, c)       ((size_t)(r)*window.cols + (c))
+#define MAPINDEX(r, c)       ((size_t)(r) * window.cols + (c))
 #define ZONE_INCR            2
 
 #define FEET_TO_METERS       0.3048
