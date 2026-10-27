@@ -4,5 +4,6 @@
 #include <../ucrt/stdlib.h>
 
 #define random rand
+char *realpath(const char *path, char *resolved_path);
 
 #endif
