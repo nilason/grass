@@ -7,10 +7,8 @@ Classes:
  - menudata::LayerManagerMenuData
 
 
-(C) 2007-2012 by the GRASS Development Team
-
-This program is free software under the GNU General Public License
-(>=v2). Read the file COPYING that comes with GRASS for details.
+SPDX-FileCopyrightText: 2007-2012 GRASS Development Team
+SPDX-License-Identifier: GPL-2.0-or-later
 
 @author Martin Landa <landa.martin gmail.com>
 """
@@ -25,10 +23,7 @@ from core.gcmd import GError
 
 class LayerManagerMenuData(MenuTreeModelBuilder):
     def __init__(self, filename=None, message_handler=GError):
-        if filename:
-            expandAddons = False
-        else:
-            expandAddons = True
+        expandAddons = not filename
 
         fallback = os.path.join(WXGUIDIR, "xml", "menudata.xml")
         if not filename:
@@ -57,10 +52,7 @@ class LayerManagerMenuData(MenuTreeModelBuilder):
 
 class LayerManagerModuleTree(MenuTreeModelBuilder):
     def __init__(self, filename=None, message_handler=GError):
-        if filename:
-            expandAddons = False
-        else:
-            expandAddons = True
+        expandAddons = not filename
 
         fallback = os.path.join(WXGUIDIR, "xml", "module_tree_menudata.xml")
         if not filename:

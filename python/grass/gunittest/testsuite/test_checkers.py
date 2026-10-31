@@ -3,14 +3,11 @@ Tests checkers functions
 
 @brief Test of GRASS Python testing framework checkers
 
-(C) 2014 by the GRASS Development Team
-This program is free software under the GNU General Public
-License (>=v2). Read the file COPYING that comes with GRASS
-for details.
+SPDX-FileCopyrightText: 2014 GRASS Development Team
+SPDX-License-Identifier: GPL-2.0-or-later
 
 @author Vaclav Petras
 """
-
 
 from grass.script.utils import parse_key_val, try_remove
 
@@ -350,7 +347,7 @@ class TestMd5Sums(TestCase):
 
     To create MD5 which is used for testing use:
 
-    .. code: sh
+    .. code:: sh
     $ cat > test.txt << EOF
     null_cells=57995100
     cells=60020100
@@ -369,17 +366,14 @@ class TestMd5Sums(TestCase):
     @classmethod
     def setUpClass(cls):
         with open(cls.correct_file_name_platform_nl, "w") as f:
-            for line in CORRECT_LINES:
-                # \n should be converted to platform newline
-                f.write(line + "\n")
-        with open(cls.correct_file_name_unix_nl, "w") as f:
-            for line in CORRECT_LINES:
-                # binary mode will write pure \n
-                f.write(line + "\n")
+            # \n should be converted to platform newline
+            f.writelines(line + "\n" for line in CORRECT_LINES)
+        with open(cls.correct_file_name_unix_nl, "w", newline="") as f:
+            # newline="" writes pure \n on every platform
+            f.writelines(line + "\n" for line in CORRECT_LINES)
         with open(cls.wrong_file_name, "w") as f:
-            for line in INCORRECT_LINES:
-                # \n should be converted to platform newline
-                f.write(line + "\n")
+            # \n should be converted to platform newline
+            f.writelines(line + "\n" for line in INCORRECT_LINES)
 
     @classmethod
     def tearDownClass(cls):
@@ -395,7 +389,7 @@ class TestMd5Sums(TestCase):
             msg="MD5 sums different",
         )
 
-    def test_text_file_platfrom(self):
+    def test_text_file_platform(self):
         r"""Text file with platform dependent newlines"""
         self.assertEqual(
             text_file_md5(self.correct_file_name_platform_nl),

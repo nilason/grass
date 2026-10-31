@@ -1,14 +1,11 @@
 """Test t.rast.to.vect
 
-(C) 2014 by the GRASS Development Team
-This program is free software under the GNU General Public
-License (>=v2). Read the file COPYING that comes with GRASS
-for details.
+SPDX-FileCopyrightText: 2014 GRASS Development Team
+SPDX-License-Identifier: GPL-2.0-or-later
 
 @author Soeren Gebbert
 """
 
-import subprocess
 from grass.gunittest.case import TestCase
 from grass.gunittest.gmodules import SimpleModule
 
@@ -301,7 +298,7 @@ a_3|2001-12-01 00:00:00|2002-01-01 00:00:00|1200.0|1200.0
         self.assertModule(rast_list)
         self.assertLooksLike(text, rast_list.outputs.stdout)
 
-    def test_simple_gran(self):
+    def test_simple_gran_time_suffix(self):
         self.assertModule(
             "t.rast.gapfill",
             input="A",

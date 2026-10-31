@@ -9,11 +9,8 @@
  * PURPOSE:      processes a single input raster map layer
  *               and constructs the real and imaginary Fourier
  *               components in frequency space
- * COPYRIGHT:    (C) 1999-2008 by the GRASS Development Team
- *
- *               This program is free software under the GNU General Public
- *               License (>=v2). Read the file COPYING that comes with GRASS
- *               for details.
+ * SPDX-FileCopyrightText: 1999-2008 GRASS Development Team
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  *****************************************************************************/
 /*
@@ -68,7 +65,7 @@ int main(int argc, char *argv[])
     DCELL *cell_real, *cell_imag;
     int rows, cols; /* number of rows & columns */
     long totsize;   /* Total number of data points */
-    double(
+    double (
         *data)[2]; /* Data structure containing real & complex values of FFT */
     int i, j;      /* Loop control variables */
 
@@ -105,8 +102,9 @@ int main(int argc, char *argv[])
     inputfd = Rast_open_old(Cellmap_orig, "");
 
     if (Rast_maskfd() >= 0)
-        G_warning(_("Raster MASK found, consider to remove "
-                    "(see man-page). Will continue..."));
+        G_warning(_("Raster mask active, consider removing it"
+                    " and running again without it (see documentation for"
+                    " details). This current process will now continue..."));
 
     G_get_set_window(&window); /* get the current window for later */
 
@@ -125,7 +123,7 @@ int main(int argc, char *argv[])
     cell_real = Rast_allocate_d_buf();
     cell_imag = Rast_allocate_d_buf();
 
-#define C(i, j) ((i)*cols + (j))
+#define C(i, j) ((i) * cols + (j))
 
     /* Read in cell map values */
     G_message(_("Reading the raster map <%s>..."), Cellmap_orig);

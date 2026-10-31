@@ -1,14 +1,11 @@
 """
-Managing existing objects in a GRASS GIS Spatial Database
+Managing existing objects in a GRASS Spatial Database
 
-(C) 2020 by the GRASS Development Team
-This program is free software under the GNU General Public
-License (>=v2). Read the file COPYING that comes with GRASS
-for details.
+SPDX-FileCopyrightText: 2020 GRASS Development Team
+SPDX-License-Identifier: GPL-2.0-or-later
 
 .. sectionauthor:: Vaclav Petras <wenzeslaus gmail com>
 """
-
 
 import os
 import shutil
@@ -42,15 +39,13 @@ def rename_mapset(database, location, old_name, new_name):
     """Rename mapset from *old_name* to *new_name*"""
     if old_name == "PERMANENT":
         raise ValueError(_("Mapset PERMANENT cannot be renamed"))
-    location_path = os.path.join(database, location)
-    os.rename(
-        os.path.join(location_path, old_name), os.path.join(location_path, new_name)
-    )
+    location_path = Path(database, location)
+    (location_path / old_name).rename(location_path / new_name)
 
 
 def rename_location(database, old_name, new_name):
     """Rename location from *old_name* to *new_name*"""
-    os.rename(os.path.join(database, old_name), os.path.join(database, new_name))
+    Path(database, old_name).rename(Path(database, new_name))
 
 
 class MapsetPath:
@@ -109,7 +104,7 @@ def split_mapset_path(mapset_path):
     """Split mapset path to three parts - grassdb, location, mapset"""
     mapset_path = Path(mapset_path)
     if len(mapset_path.parts) < 3:
-        ValueError(
+        raise ValueError(
             _("Mapset path '{}' needs at least three components").format(mapset_path)
         )
     mapset = mapset_path.name
@@ -174,7 +169,7 @@ def resolve_mapset_path(path, location=None, mapset=None) -> MapsetPath:
         from grass.grassdb.checks import is_mapset_valid
 
         if not is_mapset_valid(path) and is_mapset_valid(path / default_mapset):
-            path = path / default_mapset
+            path /= default_mapset
         parts = path.parts
         if len(parts) < 3:
             raise ValueError(

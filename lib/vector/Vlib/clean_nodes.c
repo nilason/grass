@@ -5,10 +5,8 @@
 
    Higher level functions for reading/writing/manipulating vectors.
 
-   (C) 2001-2009 by the GRASS Development Team
-
-   This program is free software under the GNU General Public License
-   (>=v2).  Read the file COPYING that comes with GRASS for details.
+   SPDX-FileCopyrightText: 2001-2009 GRASS Development Team
+   SPDX-License-Identifier: GPL-2.0-or-later
 
    \author Radim Blazek
  */
@@ -241,6 +239,10 @@ int Vect_clean_small_angles_at_nodes(struct Map_info *Map, int otype,
         }
     }
     G_verbose_message(_("Modifications: %d"), nmodif);
+    Vect_destroy_line_struct(Points);
+    Vect_destroy_cats_struct(OCats);
+    Vect_destroy_cats_struct(LCats);
+    Vect_destroy_cats_struct(SCats);
 
     return (nmodif);
 }

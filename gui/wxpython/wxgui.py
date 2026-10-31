@@ -6,10 +6,8 @@
 Classes:
  - wxgui::GMApp
 
-(C) 2006-2015 by the GRASS Development Team
-
-This program is free software under the GNU General Public License
-(>=v2). Read the file COPYING that comes with GRASS for details.
+SPDX-FileCopyrightText: 2006-2015 GRASS Development Team
+SPDX-License-Identifier: GPL-2.0-or-later
 
 @author Michael Barton (Arizona State University)
 @author Jachym Cepicky (Mendel University of Agriculture)
@@ -36,7 +34,6 @@ import wx
 # we get annoying "Debug: Adding duplicate image handler for 'Windows bitmap file'"
 # during start up, remove when not needed
 import wx.adv
-import wx.html
 
 try:
     import wx.lib.agw.advancedsplash as SC
@@ -63,7 +60,7 @@ class GMApp(wx.App):
         :return: True
         """
         # Internal and display name of the app (if supported by/on platform)
-        self.SetAppName("GRASS GIS")
+        self.SetAppName("GRASS")
         self.SetVendorName("The GRASS Development Team")
 
         # create splash screen
@@ -100,10 +97,10 @@ class GMApp(wx.App):
                     warning(
                         _(
                             "Current version of wxPython {} is lower than "
-                            "minimum required version {}".format(
-                                wx.__version__,
-                                ".".join(map(str, min_required_wx_version)),
-                            )
+                            "minimum required version {}"
+                        ).format(
+                            wx.__version__,
+                            ".".join(map(str, min_required_wx_version)),
                         )
                     )
                 else:
@@ -135,14 +132,11 @@ def process_opt(opts, args):
     """Process command-line arguments"""
     workspaceFile = None
     for o, a in opts:
-        if o in ("-h", "--help"):
+        if o in {"-h", "--help"}:
             printHelp()
 
-        elif o in ("-w", "--workspace"):
-            if a != "":
-                workspaceFile = str(a)
-            else:
-                workspaceFile = args.pop(0)
+        elif o in {"-w", "--workspace"}:
+            workspaceFile = str(a) if a != "" else args.pop(0)
 
     return workspaceFile
 
@@ -154,7 +148,7 @@ def main(argv=None):
         try:
             opts, args = getopt.getopt(argv[1:], "hw:", ["help", "workspace"])
         except getopt.error as msg:
-            raise Usage(msg)
+            raise Usage(msg) from None
     except Usage as err:
         print(err.msg, file=sys.stderr)
         print(sys.stderr, "for help use --help", file=sys.stderr)
@@ -164,7 +158,7 @@ def main(argv=None):
     app = GMApp(workspaceFile)
 
     # suppress wxPython logs
-    q = wx.LogNull()
+    q = wx.LogNull()  # noqa: F841
     set_raise_on_error(True)
 
     # register GUI PID

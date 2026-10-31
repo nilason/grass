@@ -9,21 +9,17 @@
  *   - http://www.ijs.si/software/snprintf/
  *   - openssh's snprintf() implementation: bsd-snprintf.c
  *
- * (C) 2001-2014 by the GRASS Development Team
- *
- * This program is free software under the GNU General Public License
- * (>=v2). Read the file COPYING that comes with GRASS for details.
+ * SPDX-FileCopyrightText: 2001-2014 GRASS Development Team
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  * \author Markus Neteler
  *
  * \date 2006-2008
  */
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <stdarg.h>
-#include <unistd.h>
-#include <assert.h>
+#include <stdio.h>
+
 #include <grass/gis.h>
 
 /**
@@ -33,12 +29,13 @@
  * discouraged in favour of calculating how long the string will be and
  * allocating enough memory!
  *
+ * \deprecated Use C99 standard function snprintf() instead.
+ *
  * \param[in] str input string
  * \param[in] size length of string
  * \param[in] fmt
  * \return number of chars written
  */
-
 int G_snprintf(char *str, size_t size, const char *fmt, ...)
 {
     va_list ap;
@@ -47,10 +44,6 @@ int G_snprintf(char *str, size_t size, const char *fmt, ...)
     va_start(ap, fmt);
     count = vsnprintf(str, size, fmt, ap);
     va_end(ap);
-
-    /* Windows' vsnprintf() doesn't always NUL-terminate the buffer */
-    if (count >= 0 && (unsigned int)count == size)
-        str[--count] = '\0';
 
     return count;
 }

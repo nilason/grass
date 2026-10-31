@@ -3,12 +3,14 @@ Created on Fri Aug 17 16:05:25 2012
 
 @author: pietro
 """
+
 import ctypes
 
 #
 # import GRASS modules
 #
-from grass.script import fatal, gisenv
+from grass.exceptions import GrassError
+from grass.script import gisenv
 import grass.lib.gis as libgis
 import grass.lib.raster as libraster
 
@@ -17,7 +19,7 @@ import grass.lib.raster as libraster
 #
 from grass.pygrass import utils
 from grass.pygrass.gis.region import Region
-from grass.pygrass.errors import must_be_open, must_be_in_current_mapset
+from grass.pygrass.errors import must_be_in_current_mapset, must_be_open
 from grass.pygrass.shell.conversion import dict2html
 from grass.pygrass.shell.show import raw_figure
 
@@ -44,11 +46,11 @@ proj: {proj}
 
 class Info:
     def __init__(self, name, mapset=""):
-        """Read the information for a raster map. ::
+        """Read the information for a raster map.
 
         >>> info = Info(test_raster_name)
         >>> info.read()
-        >>> info          # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+        >>> info  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
         abstract_test_map@
         rows: 4
         cols: 4
@@ -246,10 +248,10 @@ class Info:
         ]
 
     def items(self):
-        return [(k, self.__getattribute__(k)) for k in self.keys()]
+        return [(k, getattr(self, k)) for k in self.keys()]
 
     def __iter__(self):
-        return ((k, self.__getattribute__(k)) for k in self.keys())
+        return ((k, getattr(self, k)) for k in self.keys())
 
     def _repr_html_(self):
         return dict2html(dict(self.items()), keys=self.keys(), border="1", kdec="b")
@@ -322,7 +324,7 @@ class RasterAbstractBase:
 
     def _set_mtype(self, mtype):
         """Private method to change the Raster type"""
-        if mtype.upper() not in ("CELL", "FCELL", "DCELL"):
+        if mtype.upper() not in {"CELL", "FCELL", "DCELL"}:
             str_err = "Raster type: {0} not supported ('CELL','FCELL','DCELL')"
             raise ValueError(_(str_err).format(mtype))
         self._mtype = mtype
@@ -334,7 +336,7 @@ class RasterAbstractBase:
         return self._mode
 
     def _set_mode(self, mode):
-        if mode.upper() not in ("R", "W"):
+        if mode.upper() not in {"R", "W"}:
             str_err = _("Mode type: {0} not supported ('r', 'w')")
             raise ValueError(str_err.format(mode))
         self._mode = mode
@@ -345,7 +347,7 @@ class RasterAbstractBase:
         return self._overwrite
 
     def _set_overwrite(self, overwrite):
-        if overwrite not in (True, False):
+        if overwrite not in {True, False}:
             str_err = _("Overwrite type: {0} not supported (True/False)")
             raise ValueError(str_err.format(overwrite))
         self._overwrite = overwrite
@@ -392,23 +394,22 @@ class RasterAbstractBase:
         if isinstance(key, slice):
             # Get the start, stop, and step from the slice
             return (self.get_row(ii) for ii in range(*key.indices(len(self))))
-        elif isinstance(key, tuple):
+        if isinstance(key, tuple):
             x, y = key
             return self.get(x, y)
-        elif isinstance(key, int):
+        if isinstance(key, int):
             if not self.is_open():
-                raise IndexError("Can not operate on a closed map. Call open() first.")
+                msg = "Can not operate on a closed map. Call open() first."
+                raise IndexError(msg)
             if key < 0:  # Handle negative indices
                 key += self._rows
             if key >= self._rows:
-                raise IndexError(
-                    "The row index {0} is out of range [0, {1}).".format(
-                        key, self._rows
-                    )
+                msg = "The row index {0} is out of range [0, {1}).".format(
+                    key, self._rows
                 )
+                raise IndexError(msg)
             return self.get_row(key)
-        else:
-            fatal("Invalid argument type.")
+        raise TypeError("Invalid argument type: %r." % key)
 
     def __iter__(self):
         """Return a constructor of the class"""
@@ -427,14 +428,13 @@ class RasterAbstractBase:
         >>> ele.exist()
         True
         """
-        if self.name:
-            if self.mapset == "":
-                mapset = utils.get_mapset_raster(self.name, self.mapset)
-                self.mapset = mapset if mapset else ""
-                return True if mapset else False
-            return bool(utils.get_mapset_raster(self.name, self.mapset))
-        else:
+        if not self.name:
             return False
+        if self.mapset == "":
+            mapset = utils.get_mapset_raster(self.name, self.mapset)
+            self.mapset = mapset or ""
+            return bool(mapset)
+        return bool(utils.get_mapset_raster(self.name, self.mapset))
 
     def is_open(self):
         """Return True if the map is open False otherwise.
@@ -444,7 +444,7 @@ class RasterAbstractBase:
         False
 
         """
-        return True if self._fd is not None and self._fd >= 0 else False
+        return bool(self._fd is not None and self._fd >= 0)
 
     @must_be_open
     def close(self):
@@ -484,8 +484,7 @@ class RasterAbstractBase:
 
         if mapset and mapset != gis_env["MAPSET"]:
             return "{name}@{mapset}".format(name=name, mapset=mapset)
-        else:
-            return name
+        return name
 
     def rename(self, newname):
         """Rename the map"""
@@ -505,8 +504,8 @@ class RasterAbstractBase:
 
         """
         if self.is_open():
-            fatal("You cannot change the region if map is open")
-            raise
+            msg = "You cannot change the region if map is open"
+            raise GrassError(msg)
         region = Region()
         if rastname == "":
             rastname = self.name
@@ -524,8 +523,8 @@ class RasterAbstractBase:
         The GRASS region settings will not be modified.
         """
         if self.is_open():
-            fatal("You cannot change the region if map is open")
-            raise
+            msg = "You cannot change the region if map is open"
+            raise GrassError(msg)
         self._set_raster_window(region)
 
     def _set_raster_window(self, region):
@@ -538,7 +537,8 @@ class RasterAbstractBase:
     def get_value(self, point, region=None):
         """This method returns the pixel value of a given pair of coordinates:
 
-        :param point: pair of coordinates in tuple object or class object with coords() method
+        :param point: pair of coordinates in tuple object or class object with coords()
+            method
         """
         # Check for tuple
         if not isinstance(point, list) and not isinstance(point, tuple):
@@ -632,7 +632,7 @@ if __name__ == "__main__":
 
     doctest.testmod()
 
-    """Remove the generated vector map, if exist"""
     mset = utils.get_mapset_raster(test_raster_name, mapset="")
     if mset:
+        # Remove the generated vector map, if exists
         Module("g.remove", flags="f", type="raster", name=test_raster_name)

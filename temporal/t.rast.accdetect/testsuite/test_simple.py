@@ -1,16 +1,15 @@
 """test distributed temporal databases with stvds
 
-(C) 2014 by the GRASS Development Team
-This program is free software under the GNU General Public
-License (>=v2). Read the file COPYING that comes with GRASS
-for details.
+SPDX-FileCopyrightText: 2014 GRASS Development Team
+SPDX-License-Identifier: GPL-2.0-or-later
 
 :authors: Luca Delucchi
 """
 
+import os
+
 from grass.gunittest.case import TestCase
 from grass.gunittest.gmodules import SimpleModule
-import os
 
 
 class TestRasterExtraction(TestCase):
@@ -23,7 +22,6 @@ class TestRasterExtraction(TestCase):
         for i in range(1, 101):
             cls.runModule(
                 "r.mapcalc",
-                flags="s",
                 overwrite=True,
                 expression="a_mapcalc{nu} = rand(1,10)".format(nu=i),
             )
@@ -61,8 +59,7 @@ class TestRasterExtraction(TestCase):
 
     def tearDown(self):
         """Remove generated data"""
-        self.runModule("t.remove", flags="df", type="strds", inputs="B")
-        self.runModule("t.remove", flags="df", type="strds", inputs="C")
+        self.runModule("t.remove", flags="df", type="strds", inputs="B,C")
 
     def test_simple(self):
         self.assertModule(

@@ -7,10 +7,7 @@ import doctest
 import grass.gunittest.case
 import grass.gunittest.main
 import grass.gunittest.utils
-
 import grass.pygrass.vector as gvector
-import grass.pygrass.utils as gutils
-
 
 # doctest does not allow changing the base classes of test case, skip test case
 # and test suite, so we need to create a new type which inherits from our class
@@ -29,7 +26,7 @@ doctest.SkipDocTestCase = type(
 
 def load_tests(loader, tests, ignore):
     # TODO: this must be somewhere when doctest is called, not here
-    # TODO: ultimate solution is not to use _ as a buildin in lib/python
+    # TODO: ultimate solution is not to use _ as a built-in in lib/python
     # for now it is the only place where it works
     grass.gunittest.utils.do_doctest_gettext_workaround()
 

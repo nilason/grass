@@ -1,14 +1,11 @@
 """Test t.rast.to.vect
 
-(C) 2014 by the GRASS Development Team
-This program is free software under the GNU General Public
-License (>=v2). Read the file COPYING that comes with GRASS
-for details.
+SPDX-FileCopyrightText: 2014 GRASS Development Team
+SPDX-License-Identifier: GPL-2.0-or-later
 
 @author Soeren Gebbert
 """
 
-import subprocess
 from grass.gunittest.case import TestCase
 from grass.gunittest.gmodules import SimpleModule
 
@@ -63,7 +60,6 @@ class TestRasterToVector(TestCase):
             output="result",
             type="point",
             flags="n",
-            column="values",
             basename="test",
             nprocs=1,
             overwrite=True,
@@ -92,7 +88,6 @@ class TestRasterToVector(TestCase):
             output="result",
             type="area",
             flags="n",
-            column="values",
             basename="test",
             nprocs=1,
             overwrite=True,
@@ -126,7 +121,6 @@ class TestRasterToVector(TestCase):
             output="result",
             type="area",
             flags="s",
-            column="values",
             basename="test",
             nprocs=1,
             overwrite=True,
@@ -159,7 +153,6 @@ class TestRasterToVector(TestCase):
             output="result",
             type="point",
             flags="t",
-            column="values",
             basename="test",
             nprocs=4,
             overwrite=True,
@@ -187,7 +180,6 @@ class TestRasterToVector(TestCase):
             output="result",
             type="point",
             flags="t",
-            column="values",
             basename="test",
             suffix="num%03",
             nprocs=4,
@@ -203,7 +195,6 @@ class TestRasterToVector(TestCase):
             output="result",
             type="point",
             flags="t",
-            column="values",
             basename="test",
             suffix="time",
             nprocs=4,
@@ -260,7 +251,6 @@ class TestRasterToVectorFails(TestCase):
             output="result",
             type="point",
             flags="n",
-            column="values",
             basename="test",
             where="start_time > '2010-01-01'",
             nprocs=1,

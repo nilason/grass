@@ -7,17 +7,8 @@
 #
 # PURPOSE:    Perform different aggregation algorithms from r.series on all or a
 #           selected subset of raster maps in a space time raster dataset
-# COPYRIGHT:    (C) 2011-2017 by the GRASS Development Team
-#
-#  This program is free software; you can redistribute it and/or modify
-#  it under the terms of the GNU General Public License as published by
-#  the Free Software Foundation; either version 2 of the License, or
-#  (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
+# SPDX-FileCopyrightText: 2011-2017 GRASS Development Team
+# SPDX-License-Identifier: GPL-2.0-or-later
 #
 #############################################################################
 
@@ -92,7 +83,9 @@
 # % description: Propagate NULLs
 # %end
 
-import grass.script as grass
+from pathlib import Path
+
+import grass.script as gs
 from grass.exceptions import CalledModuleError
 
 ############################################################################
@@ -124,7 +117,7 @@ def main():
     if (len(list(filter(None, quantile.split(",")))) + len_method) != len(
         output.split(",")
     ):
-        grass.fatal(_("Number requested methods and output maps do not match."))
+        gs.fatal(_("Number requested methods and output maps do not match."))
 
     # Make sure the temporal database exists
     tgis.init()
@@ -135,42 +128,35 @@ def main():
 
     if rows:
         # Create the r.series input file
-        filename = grass.tempfile(True)
-        file = open(filename, "w")
-
-        for row in rows:
-            string = "%s\n" % (row["id"])
-            file.write(string)
-
-        file.close()
+        filename = gs.tempfile(True)
+        Path(filename).write_text("\n".join(str(row["id"]) for row in rows))
 
         flag = ""
         if len(rows) > max_files_open:
-            grass.warning(
+            gs.warning(
                 _(
-                    "Processing over {} maps: activating -z flag of r.series which slows down processing.".format(
-                        max_files_open
-                    )
-                )
+                    "Processing over {} maps: activating -z flag of r.series which "
+                    "slows down processing."
+                ).format(max_files_open)
             )
             flag += "z"
         if nulls:
             flag += "n"
 
         try:
-            grass.run_command(
+            gs.run_command(
                 "r.series",
                 flags=flag,
                 file=filename,
                 output=output,
-                overwrite=grass.overwrite(),
+                overwrite=gs.overwrite(),
                 method=method,
                 quantile=quantile,
                 memory=memory,
                 nprocs=nprocs,
             )
         except CalledModuleError:
-            grass.fatal(_("%s failed. Check above error messages.") % "r.series")
+            gs.fatal(_("%s failed. Check above error messages.") % "r.series")
 
         if not add_time:
             # We need to set the temporal extent from the subset of selected maps
@@ -199,7 +185,7 @@ def main():
                 if out_map.find("@") >= 0:
                     id = out_map
                 else:
-                    mapset = grass.gisenv()["MAPSET"]
+                    mapset = gs.gisenv()["MAPSET"]
                     id = out_map + "@" + mapset
 
                 map = sp.get_new_map_instance(id)
@@ -215,5 +201,5 @@ def main():
 
 
 if __name__ == "__main__":
-    options, flags = grass.parser()
+    options, flags = gs.parser()
     main()

@@ -8,10 +8,8 @@ Classes:
  - histogram::HistogramFrame
  - histogram::HistogramToolbar
 
-(C) 2007, 2010-2011 by the GRASS Development Team
-
-This program is free software under the GNU General Public License
-(>=v2). Read the file COPYING that comes with GRASS for details.
+SPDX-FileCopyrightText: 2007, 2010-2011 GRASS Development Team
+SPDX-License-Identifier: GPL-2.0-or-later
 
 @author Michael Barton
 @author Various updates by Martin Landa <landa.martin gmail.com>
@@ -19,6 +17,7 @@ This program is free software under the GNU General Public License
 
 import os
 import sys
+from pathlib import Path
 
 import wx
 
@@ -212,8 +211,8 @@ class BufferedWindow(wx.Window):
         """Converts files to wx.Image"""
         if (
             self.Map.mapfile
-            and os.path.isfile(self.Map.mapfile)
-            and os.path.getsize(self.Map.mapfile)
+            and Path(self.Map.mapfile).is_file()
+            and Path(self.Map.mapfile).stat().st_size
         ):
             img = wx.Image(self.Map.mapfile, wx.BITMAP_TYPE_ANY)
         else:
@@ -258,7 +257,7 @@ class BufferedWindow(wx.Window):
             return
         try:
             id = self.imagedict[self.img]
-        except:
+        except KeyError:
             return
 
         # paint images to PseudoDC
@@ -471,7 +470,7 @@ class HistogramFrame(wx.Frame):
         dlg = wx.FileDialog(
             parent=self,
             message=_(
-                "Choose a file name to save the image " "(no need to add extension)"
+                "Choose a file name to save the image (no need to add extension)"
             ),
             wildcard=filetype,
             style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT,
@@ -496,7 +495,6 @@ class HistogramFrame(wx.Frame):
 
     def PrintMenu(self, event):
         """Print options and output menu"""
-        point = wx.GetMousePosition()
         printmenu = Menu()
         # Add items to the menu
         setup = wx.MenuItem(printmenu, id=wx.ID_ANY, text=_("Page setup"))
@@ -525,7 +523,7 @@ class HistogramFrame(wx.Frame):
         """
         try:
             self.propwin.Close(True)
-        except:
+        except Exception:
             pass
         self.Map.Clean()
         self.Destroy()

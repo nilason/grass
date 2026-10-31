@@ -1,18 +1,16 @@
 """
-(C) 2013-2023 by the GRASS Development Team
-This program is free software under the GNU General Public
-License (>=v2). Read the file COPYING that comes with GRASS
-for details.
+SPDX-FileCopyrightText: 2013-2023 GRASS Development Team
+SPDX-License-Identifier: GPL-2.0-or-later
 
 :authors: Soeren Gebbert
 """
 
 import datetime
 import os
+
 import grass.temporal as tgis
 from grass.gunittest.case import TestCase
 from grass.gunittest.main import test
-from grass.gunittest.gmodules import SimpleModule
 
 
 class TestTRastAlgebra(TestCase):
@@ -132,13 +130,13 @@ class TestTRastAlgebra(TestCase):
         of the then/else statement."""
         self.assertModule(
             "t.rast.algebra",
-            expression="R = if({contains}, B == 5, " "A - 1,  A + 1)",
+            expression="R = if({contains}, B == 5, A - 1,  A + 1)",
             basename="r",
             flags="d",
         )
         self.assertModule(
             "t.rast.algebra",
-            expression="R = if({contains}, B == 5, " "A - 1,  A + 1)",
+            expression="R = if({contains}, B == 5, A - 1,  A + 1)",
             basename="r",
         )
 

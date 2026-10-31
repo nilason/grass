@@ -8,10 +8,8 @@ Classes:
  - vnet_core::VectMap
  - vnet_core::History
 
-(C) 2013 by the GRASS Development Team
-
-This program is free software under the GNU General Public License
-(>=v2). Read the file COPYING that comes with GRASS for details.
+SPDX-FileCopyrightText: 2013 GRASS Development Team
+SPDX-License-Identifier: GPL-2.0-or-later
 
 @author Stepan Turek <stepan.turek seznam.cz> (GSoC 2012, mentor: Martin Landa)
 @author Lukas Bocan <silent_bob centrum.cz> (turn costs support)
@@ -34,10 +32,7 @@ except ImportError:
 def ParseMapStr(mapStr):
     """Create full map name (add current mapset if it is not present in name)"""
     mapValSpl = mapStr.strip().split("@")
-    if len(mapValSpl) > 1:
-        mapSet = mapValSpl[1]
-    else:
-        mapSet = grass.gisenv()["MAPSET"]
+    mapSet = mapValSpl[1] if len(mapValSpl) > 1 else grass.gisenv()["MAPSET"]
     mapName = mapValSpl[0]
 
     return mapName, mapSet
@@ -76,15 +71,14 @@ def SnapToNode(e, n, tresh, vectMap):
         vectlib.WITHOUT_Z,
     )
 
-    if nodeNum > 0:
-        e = c_double(0)
-        n = c_double(0)
-        vectlib.Vect_get_node_coor(openedMap, nodeNum, byref(e), byref(n), None)  # z
-        e = e.value
-        n = n.value
-    else:
+    if nodeNum <= 0:
         vectlib.Vect_close(openedMap)
         return False
+    e = c_double(0)
+    n = c_double(0)
+    vectlib.Vect_get_node_coor(openedMap, nodeNum, byref(e), byref(n), None)
+    e = e.value
+    n = n.value
 
     return e, n
 
@@ -113,15 +107,14 @@ def GetNearestNodeCat(e, n, layer, tresh, vectMap):
         vectlib.WITHOUT_Z,
     )
 
-    if nodeNum > 0:
-        e = c_double(0)
-        n = c_double(0)
-        vectlib.Vect_get_node_coor(openedMap, nodeNum, byref(e), byref(n), None)  # z
-        e = e.value
-        n = n.value
-    else:
+    if nodeNum <= 0:
         vectlib.Vect_close(openedMap)
         return -1
+    e = c_double(0)
+    n = c_double(0)
+    vectlib.Vect_get_node_coor(openedMap, nodeNum, byref(e), byref(n), None)
+    e = e.value
+    n = n.value
 
     box = vectlib.bound_box()
     List = POINTER(vectlib.boxlist)
@@ -133,7 +126,6 @@ def GetNearestNodeCat(e, n, layer, tresh, vectMap):
     vectlib.Vect_select_lines_by_box(openedMap, byref(box), vectlib.GV_POINT, List)
 
     found = 0
-    dcost = 0
 
     Cats = POINTER(vectlib.line_cats)
     Cats = vectlib.Vect_new_cats_struct()

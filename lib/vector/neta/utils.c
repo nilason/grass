@@ -5,10 +5,9 @@
 
    Utils subroutines.
 
-   (C) 2009-2010 by Daniel Bundala, and the GRASS Development Team
-
-   This program is free software under the GNU General Public License
-   (>=v2). Read the file COPYING that comes with GRASS for details.
+   SPDX-FileCopyrightText: 2009-2010 Daniel Bundala
+   SPDX-FileCopyrightText: GRASS Development Team
+   SPDX-License-Identifier: GPL-2.0-or-later
 
    \author Daniel Bundala (Google Summer of Code 2009)
  */
@@ -115,6 +114,9 @@ int NetA_get_node_costs(struct Map_info *In, int layer, char *column,
     struct field_info *Fi;
 
     Fi = Vect_get_field(In, layer);
+    if (Fi == NULL)
+        G_fatal_error(_("Database connection not defined for layer %d"), layer);
+
     driver = db_start_driver_open_database(Fi->driver, Fi->database);
     if (driver == NULL)
         G_fatal_error(_("Unable to open database <%s> by driver <%s>"),
@@ -122,16 +124,21 @@ int NetA_get_node_costs(struct Map_info *In, int layer, char *column,
 
     nlines = Vect_get_num_lines(In);
     nnodes = Vect_get_num_nodes(In);
-    Cats = Vect_new_cats_struct();
-    Points = Vect_new_line_struct();
     for (i = 1; i <= nnodes; i++)
         node_costs[i] = 0;
 
     db_CatValArray_init(&vals);
+    int nvals =
+        db_select_CatValArray(driver, Fi->table, Fi->key, column, NULL, &vals);
 
-    if (db_select_CatValArray(driver, Fi->table, Fi->key, column, NULL,
-                              &vals) == -1)
+    db_close_database_shutdown_driver(driver);
+    Vect_destroy_field_info(Fi);
+
+    if (nvals == -1)
         return 0;
+
+    Cats = Vect_new_cats_struct();
+    Points = Vect_new_line_struct();
     for (i = 1; i <= nlines; i++) {
         int type = Vect_read_line(In, Points, Cats, i);
 
@@ -152,8 +159,8 @@ int NetA_get_node_costs(struct Map_info *In, int layer, char *column,
     }
 
     Vect_destroy_cats_struct(Cats);
+    Vect_destroy_line_struct(Points);
     db_CatValArray_free(&vals);
-    db_close_database_shutdown_driver(driver);
     return 1;
 }
 
@@ -164,8 +171,8 @@ int NetA_get_node_costs(struct Map_info *In, int layer, char *column,
    nodes_to_features contains the index of a feature adjacent to each
    node or -1 if no such feature specified by varray
    exists. Nodes_to_features might be NULL, in which case it is left
-   unitialised. Nodes_to_features will be wrong if several lines connect
-   to the same node.
+   uninitialised. Nodes_to_features will be wrong if several lines
+   connect to the same node.
 
    \param map pointer to Map_info structure
    \param varray pointer to varray structure

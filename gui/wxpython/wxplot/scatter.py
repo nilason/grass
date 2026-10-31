@@ -7,10 +7,8 @@ Classes:
  - scatter::ScatterFrame
  - scatter::ScatterToolbar
 
-(C) 2011 by the GRASS Development Team
-
-This program is free software under the GNU General Public License
-(>=v2). Read the file COPYING that comes with GRASS for details.
+SPDX-FileCopyrightText: 2011 GRASS Development Team
+SPDX-License-Identifier: GPL-2.0-or-later
 
 @author Michael Barton, Arizona State University
 """
@@ -19,8 +17,8 @@ import sys
 
 import wx
 
-import grass.script as grass
-import wx.lib.plot as plot
+import grass.script as gs
+from wx.lib import plot
 from wxplot.base import BasePlotFrame, PlotIcons
 from gui_core.toolbars import BaseToolbar, BaseIcons
 from gui_core.wrap import StockCursor
@@ -29,7 +27,8 @@ from core.gcmd import RunCommand, GException, GError, GMessage
 
 
 class ScatterFrame(BasePlotFrame):
-    """Mainframe for displaying bivariate scatter plot of two raster maps. Uses wx.lib.plot."""
+    """Mainframe for displaying bivariate scatter plot of two raster maps. Uses
+    wx.lib.plot."""
 
     def __init__(
         self,
@@ -134,10 +133,7 @@ class ScatterFrame(BasePlotFrame):
     def SetupScatterplot(self):
         """Build data list for plotting each raster"""
 
-        #
-        # initialize title string
-        #
-        self.ptitle = _("Bivariate Scatterplot of ")
+        pair_labels = []
 
         #
         # create a datalist for plotting for each raster pair
@@ -149,37 +145,42 @@ class ScatterFrame(BasePlotFrame):
             self.raster[rpair]["datalist"] = self.CreateDatalist(rpair)
 
             # update title
-            self.ptitle += "%s vs %s, " % (
-                rpair[0].split("@")[0],
-                rpair[1].split("@")[0],
+            pair_labels.append(
+                _("{first} vs {second}").format(
+                    first=rpair[0].split("@")[0],
+                    second=rpair[1].split("@")[0],
+                )
             )
 
-        self.ptitle = self.ptitle.strip(", ")
+        self.ptitle = _("Bivariate Scatterplot of {pairs}").format(
+            pairs=", ".join(pair_labels)
+        )
 
         #
         # set xlabel & ylabel based on raster maps of first pair to be plotted
         #
-        self.xlabel = _("Raster <%s> cell values") % rpair[0].split("@")[0]
-        self.ylabel = _("Raster <%s> cell values") % rpair[1].split("@")[0]
+        self.xlabel = self._cell_values_label(
+            rpair[0].split("@")[0], self.raster[self.rasterList[0]][0]["units"]
+        )
+        self.ylabel = self._cell_values_label(
+            rpair[1].split("@")[0], self.raster[self.rasterList[0]][1]["units"]
+        )
 
-        units = self.raster[self.rasterList[0]][0]["units"]
+    @staticmethod
+    def _cell_values_label(raster, units):
+        """Return the axis label for the cell values of a raster map"""
         if units != "":
-            self.xlabel += _(": %s") % units
-
-        units = self.raster[self.rasterList[0]][1]["units"]
-        if units != "":
-            self.ylabel += _(": %s") % units
+            return _("Raster <{raster}> cell values: {units}").format(
+                raster=raster, units=units
+            )
+        return _("Raster <{raster}> cell values").format(raster=raster)
 
     def CreateDatalist(self, rpair):
         """Build a list of cell value, frequency pairs for histogram
         frequency can be in cell counts, percents, or area
         """
         datalist = []
-
-        if self.scattertype == "bubble":
-            freqflag = "cn"
-        else:
-            freqflag = "n"
+        freqflag = "cn" if self.scattertype == "bubble" else "n"
 
         try:
             ret = RunCommand(
@@ -274,13 +275,13 @@ class ScatterFrame(BasePlotFrame):
             rast1, rast2 = rpair
             rast1 = rast1.split("@")[0]
             rast2 = rast2.split("@")[0]
-            ret = grass.parse_command(
+            ret = gs.parse_command(
                 "r.regression.line",
                 mapx=rast1,
                 mapy=rast2,
                 flags="g",
                 quiet=True,
-                parse=(grass.parse_key_val, {"sep": "="}),
+                parse=(gs.parse_key_val, {"sep": "="}),
             )
             eqtitle = _(
                 "Regression equation for raster map <%(rast1)s> vs. <%(rast2)s>:\n\n"

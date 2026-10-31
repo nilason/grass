@@ -9,11 +9,8 @@
  * PURPOSE:      Creates a topographic index raster map from an elevation
  *               raster map.
  *
- * COPYRIGHT:    (C) 2000-2014 by the GRASS Development Team
- *
- *               This program is free software under the GNU General Public
- *               License (>=v2). Read the file COPYING that comes with GRASS
- *               for details.
+ * SPDX-FileCopyrightText: 2000-2014 GRASS Development Team
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  *****************************************************************************/
 
@@ -53,7 +50,7 @@ int main(int argc, char **argv)
 
     /* Make sure that the current projection is not lat/long */
     if (G_projection() == PROJECTION_LL)
-        G_fatal_error(_("Lat/Long location is not supported by %s. Please "
+        G_fatal_error(_("Lat/Long project is not supported by %s. Please "
                         "reproject map first."),
                       G_program_name());
 

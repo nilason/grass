@@ -71,6 +71,7 @@ SUBDIRS = \
 	v.parallel \
 	v.patch \
 	v.perturb \
+	v.ppa \
 	v.split \
 	v.qcount \
 	v.profile \
@@ -102,7 +103,6 @@ SUBDIRS = \
 	v.out.ogr \
 	v.in.ogr \
 	v.external \
-	v.in.dwg \
 	v.in.lidar \
 	v.external.out
 

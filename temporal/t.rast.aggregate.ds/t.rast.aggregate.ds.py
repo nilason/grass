@@ -6,17 +6,8 @@
 # AUTHOR(S):	Soeren Gebbert
 #
 # PURPOSE:	Aggregates data of an existing space time raster dataset using the time intervals of a second space time dataset
-# COPYRIGHT:	(C) 2011-2017 by the GRASS Development Team
-#
-#  This program is free software; you can redistribute it and/or modify
-#  it under the terms of the GNU General Public License as published by
-#  the Free Software Foundation; either version 2 of the License, or
-#  (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
+# SPDX-FileCopyrightText: 2011-2017 GRASS Development Team
+# SPDX-License-Identifier: GPL-2.0-or-later
 #
 #############################################################################
 
@@ -50,16 +41,9 @@
 # % description: A numerical suffix separated by an underscore will be attached to create a unique identifier
 # % required: yes
 # % multiple: no
-# % gisprompt:
 # %end
 
-# %option
-# % key: suffix
-# % type: string
-# % description: Suffix to add at basename: set 'gran' for granularity, 'time' for the full time format, 'num' for numerical suffix with a specific number of digits (default %05)
-# % answer: gran
-# % required: no
-# % multiple: no
+# %option G_OPT_T_SUFFIX
 # %end
 
 # %option
@@ -103,8 +87,7 @@
 # % description: Register Null maps
 # %end
 
-import grass.script as gcore
-
+import grass.script as gs
 
 ############################################################################
 
@@ -139,22 +122,17 @@ def main():
 
     if sampler_sp.get_temporal_type() != sp.get_temporal_type():
         dbif.close()
-        gcore.fatal(
-            _("Input and aggregation dataset must have " "the same temporal type")
-        )
+        gs.fatal(_("Input and aggregation dataset must have the same temporal type"))
 
     # Check if intervals are present
     if sampler_sp.temporal_extent.get_map_time() != "interval":
         dbif.close()
-        gcore.fatal(
-            _(
-                "All registered maps of the aggregation dataset "
-                "must have time intervals"
-            )
+        gs.fatal(
+            _("All registered maps of the aggregation dataset must have time intervals")
         )
 
     # We will create the strds later, but need to check here
-    tgis.check_new_stds(output, "strds", dbif, gcore.overwrite())
+    tgis.check_new_stds(output, "strds", dbif, gs.overwrite())
 
     map_list = sp.get_registered_maps_as_objects(
         where=where, order="start_time", dbif=dbif
@@ -162,7 +140,7 @@ def main():
 
     if not map_list:
         dbif.close()
-        gcore.fatal(_("Space time raster dataset <%s> is empty") % input)
+        gs.fatal(_("Space time raster dataset <%s> is empty") % input)
 
     granularity_list = sampler_sp.get_registered_maps_as_objects(
         where=where, order="start_time", dbif=dbif
@@ -170,7 +148,7 @@ def main():
 
     if not granularity_list:
         dbif.close()
-        gcore.fatal(_("Space time raster dataset <%s> is empty") % sampler)
+        gs.fatal(_("Space time raster dataset <%s> is empty") % sampler)
 
     gran = sampler_sp.get_granularity()
 
@@ -185,7 +163,7 @@ def main():
         method=method,
         nprocs=nprocs,
         spatial=None,
-        overwrite=gcore.overwrite(),
+        overwrite=gs.overwrite(),
     )
 
     if output_list:
@@ -198,7 +176,7 @@ def main():
             description,
             semantic_type,
             dbif,
-            gcore.overwrite(),
+            gs.overwrite(),
         )
         tgis.register_map_object_list(
             "rast",
@@ -217,5 +195,5 @@ def main():
 
 
 if __name__ == "__main__":
-    options, flags = gcore.parser()
+    options, flags = gs.parser()
     main()

@@ -3,10 +3,8 @@
 
    \brief Vedit library - merge lines
 
-   (C) 2006-2008 by the GRASS Development Team
-
-   This program is free software under the GNU General Public License
-   (>=v2).  Read the file COPYING that comes with GRASS for details.
+   SPDX-FileCopyrightText: 2006-2008 GRASS Development Team
+   SPDX-License-Identifier: GPL-2.0-or-later
 
    \author Jachym Cepicky <jachym.cepicky gmail.com>
    \author Martin Landa <landa.martin gmail.com>
@@ -184,7 +182,8 @@ int Vedit_merge_lines(struct Map_info *Map, struct ilist *List)
         if (Points->n_points > 0) {
             line = Vect_rewrite_line(Map, line1, type1, Points, Cats1);
             if (line < 0) {
-                return -1;
+                nlines_merged = -1;
+                goto free_exit;
             }
 
             if (line1 <= nlines)
@@ -195,6 +194,7 @@ int Vedit_merge_lines(struct Map_info *Map, struct ilist *List)
         }
     } /* for each line */
 
+free_exit:
     /* destroy structures */
     Vect_destroy_line_struct(Points1);
     Vect_destroy_line_struct(Points2);
@@ -202,6 +202,8 @@ int Vedit_merge_lines(struct Map_info *Map, struct ilist *List)
 
     Vect_destroy_cats_struct(Cats1);
     Vect_destroy_cats_struct(Cats2);
+
+    Vect_destroy_list(List_in_box);
 
     return nlines_merged;
 }

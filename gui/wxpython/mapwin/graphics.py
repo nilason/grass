@@ -7,14 +7,11 @@ Classes:
  - graphics::GraphicsSet
  - graphics::GraphicsSetItem
 
-(C) 2006-2013 by the GRASS Development Team
-
-This program is free software under the GNU General Public License
-(>=v2). Read the file COPYING that comes with GRASS for details.
+SPDX-FileCopyrightText: 2006-2013 GRASS Development Team
+SPDX-License-Identifier: GPL-2.0-or-later
 
 @author Stepan Turek <stepan.turek seznam.cz> (handlers support, GraphicsSet)
 """
-
 
 from copy import copy
 
@@ -201,6 +198,7 @@ class GraphicsSet:
         Could be 'point' or 'line' according to graphicsType.
 
         :param coords: list of east, north coordinates (double) of item.
+
                        Example:
 
                            * point: [1023, 122]
@@ -212,8 +210,7 @@ class GraphicsSet:
                       relevant just for 'point' type.
         :type label: str
         :param hide: if it is True, the item is not drawn when self.Draw
-                     is called. Hidden items are also counted in drawing
-                     order.
+                     is called. Hidden items are also counted in drawing order.
         :type hide: bool
         :return: (GraphicsSetItem) - added item reference
         """
@@ -364,7 +361,7 @@ class GraphicsSet:
         :return: True if order was changed
         :return: False if drawNum is out of range or item was not found
         """
-        if drawNum < len(self.itemsList) and drawNum >= 0 and item in self.itemsList:
+        if 0 <= drawNum < len(self.itemsList) and item in self.itemsList:
             self.itemsList.insert(
                 drawNum, self.itemsList.pop(self.itemsList.index(item))
             )
@@ -389,7 +386,7 @@ class GraphicsSet:
         """Clears old object before drawing new object."""
         try:
             self.pdc.ClearId(drawid)
-        except:
+        except (wx.PyDeadObjectError, KeyError):
             pass
 
 

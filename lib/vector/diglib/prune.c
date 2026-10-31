@@ -7,11 +7,8 @@
  *
  * PURPOSE:      Lower level functions for reading/writing/manipulating vectors.
  *
- * COPYRIGHT:    (C) 2001 by the GRASS Development Team
- *
- *               This program is free software under the GNU General Public
- *               License (>=v2). Read the file COPYING that comes with GRASS
- *               for details.
+ * SPDX-FileCopyrightText: 2001 GRASS Development Team
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  *****************************************************************************/
 
@@ -216,7 +213,7 @@ int dig_prune(struct line_pnts *points, double thresh)
                 nt[++it] = ij;
             }
             else
-            endseg : { /* All points are inside threshold. */
+            endseg: { /* All points are inside threshold. */
                 /* Former start becomes new end     */
                 nu[++inu] = jd;
                 if (--it < 0)

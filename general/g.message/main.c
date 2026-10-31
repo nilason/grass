@@ -7,11 +7,8 @@
  * PURPOSE:      Provides a means of reporting the contents of GRASS
  *               projection information files and creating
  *               new projection information files.
- * COPYRIGHT:    (C) 2007,2010,2012 by the GRASS Development Team
- *
- *               This program is free software under the GNU General Public
- *               License (>=v2). Read the file COPYING that comes with GRASS
- *               for details.
+ * SPDX-FileCopyrightText: 2007,2010,2012 GRASS Development Team
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  *****************************************************************************/
 
@@ -26,7 +23,12 @@ int main(int argc, char *argv[])
     struct GModule *module;
     int debug_level;
 
-    G_gisinit(argv[0]);
+    /* We don't call G_gisinit() here because it validates the
+     * mapset, whereas this module may legitimately be even
+     * without a valid mapset. */
+    G_set_program_name(argv[0]);
+    G_no_gisinit();
+    G_set_gisrc_mode(G_GISRC_MODE_MEMORY);
 
     module = G_define_module();
     G_add_keyword(_("general"));

@@ -1,21 +1,21 @@
 """
-(C) 2014 by the GRASS Development Team
-This program is free software under the GNU General Public
-License (>=v2). Read the file COPYING that comes with GRASS
-for details.
+SPDX-FileCopyrightText: 2014 GRASS Development Team
+SPDX-License-Identifier: GPL-2.0-or-later
 
 :authors: Thomas Leppelt
 """
 
 import datetime
-import grass.temporal as tgis
+
 from grass.gunittest.case import TestCase
 from grass.gunittest.main import test
+
+import grass.temporal as tgis
 
 
 class TestTemporalRasterAlgebraConditionals(TestCase):
     @classmethod
-    def setUpClass(cls):
+    def setUpClass(cls) -> None:
         """Initiate the temporal GIS and set the region"""
         tgis.init(True)  # Raise on error instead of exit(1)
         cls.use_temp_region()
@@ -103,16 +103,16 @@ class TestTemporalRasterAlgebraConditionals(TestCase):
             interval=True,
         )
 
-    def tearDown(self):
+    def tearDown(self) -> None:
         self.runModule("t.remove", flags="rf", inputs="R", quiet=True)
 
     @classmethod
-    def tearDownClass(cls):
+    def tearDownClass(cls) -> None:
         """Remove the temporary region"""
         cls.runModule("t.remove", flags="rf", inputs="A,B,C,D", quiet=True)
         cls.del_temp_region()
 
-    def test_temporal_conditional_time_dimension_bug(self):
+    def test_temporal_conditional_time_dimension_bug(self) -> None:
         """Testing the conditional time dimension bug, that uses the time
         dimension of the conditional statement instead the time dimension
         of the then/else statement."""
@@ -134,7 +134,7 @@ class TestTemporalRasterAlgebraConditionals(TestCase):
         self.assertEqual(R.check_temporal_topology(), True)
         self.assertEqual(R.get_granularity(), "1 day")
 
-    def test_temporal_conditional_1(self):
+    def test_temporal_conditional_1(self) -> None:
         """Testing the conditional time dimension bug, that uses the time
         dimension of the conditional statement instead the time dimension
         of the then/else statement."""
@@ -154,7 +154,7 @@ class TestTemporalRasterAlgebraConditionals(TestCase):
         self.assertEqual(R.check_temporal_topology(), True)
         self.assertEqual(R.get_granularity(), "1 day")
 
-    def test_temporal_conditional_relation_1(self):
+    def test_temporal_conditional_relation_1(self) -> None:
         """Testing the conditional time dimension bug, that uses the time
         dimension of the conditional statement instead the time dimension
         of the then/else statement."""
@@ -176,7 +176,7 @@ class TestTemporalRasterAlgebraConditionals(TestCase):
         self.assertEqual(R.check_temporal_topology(), False)
         self.assertEqual(R.get_granularity(), "2 days")
 
-    def test_spatial_conditional_1(self):
+    def test_spatial_conditional_1(self) -> None:
         """Testing the spatial conditionals combined by AND/OR operators.
         Evaluation"""
         tra = tgis.TemporalRasterAlgebraParser(run=True, debug=True)
@@ -197,7 +197,7 @@ class TestTemporalRasterAlgebraConditionals(TestCase):
         self.assertEqual(R.check_temporal_topology(), True)
         self.assertEqual(R.get_granularity(), "1 day")
 
-    def test_spatial_conditional_2(self):
+    def test_spatial_conditional_2(self) -> None:
         """Testing the spatial conditionals combined by AND/OR operators.
         Evaluation"""
         tra = tgis.TemporalRasterAlgebraParser(run=True, debug=True)
@@ -218,7 +218,7 @@ class TestTemporalRasterAlgebraConditionals(TestCase):
         self.assertEqual(R.check_temporal_topology(), True)
         self.assertEqual(R.get_granularity(), "1 day")
 
-    def test_spatial_conditional_3(self):
+    def test_spatial_conditional_3(self) -> None:
         """Testing the spatial conditionals combined by AND/OR operators.
         Evaluation"""
         tra = tgis.TemporalRasterAlgebraParser(run=True, debug=True)
@@ -235,7 +235,7 @@ class TestTemporalRasterAlgebraConditionals(TestCase):
         self.assertEqual(R.check_temporal_topology(), True)
         self.assertEqual(R.get_granularity(), "1 day")
 
-    def test_spatial_conditional_4(self):
+    def test_spatial_conditional_4(self) -> None:
         """Testing the spatial conditionals combined by AND/OR operators.
         Evaluation"""
         tra = tgis.TemporalRasterAlgebraParser(run=True, debug=True)
@@ -252,7 +252,7 @@ class TestTemporalRasterAlgebraConditionals(TestCase):
         self.assertEqual(R.check_temporal_topology(), True)
         self.assertEqual(R.get_granularity(), "1 day")
 
-    def test_spatial_conditional_5(self):
+    def test_spatial_conditional_5(self) -> None:
         """Testing the spatial conditionals combined by AND/OR operators.
         Evaluation"""
         tra = tgis.TemporalRasterAlgebraParser(run=True, debug=True)
@@ -273,7 +273,7 @@ class TestTemporalRasterAlgebraConditionals(TestCase):
         self.assertEqual(R.check_temporal_topology(), True)
         self.assertEqual(R.get_granularity(), "2 days")
 
-    def test_spatial_conditional_relation_1(self):
+    def test_spatial_conditional_relation_1(self) -> None:
         """Testing the spatial conditionals combined by AND/OR operators.
         Evaluation"""
         tra = tgis.TemporalRasterAlgebraParser(run=True, debug=True)
@@ -292,7 +292,7 @@ class TestTemporalRasterAlgebraConditionals(TestCase):
         self.assertEqual(R.check_temporal_topology(), True)
         self.assertEqual(R.get_granularity(), "1 day")
 
-    def test_spatial_conditional_relation_2(self):
+    def test_spatial_conditional_relation_2(self) -> None:
         """Testing the spatial conditionals with numeric conclusions"""
         tra = tgis.TemporalRasterAlgebraParser(run=True, debug=True)
         tra.parse(
@@ -312,7 +312,7 @@ class TestTemporalRasterAlgebraConditionals(TestCase):
         self.assertEqual(R.check_temporal_topology(), True)
         self.assertEqual(R.get_granularity(), "1 day")
 
-    def test_spatial_conditional_numeric_relation_1(self):
+    def test_spatial_conditional_numeric_relation_1(self) -> None:
         """Testing the spatial conditionals with numeric conclusions"""
         tra = tgis.TemporalRasterAlgebraParser(run=True, debug=True)
         tra.parse(
@@ -330,7 +330,7 @@ class TestTemporalRasterAlgebraConditionals(TestCase):
         self.assertEqual(R.check_temporal_topology(), True)
         self.assertEqual(R.get_granularity(), "1 day")
 
-    def test_spatial_conditional_numeric_relation_2(self):
+    def test_spatial_conditional_numeric_relation_2(self) -> None:
         """Testing the spatial conditionals combined by AND/OR operators.
         Evaluation"""
         tra = tgis.TemporalRasterAlgebraParser(run=True, debug=True)
@@ -351,7 +351,7 @@ class TestTemporalRasterAlgebraConditionals(TestCase):
         self.assertEqual(R.check_temporal_topology(), True)
         self.assertEqual(R.get_granularity(), "1 day")
 
-    def test_spatial_conditional_numeric_1(self):
+    def test_spatial_conditional_numeric_1(self) -> None:
         """Testing the spatial conditionals with numeric conclusions"""
         tra = tgis.TemporalRasterAlgebraParser(run=True, debug=True)
         tra.parse(expression="R = if(A > 2, 0, A)", basename="r", overwrite=True)
@@ -367,7 +367,7 @@ class TestTemporalRasterAlgebraConditionals(TestCase):
         self.assertEqual(R.check_temporal_topology(), True)
         self.assertEqual(R.get_granularity(), "1 day")
 
-    def test_spatial_conditional_numeric_2(self):
+    def test_spatial_conditional_numeric_2(self) -> None:
         """Testing the spatial conditionals with numeric conclusions"""
         tra = tgis.TemporalRasterAlgebraParser(run=True, debug=True)
         tra.parse(expression="R = if(A > 2, A, 8)", basename="r", overwrite=True)
@@ -383,7 +383,7 @@ class TestTemporalRasterAlgebraConditionals(TestCase):
         self.assertEqual(R.check_temporal_topology(), True)
         self.assertEqual(R.get_granularity(), "1 day")
 
-    def test_spatial_conditional_numeric_3(self):
+    def test_spatial_conditional_numeric_3(self) -> None:
         """Testing the spatial conditionals with numeric conclusions"""
         tra = tgis.TemporalRasterAlgebraParser(run=True, debug=True)
         tra.parse(expression="R = if(A > 2, 1, 0)", basename="r", overwrite=True)
@@ -399,7 +399,7 @@ class TestTemporalRasterAlgebraConditionals(TestCase):
         self.assertEqual(R.check_temporal_topology(), True)
         self.assertEqual(R.get_granularity(), "1 day")
 
-    def test_spatial_conditional_numeric_4(self):
+    def test_spatial_conditional_numeric_4(self) -> None:
         """Testing the spatial conditionals with numeric conclusions"""
         tra = tgis.TemporalRasterAlgebraParser(run=True, debug=True)
         tra.parse(expression="R = if(A > 2, null())", basename="r", overwrite=True)
@@ -415,7 +415,7 @@ class TestTemporalRasterAlgebraConditionals(TestCase):
         self.assertEqual(R.check_temporal_topology(), True)
         self.assertEqual(R.get_granularity(), "1 day")
 
-    def test_spatiotemporal_conditional_1(self):
+    def test_spatiotemporal_conditional_1(self) -> None:
         """Testing the spatial conditionals with numeric conclusions"""
         tra = tgis.TemporalRasterAlgebraParser(run=True, debug=True)
         tra.parse(
@@ -435,7 +435,7 @@ class TestTemporalRasterAlgebraConditionals(TestCase):
         self.assertEqual(R.check_temporal_topology(), True)
         self.assertEqual(R.get_granularity(), "1 day")
 
-    def test_spatiotemporal_conditional_2(self):
+    def test_spatiotemporal_conditional_2(self) -> None:
         """Testing the spatial conditionals with numeric conclusions"""
         tra = tgis.TemporalRasterAlgebraParser(run=True, debug=True)
         tra.parse(
@@ -455,7 +455,7 @@ class TestTemporalRasterAlgebraConditionals(TestCase):
         self.assertEqual(R.check_temporal_topology(), True)
         self.assertEqual(R.get_granularity(), "1 day")
 
-    def test_spatiotemporal_conditional_relation_1(self):
+    def test_spatiotemporal_conditional_relation_1(self) -> None:
         """Testing the spatial conditionals with numeric conclusions"""
         tra = tgis.TemporalRasterAlgebraParser(run=True, debug=True)
         tra.parse(
@@ -475,7 +475,7 @@ class TestTemporalRasterAlgebraConditionals(TestCase):
         self.assertEqual(R.check_temporal_topology(), True)
         self.assertEqual(R.get_granularity(), "1 day")
 
-    def test_spatiotemporal_conditional_relation_2(self):
+    def test_spatiotemporal_conditional_relation_2(self) -> None:
         """Testing the spatial conditionals with numeric conclusions"""
         tra = tgis.TemporalRasterAlgebraParser(run=True, debug=True)
         tra.parse(
@@ -495,7 +495,7 @@ class TestTemporalRasterAlgebraConditionals(TestCase):
         self.assertEqual(R.check_temporal_topology(), True)
         self.assertEqual(R.get_granularity(), "1 day")
 
-    def test_spatiotemporal_conditional_numeric_relation_1(self):
+    def test_spatiotemporal_conditional_numeric_relation_1(self) -> None:
         """Testing the spatial conditionals with numeric conclusions"""
         tra = tgis.TemporalRasterAlgebraParser(run=True, debug=True)
         tra.parse(
@@ -515,7 +515,7 @@ class TestTemporalRasterAlgebraConditionals(TestCase):
         self.assertEqual(R.check_temporal_topology(), True)
         self.assertEqual(R.get_granularity(), "1 day")
 
-    def test_spatiotemporal_conditional_numeric_relation_2(self):
+    def test_spatiotemporal_conditional_numeric_relation_2(self) -> None:
         """Testing the spatial conditionals combined by AND/OR operators.
         Evaluation"""
         tra = tgis.TemporalRasterAlgebraParser(run=True, debug=True)
@@ -536,7 +536,7 @@ class TestTemporalRasterAlgebraConditionals(TestCase):
         self.assertEqual(R.check_temporal_topology(), True)
         self.assertEqual(R.get_granularity(), "1 day")
 
-    def test_spatiotemporal_conditional_numeric_1(self):
+    def test_spatiotemporal_conditional_numeric_1(self) -> None:
         """Testing the spatial conditionals with numeric conclusions"""
         tra = tgis.TemporalRasterAlgebraParser(run=True, debug=True)
         tra.parse(
@@ -556,7 +556,7 @@ class TestTemporalRasterAlgebraConditionals(TestCase):
         self.assertEqual(R.check_temporal_topology(), True)
         self.assertEqual(R.get_granularity(), "1 day")
 
-    def test_spatiotemporal_conditional_numeric_2(self):
+    def test_spatiotemporal_conditional_numeric_2(self) -> None:
         """Testing the spatial conditionals with numeric conclusions"""
         tra = tgis.TemporalRasterAlgebraParser(run=True, debug=True)
         tra.parse(
@@ -576,7 +576,7 @@ class TestTemporalRasterAlgebraConditionals(TestCase):
         self.assertEqual(R.check_temporal_topology(), True)
         self.assertEqual(R.get_granularity(), "1 day")
 
-    def test_spatiotemporal_conditional_numeric_3(self):
+    def test_spatiotemporal_conditional_numeric_3(self) -> None:
         """Testing the spatial conditionals with numeric conclusions"""
         tra = tgis.TemporalRasterAlgebraParser(run=True, debug=True)
         tra.parse(
@@ -596,7 +596,7 @@ class TestTemporalRasterAlgebraConditionals(TestCase):
         self.assertEqual(R.check_temporal_topology(), True)
         self.assertEqual(R.get_granularity(), "1 day")
 
-    def test_spatiotemporal_conditional_numeric_4(self):
+    def test_spatiotemporal_conditional_numeric_4(self) -> None:
         """Testing the spatial conditionals with numeric conclusions"""
         tra = tgis.TemporalRasterAlgebraParser(run=True, debug=True)
         tra.parse(

@@ -1,4 +1,6 @@
-from tempfile import NamedTemporaryFile
+from pathlib import Path
+
+import grass.script as gs
 from grass.gunittest.case import TestCase
 from grass.gunittest.main import test
 
@@ -6,7 +8,7 @@ from grass.gunittest.main import test
 class TestNeighbors(TestCase):
     """
 
-    Used dataset: nc_spm_full_v2alphav2
+    Used dataset: nc_spm_full_v2beta1
 
     Test cases:
     test_sequential: Test output with sequential filter type
@@ -57,7 +59,7 @@ class TestNeighbors(TestCase):
                 "mean": 39040.3073035648,
                 "mean_of_abs": 39040.3073035648,
                 "stddev": 338.861109540213,
-                "variance": 114826.851558824,
+                "variance": 114826.851424987,
                 "coeff_var": 0.867977567147046,
                 "sum": 69862239516.6562,
             },
@@ -71,7 +73,7 @@ class TestNeighbors(TestCase):
                 "mean": 39041.4984470043,
                 "mean_of_abs": 39041.4984470043,
                 "stddev": 348.205753496913,
-                "variance": 121247.246768353,
+                "variance": 121247.246631722,
                 "coeff_var": 0.891886242454486,
                 "sum": 69864371055.9297,
             },
@@ -184,10 +186,9 @@ class TestNeighbors(TestCase):
 
     def create_filter(self, options):
         """Create a temporary filter file with the given name and options."""
-        f = NamedTemporaryFile()
-        f.write(options)
-        f.flush()
-        return f
+        filter_file = gs.tempfile(create=False)
+        Path(filter_file).write_bytes(options)
+        return filter_file
 
     @classmethod
     def setUpClass(cls):
@@ -214,16 +215,15 @@ class TestNeighbors(TestCase):
             "r.mfilter",
             input="elevation",
             output=output,
-            filter=filter.name,
+            filter=filter,
         )
         self.assertModule(
             "r.mfilter",
             input="elevation",
             output=output_threaded,
-            filter=filter.name,
+            filter=filter,
             nprocs=4,
         )
-        filter.close()
         self.assertRasterFitsUnivar(
             raster=output,
             reference=self.test_results[test_case],
@@ -247,16 +247,15 @@ class TestNeighbors(TestCase):
             "r.mfilter",
             input="elevation",
             output=output,
-            filter=filter.name,
+            filter=filter,
         )
         self.assertModule(
             "r.mfilter",
             input="elevation",
             output=output_threaded,
-            filter=filter.name,
+            filter=filter,
             nprocs=4,
         )
-        filter.close()
         self.assertRasterFitsUnivar(
             raster=output,
             reference=self.test_results[test_case],
@@ -280,16 +279,15 @@ class TestNeighbors(TestCase):
             "r.mfilter",
             input="lakes",
             output=output,
-            filter=filter.name,
+            filter=filter,
         )
         self.assertModule(
             "r.mfilter",
             input="lakes",
             output=output_z,
-            filter=filter.name,
+            filter=filter,
             flags="z",
         )
-        filter.close()
         self.assertRasterFitsUnivar(
             raster=output,
             reference=self.test_results[test_case][False],
@@ -315,31 +313,30 @@ class TestNeighbors(TestCase):
             "r.mfilter",
             input="lakes",
             output=output,
-            filter=filter.name,
+            filter=filter,
         )
         self.assertModule(
             "r.mfilter",
             input="lakes",
             output=output_threaded,
-            filter=filter.name,
+            filter=filter,
             nprocs=4,
         )
         self.assertModule(
             "r.mfilter",
             input="lakes",
             output=output_z,
-            filter=filter.name,
+            filter=filter,
             flags="z",
         )
         self.assertModule(
             "r.mfilter",
             input="lakes",
             output=output_z_threaded,
-            filter=filter.name,
+            filter=filter,
             flags="z",
             nprocs=4,
         )
-        filter.close()
         self.assertRasterFitsUnivar(
             raster=output,
             reference=self.test_results[test_case][False],
@@ -373,16 +370,15 @@ class TestNeighbors(TestCase):
             "r.mfilter",
             input="elevation",
             output=output,
-            filter=filter.name,
+            filter=filter,
         )
         self.assertModule(
             "r.mfilter",
             input="elevation",
             output=output_threaded,
-            filter=filter.name,
+            filter=filter,
             nprocs=4,
         )
-        filter.close()
         self.assertRasterFitsUnivar(
             raster=output,
             reference=self.test_results[test_case],
@@ -406,18 +402,17 @@ class TestNeighbors(TestCase):
             "r.mfilter",
             input="elevation",
             output=output,
-            filter=filter.name,
+            filter=filter,
             repeat=3,
         )
         self.assertModule(
             "r.mfilter",
             input="elevation",
             output=output_threaded,
-            filter=filter.name,
+            filter=filter,
             repeat=3,
             nprocs=4,
         )
-        filter.close()
         self.assertRasterFitsUnivar(
             raster=output,
             reference=self.test_results[test_case],

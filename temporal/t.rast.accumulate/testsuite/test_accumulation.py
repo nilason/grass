@@ -1,17 +1,15 @@
 """Test t.rast.accumulate
 
-(C) 2014 by the GRASS Development Team
-This program is free software under the GNU General Public
-License (>=v2). Read the file COPYING that comes with GRASS
-for details.
+SPDX-FileCopyrightText: 2014 GRASS Development Team
+SPDX-License-Identifier: GPL-2.0-or-later
 
 @author Soeren Gebbert
 """
 
-import grass.temporal as tgis
 import datetime
+
+import grass.temporal as tgis
 from grass.gunittest.case import TestCase
-from grass.gunittest.gmodules import SimpleModule
 
 
 class TestAccumulate(TestCase):
@@ -94,9 +92,7 @@ class TestAccumulate(TestCase):
     @classmethod
     def tearDownClass(cls):
         """Remove the temporary region"""
-        cls.runModule("t.remove", flags="df", type="strds", inputs="A")
-        cls.runModule("t.remove", flags="df", type="strds", inputs="Lower")
-        cls.runModule("t.remove", flags="df", type="strds", inputs="Upper")
+        cls.runModule("t.remove", flags="df", type="strds", inputs="A,Lower,Upper")
         cls.del_temp_region()
 
     def tearDown(self):

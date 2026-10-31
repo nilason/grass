@@ -3,10 +3,8 @@
 
    \brief Vedit library - delete vector features
 
-   (C) 2007-2008, 2012 by the GRASS Development Team
-
-   This program is free software under the GNU General Public License
-   (>=v2). Read the file COPYING that comes with GRASS for details.
+   SPDX-FileCopyrightText: 2007-2008, 2012 GRASS Development Team
+   SPDX-License-Identifier: GPL-2.0-or-later
 
    \author Martin Landa <landa.martin gmail.com>
  */
@@ -24,7 +22,7 @@
    \param List list of features to be deleted
 
    \return number of deleted features
-   \return -1 on on error
+   \return -1 on error
  */
 int Vedit_delete_lines(struct Map_info *Map, struct ilist *List)
 {
@@ -94,8 +92,6 @@ int Vedit_delete_area(struct Map_info *Map, int area)
     int i, line, centroid, left, right;
     struct ilist *list;
 
-    list = Vect_new_list();
-
     G_debug(3, "Vedit_delete_area(): area=%d", area);
     centroid = Vect_get_area_centroid(Map, area);
     if (centroid != 0) {
@@ -105,6 +101,7 @@ int Vedit_delete_area(struct Map_info *Map, int area)
         G_warning(_("Area %d without centroid"), area);
         return 0;
     }
+    list = Vect_new_list();
     Vect_get_area_boundaries(Map, area, list);
     if (list->n_values > 0) {
         for (i = 0; i < list->n_values; i++) {
@@ -119,6 +116,7 @@ int Vedit_delete_area(struct Map_info *Map, int area)
     }
     else {
         G_warning(_("Area %d has no boundaries"), area);
+        Vect_destroy_list(list);
         return 0;
     }
 
