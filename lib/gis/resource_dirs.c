@@ -10,9 +10,26 @@
    SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include <grass/config.h>
+
+#if defined(HAVE_DLADDR)
+
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif
+
+#include <dlfcn.h>
+
+#elif defined(_WIN32)
+
+#include <windows.h>
+#include <stdint.h>
+
+static char *get_module_path(const void *addr);
+
+#else
+#error Support for Dynamically Loaded Libraries (DL) is missing
+#endif // defined(HAVE_DLADDR)
 
 #include <ctype.h>
 #include <errno.h>
@@ -31,16 +48,8 @@
 #define RESOURCE_DIRS_ATOMIC 0
 #endif
 
-#include <grass/config.h>
 #include <grass/gis.h>
 #include <grass/glocale.h>
-
-#if defined(HAVE_DLADDR)
-#include <dlfcn.h>
-#else
-#error Dynamically Loaded Libraries (DL) and dladdr() needed
-// TODO: add alternative code for MSVC
-#endif
 
 typedef enum {
     GRASS_COLORSDIR,
@@ -232,19 +241,34 @@ static const char grass_config_anchor = 0;
 static const char *get_config_file(void)
 {
     Dl_info info;
+    char *libfile_name;
 
+#if defined(HAVE_DLADDR)
     if (dladdr((const void *)&grass_config_anchor, &info) == 0) {
         G_warning(_("%s failed to resolve library address via dladdr."),
                   __func__);
         return NULL;
     }
+    libfile_name = G_store(info.dli_fname);
+#else // _WIN32
+    char *module_path = get_module_path(&grass_config_anchor);
+    if (!module_path) {
+        G_warning(
+            _("%s failed to resolve library address via get_module_path."),
+            __func__);
+        return NULL;
+    }
+    libfile_name = G_store(module_path);
+    free(module_path);
+#endif
 
-    char *resolved_path = realpath(info.dli_fname, NULL);
+    char *resolved_path = realpath(libfile_name, NULL);
     if (!resolved_path) {
         G_warning(_("%s failed to resolv physical path '%s'."), __func__,
                   info.dli_fname);
         return NULL;
     }
+    G_free(libfile_name);
 
     char *dir = dirname(resolved_path);
     char *library_directory = G_store(dir);
@@ -397,3 +421,84 @@ static const char *get_g_env(GResourceDirType t)
 
     return resolve_and_set_resource_path(dir_type_name);
 }
+
+#ifdef _WIN32
+
+/*
+ * Return the absolute UTF-8 path of the module containing addr.
+ *
+ * The caller must free the returned string.
+ * Returns NULL on failure.
+ *
+ * addr must point to an object or function within the module.
+ */
+static char *get_module_path(const void *addr)
+{
+    HMODULE module;
+    wchar_t *wpath = NULL;
+    DWORD capacity = MAX_PATH;
+    char *path = NULL;
+
+    if (!GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
+                                GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+                            (LPCWSTR)addr, &module))
+        return NULL;
+
+    /* Retrieve the UTF-16 module path, growing the buffer as needed. */
+    for (;;) {
+        wchar_t *tmp;
+        DWORD len;
+
+        if (capacity > SIZE_MAX / sizeof(*wpath))
+            return NULL;
+
+        tmp = realloc(wpath, (size_t)capacity * sizeof(*wpath));
+        if (!tmp) {
+            free(wpath);
+            return NULL;
+        }
+        wpath = tmp;
+
+        SetLastError(ERROR_SUCCESS);
+        len = GetModuleFileNameW(module, wpath, capacity);
+
+        if (len == 0) {
+            free(wpath);
+            return NULL;
+        }
+
+        if (len < capacity)
+            break;
+
+        /* The buffer may have been truncated. */
+        if (capacity > (DWORD)-1 / 2) {
+            free(wpath);
+            return NULL;
+        }
+
+        capacity *= 2;
+    }
+
+    /* Determine the required UTF-8 buffer size. */
+    int size = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, wpath, -1,
+                                   NULL, 0, NULL, NULL);
+
+    if (size == 0) {
+        free(wpath);
+        return NULL;
+    }
+
+    path = malloc((size_t)size);
+    if (path) {
+        if (!WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, wpath, -1, path,
+                                 size, NULL, NULL)) {
+            free(path);
+            path = NULL;
+        }
+    }
+
+    free(wpath);
+    return path;
+}
+
+#endif
