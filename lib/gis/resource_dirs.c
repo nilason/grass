@@ -25,6 +25,8 @@
 #include <windows.h>
 #include <stdint.h>
 
+#define realpath(N, R) _fullpath((R), (N), _MAX_PATH)
+
 static char *get_module_path(const void *addr);
 
 #else
@@ -271,7 +273,7 @@ static const char *get_config_file(void)
     }
     G_free(libfile_name);
 
-    char *dir = dirname(resolved_path);
+    char *dir = G_dirname(resolved_path);
     char *library_directory = G_store(dir);
     if (!library_directory) {
         G_warning("%s failed to duplicate directory path.", __func__);
@@ -362,7 +364,7 @@ static void config_init_if_needed(void)
                 if (strcmp(g_config[i].key, "GRASS_PREFIX_RELATIVE") == 0) {
                     char symlinkpath[GPATH_MAX] = {0};
                     snprintf(symlinkpath, sizeof(symlinkpath), "%s%c%s",
-                             dirname(g_config_file_path), HOST_DIRSEP,
+                             G_dirname(g_config_file_path), HOST_DIRSEP,
                              g_config[i].value);
 
                     char *resolved_path = realpath(symlinkpath, NULL);
@@ -403,7 +405,7 @@ static const char *resolve_and_set_resource_path(const char *dir_type_name)
         G_warning("%s file name exceeds allowed length '%s'.", __func__, buf);
         return NULL;
     }
-#if defined(_MSC_VER)
+#if defined(_WIN32)
     _putenv_s(dir_type_name, buf);
 #else
     setenv(dir_type_name, buf, 1);
