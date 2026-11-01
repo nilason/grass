@@ -78,6 +78,8 @@ make
 
 # install
 
+make install
+
 bin=bin.${ARCH}
 dist=dist.${ARCH}
 ver=$(sed -n '/^INST_DIR[ \t]*=/{s/^.*grass//; p}' include/Make/Platform.make)
