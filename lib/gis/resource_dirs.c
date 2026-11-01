@@ -240,10 +240,11 @@ static const char grass_config_anchor = 0;
 
 static const char *get_config_file(void)
 {
-    Dl_info info;
     char *libfile_name;
 
 #if defined(HAVE_DLADDR)
+    Dl_info info;
+
     if (dladdr((const void *)&grass_config_anchor, &info) == 0) {
         G_warning(_("%s failed to resolve library address via dladdr."),
                   __func__);
@@ -265,7 +266,7 @@ static const char *get_config_file(void)
     char *resolved_path = realpath(libfile_name, NULL);
     if (!resolved_path) {
         G_warning(_("%s failed to resolv physical path '%s'."), __func__,
-                  info.dli_fname);
+                  libfile_name);
         return NULL;
     }
     G_free(libfile_name);
