@@ -306,6 +306,9 @@ void G_read_datum_table(void);
 void G_init_debug(void);
 int G_debug(int, const char *, ...) __attribute__((format(printf, 2, 3)));
 
+/* dirname.c */
+char *G_dirname(char *);
+
 /* distance.c */
 int G_begin_distance_calculations(void);
 double G_distance(double, double, double, double);
