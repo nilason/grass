@@ -9424,7 +9424,8 @@ then :
   DLLIB=-ldl
 else case e in #(
   e)
-    as_fn_error $? "*** Failed check for dl library." "$LINENO" 5
+    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: *** Unable to locate dl library." >&5
+printf "%s\n" "$as_me: WARNING: *** Unable to locate dl library." >&2;}
  ;;
 esac
 fi

@@ -654,7 +654,7 @@ AC_SUBST(MATHLIB)
 
 AC_CHECK_FUNCS([dladdr dlsym], DLLIB=, [
 AC_CHECK_LIB(dl, dladdr, DLLIB=-ldl, [
-    AC_MSG_ERROR([*** Failed check for dl library.])
+    AC_MSG_WARN([*** Unable to locate dl library.])
 ])])
 AC_SUBST(DLLIB)
 
