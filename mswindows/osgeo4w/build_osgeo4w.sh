@@ -12,7 +12,7 @@
 #
 
 # stop on errors
-set -e
+set -ex
 
 
 # compile
@@ -125,7 +125,7 @@ if not exist %GISBASE%\\etc\\fontcap (
 EOT
 ) >$dist/etc/env.bat
 unix2dos $dist/etc/env.bat
-
+cat $dist/etc/env.bat
 (
     sed -e 's/^\(call "\)%~dp0\(.*\)$/\1C:\\OSGeo4W\\bin\2/' \
         -e 's/^\(call "\).*\(\\etc\\env\.bat"\)$/\1'$dist_esc'\2/' \
@@ -134,7 +134,7 @@ unix2dos $dist/etc/env.bat
         mswindows/osgeo4w/grass.bat.tmpl
 ) >$bin/grass$ver.bat
 unix2dos $bin/grass$ver.bat
-
+cat $bin/grass$ver.bat
 opt_path=${OSGEO4W_ROOT_MSYS}/opt
 grass_path=$opt_path/grass
 
@@ -178,7 +178,7 @@ cat $grass_path/etc/env.bat
         mswindows/osgeo4w/grass.bat.tmpl
 ) >$grass_path/grass$ver.bat
 unix2dos $grass_path/grass$ver.bat
-
+cat $grass_path/grass$ver.bat
 if [ "$UNITTEST" ]; then
     cp $grass_path/grass$ver.bat $grass_path/grass.bat
     cp -a $bin/grass.py ${SRC}/dist.${ARCH}/$bash_bin/grass
